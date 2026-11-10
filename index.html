@@ -1,0 +1,982 @@
+<title>Matte 3B Øvingsrom</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Lys, minimalistisk layout i Capquiz/Moodle-ånd: topplinje, venstremeny på brede skjermer, innhold i kort. */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --line:#dfe3e8; --fg:#1d2125; --muted:#5f6b76;
+  --accent:#0f6cbf; --accent-soft:#e6f0fa; --accent-fg:#ffffff;
+  --good:#2e7d32; --good-soft:#e7f3e8; --warn:#9a6a00; --warn-soft:#fbf3dc; --bad:#c62828; --bad-soft:#fbe9e9; --grey-soft:#eceff2;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15181c;--surface:#1e2228;--line:#333a43;--fg:#e8eaed;--muted:#9aa4af;--accent:#5aa5e8;--accent-soft:#1e2f42;--accent-fg:#0b1a2a;--good:#7cc47f;--good-soft:#1f3322;--warn:#e0b45c;--warn-soft:#3a3118;--bad:#ef8a8a;--bad-soft:#3d2222;--grey-soft:#272c33;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15181c;--surface:#1e2228;--line:#333a43;--fg:#e8eaed;--muted:#9aa4af;--accent:#5aa5e8;--accent-soft:#1e2f42;--accent-fg:#0b1a2a;--good:#7cc47f;--good-soft:#1f3322;--warn:#e0b45c;--warn-soft:#3a3118;--bad:#ef8a8a;--bad-soft:#3d2222;--grey-soft:#272c33;color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.5;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+a{color:var(--accent)}
+button{font:inherit}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{font-weight:600;letter-spacing:.01em;text-decoration:none;color:var(--fg);display:flex;align-items:center;gap:10px}
+.brand .mark{width:26px;height:26px;border-radius:6px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:500}
+.topbar nav{display:flex;gap:4px;flex-wrap:wrap}
+#filebar .fn{font-size:12px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#filebar .fn.dirty{color:var(--warn);font-weight:500}
+@media(max-width:700px){#filebar .fn{display:none}}
+.topbar nav a{text-decoration:none;color:var(--muted);padding:6px 10px;border-radius:6px;font-size:14px}
+.topbar nav a.active,.topbar nav a:hover{color:var(--fg);background:var(--accent-soft)}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:1fr;gap:20px}
+@media(min-width:900px){.wrap{grid-template-columns:220px minmax(0,1fr)}}
+.side{display:none}
+@media(min-width:900px){.side{display:block;position:sticky;top:calc(58px + env(safe-area-inset-top,0px));align-self:start}}
+.side a{display:block;text-decoration:none;color:var(--fg);padding:7px 10px;border-radius:6px;font-size:14px}
+.side a.active{background:var(--accent-soft);color:var(--accent);font-weight:500}
+.side .grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 10px 4px}
+.side .sub a{padding-left:22px;font-size:13px;color:var(--muted)}
+.side .sub a.active{color:var(--accent)}
+main{min-width:0}
+h1{font-size:24px;font-weight:600;margin:0 0 4px;text-wrap:balance}
+h2{font-size:18px;font-weight:600;margin:0 0 10px;text-wrap:balance}
+h3{font-size:15px;font-weight:600;margin:0 0 6px}
+.lead{color:var(--muted);margin:0 0 18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.card.flat{background:var(--bg)}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.kpi .n{font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .l{color:var(--muted);font-size:13px;margin-top:4px}
+.stack{display:grid;gap:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:500}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--accent)}
+.btn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:500;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.bad{background:var(--bad-soft);color:var(--bad)}.pill.mute{background:var(--grey-soft);color:var(--muted)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;color:var(--muted);font-weight:500;font-size:12px;letter-spacing:.04em;text-transform:uppercase;padding:6px 8px;border-bottom:1px solid var(--line)}
+.tbl td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.tblwrap{overflow-x:auto}
+/* stolper */
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:minmax(120px,1.3fr) minmax(0,2fr) 48px;gap:10px;align-items:center;font-size:13px}
+.bar .lab{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .trk{display:grid;gap:3px}
+.bar .trk b{display:block;height:6px;background:var(--bg);border:1px solid var(--line);border-radius:4px;position:relative;overflow:hidden}
+.bar .trk i{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:3px}
+.bar .trk i.w{background:var(--muted);opacity:.45}
+.bar .v{font-variant-numeric:tabular-nums;color:var(--muted);text-align:right}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--accent)}
+.legend span.w::before{background:var(--muted);opacity:.35}
+.prog{height:8px;background:var(--grey-soft);border-radius:4px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.prog.good i{background:var(--good)}.prog.warn i{background:var(--warn)}
+/* oppgave */
+.qtext{font-size:15.5px;line-height:1.65;max-width:76ch}
+.qtext p{margin:0 0 10px}
+.qtext pre{font-family:var(--mono);font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;overflow-x:auto;margin:6px 0 12px}
+.qtext mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
+.fig{display:inline-block;font-size:12px;color:var(--muted);border:1px dashed var(--line);border-radius:4px;padding:1px 8px;margin:2px 0}
+.fld{display:inline-flex;align-items:center;gap:6px;vertical-align:middle;margin:2px 0;flex-wrap:wrap}
+.fld .tag{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--grey-soft);border-radius:4px;padding:1px 5px}
+.fld input[type=text]{font-family:var(--mono);font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);min-width:150px;width:min(100%,260px)}
+.fld select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+.fld.ok input,.fld.ok select{border-color:var(--good);background:var(--good-soft)}
+.fld.bad input,.fld.bad select{border-color:var(--bad);background:var(--bad-soft)}
+.fld.seen input,.fld.seen select{border-color:var(--warn);background:var(--warn-soft)}
+.fld .st{font-size:12px;font-weight:500;color:var(--muted)}
+.fld.ok .st{color:var(--good)}.fld.bad .st{color:var(--bad)}.fld.seen .st{color:var(--warn)}
+textarea.code{width:100%;min-height:160px;font-family:var(--mono);font-size:13px;border:1px solid var(--line);border-radius:6px;padding:10px;background:var(--surface);color:var(--fg);box-sizing:border-box}
+/* hjelpepanel under hver deloppgave */
+.help{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;background:var(--bg);padding:8px 12px;margin:4px 0 14px;max-width:76ch}
+.help .hd{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px}
+.help .hd .lab{font-weight:600;color:var(--muted);margin-right:4px}
+.help .body{margin-top:8px;display:grid;gap:8px}
+.hintbox{border-left:3px solid var(--accent);background:var(--accent-soft);padding:8px 12px;border-radius:0 6px 6px 0}
+.hintbox .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.fasit{border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--surface)}
+.fasit h4{margin:0 0 6px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fasit code,.mono{font-family:var(--mono);font-size:13px;background:var(--bg);border:1px solid var(--line);padding:1px 5px;border-radius:4px}
+.sitat{border-left:3px solid var(--muted);padding:6px 12px;color:var(--muted);font-style:italic;margin:8px 0}
+.ref{font-size:13px;color:var(--muted)}
+.warnnote{font-size:13px;color:var(--warn);background:var(--warn-soft);border-radius:6px;padding:6px 10px}
+/* faner */
+.tabs{display:flex;gap:4px;align-items:flex-end;border-bottom:1px solid var(--line);margin:-6px 0 14px;overflow-x:auto;padding-bottom:0}
+.tab{display:inline-flex;align-items:center;gap:6px;padding:6px 8px 6px 12px;border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--grey-soft);color:var(--muted);font-size:13px;cursor:pointer;white-space:nowrap;max-width:260px;position:relative;top:1px}
+.tab.on{background:var(--surface);color:var(--fg);font-weight:500;border-color:var(--line);box-shadow:0 1px 0 var(--surface)}
+.tab .tt{overflow:hidden;text-overflow:ellipsis}
+.tab .x{border:0;background:transparent;color:var(--muted);font-size:15px;line-height:1;padding:0 2px;cursor:pointer;border-radius:4px}
+.tab .x:hover{background:var(--bad-soft);color:var(--bad)}
+.tab.plus{padding:6px 10px;font-size:15px;border-radius:8px 8px 0 0}
+/* steg for steg */
+.steps{margin:0;padding-left:0;list-style:none;counter-reset:steg;display:grid;gap:8px}
+.steps li{counter-increment:steg;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.steps li::before{grid-row:1/3;content:counter(steg);width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-size:12px;font-weight:600;margin-top:2px}
+.steps .st-t{grid-column:2;font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.steps .st-s{grid-column:2;font-size:14.5px;line-height:1.65;margin-top:2px;overflow-x:auto}
+.steps .st-s code{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);padding:1px 4px;border-radius:4px}
+.stref{text-decoration:none;font-size:11px}
+.figbox{margin:12px 0 0;border:1px solid var(--line);border-radius:6px;padding:8px;background:#fff}
+.figbox img{display:block;max-width:min(100%,560px);height:auto;margin:0 auto}
+/* kompendiumvisning */
+.pv{border:1px solid var(--line);border-radius:6px;background:var(--surface);overflow:hidden}
+.pv .bar2{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap}
+.pv img{display:block;width:100%;height:auto;background:#fff}
+.pv .tabs{display:flex;gap:4px;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid var(--line)}
+.qnav{display:flex;justify-content:space-between;gap:10px;margin-top:16px;flex-wrap:wrap}
+.qlist{display:grid;gap:6px}
+.qlist a{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;text-decoration:none;color:var(--fg);padding:9px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.qlist a:hover{border-color:var(--accent)}
+.qlist .n{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.qlist .t{min-width:0}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line);display:inline-block}
+.dot.good{background:var(--good)}.dot.bad{background:var(--bad)}.dot.warn{background:var(--warn)}
+.timer{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:14px}
+.pdfframe{width:100%;height:70vh;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:var(--surface);color:var(--muted);padding:4px 10px;cursor:pointer;font-size:12px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on.g{background:var(--good-soft);color:var(--good)}.seg button.on.w{background:var(--warn-soft);color:var(--warn)}.seg button.on.b{background:var(--bad-soft);color:var(--bad)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.notice{font-size:13px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:8px 12px}
+.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:13px;z-index:20}
+/* start nytt forsøk */
+.modes{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.mode{border:1px solid var(--line);border-radius:var(--r);padding:16px;background:var(--surface);display:grid;gap:8px;align-content:start}
+.mode h3{margin:0}
+.mode ul{margin:0;padding-left:18px;color:var(--muted);font-size:13px}
+/* gjøremål */
+.todo{display:grid;gap:6px}
+.todo .it{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.todo .it.done{opacity:.7}
+.todo .it.done .tx{text-decoration:line-through;color:var(--muted)}
+.todo .chk{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--line);display:grid;place-items:center;font-size:12px;cursor:pointer;background:var(--surface);color:var(--good)}
+.todo .chk.on{border-color:var(--good);background:var(--good-soft)}
+.todo .chk.auto{cursor:default;border-style:dashed}
+.todo .tx{min-width:0}
+.todo .tx .sub{font-size:12px;color:var(--muted)}
+.weekhd{display:flex;align-items:center;gap:10px;justify-content:space-between;margin:18px 0 8px;flex-wrap:wrap}
+.weekhd h2{margin:0}
+.weekhd .prog{width:140px}
+.stepper{display:flex;gap:4px;flex-wrap:wrap}
+.stepper a{width:26px;height:26px;border-radius:5px;border:1px solid var(--line);display:grid;place-items:center;font-size:12px;text-decoration:none;color:var(--muted);background:var(--surface)}
+.stepper a.cur{border-color:var(--accent);color:var(--accent);font-weight:600}
+.stepper a.ok{background:var(--good-soft);color:var(--good);border-color:transparent}.stepper a.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}.stepper a.seen{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+@media (prefers-reduced-motion:no-preference){.bar .trk i,.prog i{transition:width .4s ease}}
+</style>
+
+<header class="topbar">
+  <a class="brand" href="#oversikt"><span class="mark">∭</span>Matte 3B · Øvingsrom</a>
+  <div id="filebar" class="row" style="gap:6px;margin-left:auto" hidden></div>
+  <nav id="topnav" style="margin-left:0">
+    <a href="#oversikt">Oversikt</a><a href="#gjoremal">Gjøremål</a><a href="#ovinger">Øvinger</a><a href="#eksamen">Eksamenssett</a><a href="#komp">Kompendium</a>
+  </nav>
+</header>
+<div class="wrap">
+  <aside class="side" id="side"></aside>
+  <main id="main-wrap"><div id="tabs" class="tabs" hidden></div><div id="main"><div class="card"><p class="muted">Laster oppgavebanken …</p></div></div></main>
+</div>
+
+<script src="bank.js"></script>
+<script src="vendor/math.js"></script>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']], processEscapes: false }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code','input'] }, svg: { fontCache: 'global' } };
+</script>
+<script src="vendor/tex-svg.js"></script>
+<script>
+(function(){
+'use strict';
+const EXAM_DATE = new Date('2026-12-17T09:00:00+01:00');
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let Q = [], QBY = {}, TOPICS = {};
+let STATE = { attempts: {}, exams: {}, sessions: {}, todos: {}, notes: {} };
+let store = null;
+const LS_KEY = 'm3b_state_v2';
+const OVINFO = {11:'Python og Matte 1/2-repetisjon (variant av øving 1)',12:'Dobbeltintegral og polar (variant av øving 2)',13:'Trippelintegral, sylinder og kule (variant av øving 3)',14:'Kurver, flater, vektorfelt (variant av øving 4)',15:'Green, Gauss, Stokes (variant av øving 5)',1:'Repetisjon og Python-oppsett',2:'Dobbeltintegral og polarkoordinater',3:'Trippelintegral, sylinder- og kulekoordinater',4:'Kurver, flater, vektorfelt og fluks',5:'Konservative felt, Green, Gauss, Stokes',6:'PDE: løsninger, differanser og leapfrog · frist 29. nov',7:'Endelig volum-metode · frist 29. nov'};
+const PAGE_OFFSET = 3; // pdf-side = trykt side + 3
+const OVS = [1,2,3,4,5,6,7], REPS = [11,12,13,14,15];
+const ovName = n => n>10 ? 'Repetisjon '+(n-10) : 'Øving '+n;
+const ovShort = n => n>10 ? 'R'+(n-10) : 'Ø'+n;
+
+// ---------- Eksamenssett ----------
+const EXAMS = [
+ { key:'ord2025', navn:'Ordinær eksamen 2025', dato:'des. 2025', pdf:'eksamen/ord2025.pdf', lf:'eksamen/ord2025_lf.pdf',
+   tasks:[[1,'Kurvelengde','kurve',4],[2,'Dobbeltintegral i polar','polar',4],[3,'Divergens','felt',4],[4,'Rotasjon','felt',4],[5,'Trippelintegral','trippel',4],[6,'Rotasjon og divergens – utsagn','felt',4],[7,'Parametrisering','kurve',4],[8,'Arbeidsintegral','arbeid',4],[9,'Difflikning','pde',4],[10,'Varmelikningen – utledning (fyll inn)','bevaring',9],[11,'Integral i 3D: parameterflate, sympy, dblquad, tplquad','flate',9],[12,'Kildekode varmelikning','tidpde',9],[13,'Gauss\' teorem på paraboloide','gauss',9]] },
+ { key:'kontfeb2026', navn:'Ekstraordinær eksamen februar 2026', dato:'19.02.2026', pdf:'eksamen/kontfeb2026.pdf', lf:'eksamen/kontfeb2026_lf.pdf',
+   tasks:[[1,'Kurve og parametrisering','kurve',4],[2,'Dobbeltintegral','dobbel',4],[3,'Polarkoordinater','polar',4],[4,'Vektoranalyse','felt',4],[5,'PDE-kode (5 kontrollvolumer)','evm',4],[6,'Linjeintegral','arbeid',4],[7,'Flateintegral','flate',4],[8,'Potensial','konserv',4],[9,'PDE','pde',4],[10,'Diffusjonslikning – utledning (fyll inn)','bevaring',9],[11,'Delaunay-triangulering','numint',9],[12,'Vektorkalkulus','gauss',9],[13,'Integral og treghetsmoment','sylkule',9]] },
+ { key:'kontmai2026', navn:'Kontinuasjonseksamen mai 2026', dato:'12.05.2026', pdf:'eksamen/kontmai2026.pdf', lf:'eksamen/kontmai2026_lf.pdf',
+   tasks:[[1,'Integral over halvdisk','polar',4],[2,'Tyngdepunkt mellom parabler','trippel',4],[3,'Kurve gitt i polarkoordinater','polar',4],[4,'Likning i kulekoordinater','sylkule',4],[5,'Divergens','felt',4],[6,'Arbeidsintegral rundt kvadrat','arbeid',4],[7,'Delaunay-kode: hva regnes ut?','numint',4],[8,'Løsning av bølgelikningen','pde',4],[9,'Vektorkalkulus','felt',4],[10,'Maxwells likninger','gauss',9],[11,'Bytte integrasjonsrekkefølge, skisse','dobbel',9],[12,'Fluks ut av sylinder','fluks',9],[13,'EVM: stasjonær varmestrøm i 1D','evm',9]] },
+ { key:'prove2025', navn:'Prøveeksamen 2025', dato:'høst 2025', pdf:'eksamen/prove2025.pdf', lf:'eksamen/prove2025_lf.pdf',
+   tasks:[[2,'Grenser for dobbeltintegral','dobbel',4],[3,'sympy, dblquad, tplquad','numint',4],[4,'Variabelskifte: nytt område','polar',4],[5,'Delaunay-triangulering','numint',4],[6,'Overlapping av celler og vekter','numint',4],[7,'Volum i første oktant – hvilket integral','sylkule',4],[8,'Oppgave 8','felt',4],[9,'Linjeintegral F = (y, x) rundt sirkel','arbeid',4],[10,'Fluks ut av boks','gauss',9],[11,'Curl H gjennom paraboloide','stokes',9],[12,'Poissonlikning i 2D (symbolsk)','differ',9],[13,'Bølgelikningen','pde',9],[14,'Konveksjon–diffusjon som bevaringslov','bevaring',9]] },
+];
+const EXBY = {}; EXAMS.forEach(e=>EXBY[e.key]=e);
+
+// ---------- Arbeidsplan som gjøremål ----------
+// type manual: hukes av manuelt. oving: alle rettbare felt i øvingen (ev. nr-liste) er besvart riktig minst én gang uten fasit.
+// prove: et prøvemodus-forsøk på øvingen med minst `min` riktig. exam: alle oppgavene er logget under Eksamenssett.
+const PLAN = [
+ { uke:46, start:'2026-11-09', end:'2026-11-15', tittel:'Modul 1 – integrasjon i flere dimensjoner', items:[
+   {id:'u46-les1', type:'manual', text:'Les kompendiet §1.1–1.3: dobbeltintegral, polarkoordinater og Jacobi', komp:'1.1'},
+   {id:'u46-les2', type:'manual', text:'Les kompendiet §1.5–1.6: trippelintegral, sylinder- og kulekoordinater', komp:'1.5'},
+   {id:'u46-o2', type:'oving', oving:2, text:'Øving 2 i øvingsmodus (alle oppgaver)'},
+   {id:'u46-o3', type:'oving', oving:3, text:'Øving 3 i øvingsmodus (alle oppgaver)'},
+   {id:'u46-p2', type:'prove', oving:2, min:0.7, text:'Prøvemodus øving 2 med minst 70 %'},
+   {id:'u46-p3', type:'prove', oving:3, min:0.7, text:'Prøvemodus øving 3 med minst 70 %'},
+   {id:'u46-eks', type:'exam', tasks:[['prove2025',2],['prove2025',3],['prove2025',4],['ord2025',2],['ord2025',5]], text:'Eksamensoppgaver: prøveeksamen 2–4, ordinær 2025 oppg. 2 og 5'},
+ ]},
+ { uke:47, start:'2026-11-16', end:'2026-11-22', tittel:'Modul 3 del 1 – PDE og endelige differanser', items:[
+   {id:'u47-les1', type:'manual', text:'Les kompendiet §3.1–3.2: PDE-typer, randbetingelser, bevaringslover', komp:'3.1'},
+   {id:'u47-les2', type:'manual', text:'Les kompendiet §3.3: endelige differanser og leapfrog', komp:'3.3'},
+   {id:'u47-o6', type:'oving', oving:6, text:'Øving 6 i øvingsmodus'},
+   {id:'u47-p6', type:'prove', oving:6, min:0.7, text:'Prøvemodus øving 6 med minst 70 %'},
+   {id:'u47-lev6', type:'manual', text:'Lever øving 6 i Capquiz'},
+   {id:'u47-eks', type:'exam', tasks:[['ord2025',10],['ord2025',12]], text:'Eksamensoppgaver: ordinær 2025 oppg. 10 og 12'},
+ ]},
+ { uke:48, start:'2026-11-23', end:'2026-11-29', tittel:'Modul 3 del 2 – endelig volum-metode · kurver og flater', items:[
+   {id:'u48-les1', type:'manual', text:'Les kompendiet §3.4–3.5 og A.8: endelig volum-metode i 1D', komp:'3.4'},
+   {id:'u48-o7', type:'oving', oving:7, text:'Øving 7 i øvingsmodus'},
+   {id:'u48-lev7', type:'manual', text:'Lever øving 7 i Capquiz (frist 29. nov)'},
+   {id:'u48-evm', type:'manual', text:'Sett opp EVM-tabellen for 5 kontrollvolumer uten å se i kompendiet'},
+   {id:'u48-les2', type:'manual', text:'Les kompendiet §1.8–1.9: kurver, buelengde, parameterflater', komp:'1.8'},
+   {id:'u48-o4a', type:'oving', oving:4, nr:[2,3,4,5,6,7,8], text:'Øving 4 oppg. 2–8 i øvingsmodus'},
+ ]},
+ { uke:49, start:'2026-11-30', end:'2026-12-06', tittel:'Modul 2 del 1 – vektorfelt, arbeid, potensial, fluks', items:[
+   {id:'u49-les1', type:'manual', text:'Les kompendiet §2.1–2.5: vektorfelt, div/curl, linjeintegral, konservative felt, fluks i 2D', komp:'2.1'},
+   {id:'u49-o4b', type:'oving', oving:4, nr:[9,10,11,12,13,14,15], text:'Øving 4 oppg. 9–15 i øvingsmodus'},
+   {id:'u49-o5a', type:'oving', oving:5, nr:[4,5,15], text:'Øving 5 oppg. 4, 5 og 15 i øvingsmodus'},
+   {id:'u49-p4', type:'prove', oving:4, min:0.7, text:'Prøvemodus øving 4 med minst 70 %'},
+   {id:'u49-eks', type:'exam', tasks:[['ord2025',3],['ord2025',4],['ord2025',6],['ord2025',8]], text:'Eksamensoppgaver: ordinær 2025 oppg. 3, 4, 6 og 8'},
+ ]},
+ { uke:50, start:'2026-12-07', end:'2026-12-13', tittel:'Modul 2 del 2 – Green, Gauss, Maxwell, Stokes · hele sett på tid', items:[
+   {id:'u50-les1', type:'manual', text:'Les kompendiet §2.6–2.9: Green, fluks i 3D, divergenssetningen, Stokes', komp:'2.6'},
+   {id:'u50-o5b', type:'oving', oving:5, nr:[6,7,8,9,10,11,12,13], text:'Øving 5 oppg. 6–13 i øvingsmodus'},
+   {id:'u50-p5', type:'prove', oving:5, min:0.7, text:'Prøvemodus øving 5 med minst 70 %'},
+   {id:'u50-eks1', type:'exam', tasks:[['kontfeb2026',10],['kontmai2026',13]], text:'Eksamensoppgaver: februar-kont. oppg. 10, mai-kont. oppg. 13'},
+   {id:'u50-eks2', type:'exam', set:'ord2025', text:'Hele ordinær eksamen 2025 på tid (4 timer), alle oppgaver logget'},
+ ]},
+ { uke:51, start:'2026-12-14', end:'2026-12-16', tittel:'Siste dager – hele sett, bommeliste, formelark', items:[
+   {id:'u51-eks1', type:'exam', set:'kontfeb2026', text:'Hele februar-kont. 2026 på tid, alle oppgaver logget'},
+   {id:'u51-eks2', type:'exam', set:'kontmai2026', text:'Hele mai-kont. 2026 på tid, alle oppgaver logget'},
+   {id:'u51-bom', type:'manual', text:'Gå gjennom bommelista: alle felt merket feil eller «fasit vist» på oversikten'},
+   {id:'u51-form', type:'manual', text:'Les gjennom formelarket og Python-cheat-sheetet én gang til'},
+ ]},
+];
+
+// ---------- Lagring ----------
+function lsLoad(){ try{ const s = localStorage.getItem(LS_KEY) || localStorage.getItem('m3b_state_v1'); if(s) return JSON.parse(s);}catch(e){} return null; }
+function lsSave(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} FILE.markDirty(); }
+// ---------- Historikkfil på PC-en (Chrome/Edge: File System Access API) ----------
+const FILE = {
+  handle:null, dirty:false, timer:null, savedAt:null,
+  supported(){ return !!window.showSaveFilePicker && !window.claude; },
+  async idbGet(){ return new Promise(res=>{ try{ const r=indexedDB.open('m3b',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{ const tx=r.result.transaction('kv','readonly'); const g=tx.objectStore('kv').get('handle'); g.onsuccess=()=>res(g.result||null); g.onerror=()=>res(null); }; r.onerror=()=>res(null); }catch(e){ res(null); } }); },
+  async idbSet(h){ return new Promise(res=>{ try{ const r=indexedDB.open('m3b',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{ try{ const tx=r.result.transaction('kv','readwrite'); if(h) tx.objectStore('kv').put(h,'handle'); else tx.objectStore('kv').delete('handle'); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }catch(e){ res(); } }; r.onerror=()=>res(); }catch(e){ res(); } }); },
+  markDirty(){ if(!this.handle) return; this.dirty = true; this.render(); clearTimeout(this.timer); this.timer = setTimeout(()=>this.save(), 1500); },
+  async save(){ if(!this.handle) return false; try{ const w = await this.handle.createWritable(); await w.write(JSON.stringify(STATE, null, 1)); await w.close(); this.dirty=false; this.savedAt=new Date(); this.render(); return true; }catch(e){ console.warn(e); toast('Kunne ikke lagre til fila – bruk «Lagre som»'); return false; } },
+  async open(){ try{ const [h] = await showOpenFilePicker({types:[{description:'Historikk (JSON)',accept:{'application/json':['.json']}}], multiple:false}); await this.use(h, true); }catch(e){ if(e.name!=='AbortError') toast('Kunne ikke åpne fila'); } },
+  async create(){ try{ const h = await showSaveFilePicker({suggestedName:'matte3b_historikk.json', types:[{description:'Historikk (JSON)',accept:{'application/json':['.json']}}]}); this.handle = h; await this.idbSet(h); this.dirty=true; await this.save(); toast('Historikken lagres nå i ' + h.name); }catch(e){ if(e.name!=='AbortError') toast('Kunne ikke lage fila'); } },
+  async use(h, load){ if((await h.requestPermission({mode:'readwrite'}))!=='granted'){ toast('Fikk ikke tilgang til fila'); return; }
+    this.handle = h; await this.idbSet(h);
+    if(load){ try{ const txt = await (await h.getFile()).text(); const d = txt.trim() ? JSON.parse(txt) : {}; const n = COLLS.reduce((a,c)=>a+Object.keys(d[c]||{}).length,0); const cur = COLLS.reduce((a,c)=>a+Object.keys(STATE[c]||{}).length,0);
+      if(cur && n && !confirm(`Fila «${h.name}» har ${n} poster. Historikken i denne nettleseren (${cur} poster) erstattes med innholdet i fila. Fortsette?`)){ this.handle=null; await this.idbSet(null); this.render(); return; }
+      if(n || !cur){ STATE = Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{}}, d); try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
+      this.dirty = !n && cur>0; }catch(e){ toast('Kunne ikke lese fila'); this.handle=null; await this.idbSet(null); this.render(); return; } }
+    this.savedAt = this.dirty ? null : new Date(); this.render(); if(this.dirty) await this.save(); toast('Bruker historikkfila ' + h.name); route(); },
+  async resume(){ const h = await this.idbGet(); if(h) await this.use(h, true); },
+  async close(){ if(this.dirty) await this.save(); this.handle=null; await this.idbSet(null); this.render(); toast('Historikkfila er koblet fra – historikken ligger fortsatt i nettleseren'); },
+  pending:null,
+  async init(){ const bar = $('#filebar'); if(!this.supported()) return; bar.hidden=false; this.pending = await this.idbGet(); this.render(); },
+  render(){ const bar = $('#filebar'); if(!bar || !this.supported()) return;
+    if(this.handle){ bar.innerHTML = `<span class="fn ${this.dirty?'dirty':''}" title="${esc(this.handle.name)}">${this.dirty?'Lagrer … ':'Lagret '}${esc(this.handle.name)}</span><button class="btn small" id="fb-save" title="Lagre nå">Lagre</button><button class="btn small ghost" id="fb-close" title="Koble fra fila">Lukk fil</button>`;
+      $('#fb-save').onclick=()=>this.save().then(ok=>ok&&toast('Lagret')); $('#fb-close').onclick=()=>this.close(); }
+    else { bar.innerHTML = `${this.pending?`<button class="btn small primary" id="fb-resume" title="Fortsett med ${esc(this.pending.name)}">Fortsett: ${esc(this.pending.name)}</button>`:''}<button class="btn small" id="fb-open">Åpne historikk</button><button class="btn small" id="fb-new">Lagre som …</button>`;
+      if($('#fb-resume')) $('#fb-resume').onclick=()=>this.resume(); $('#fb-open').onclick=()=>this.open(); $('#fb-new').onclick=()=>this.create(); }
+  }
+};
+window.addEventListener('beforeunload', e=>{ if(FILE.handle && FILE.dirty){ FILE.save(); e.preventDefault(); e.returnValue=''; } });
+const COLLS = ['attempts','exams','sessions','todos','notes'];
+async function initStore(){
+  const local = lsLoad(); if(local) STATE = Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{}}, local);
+  try{
+    if(window.claude && window.claude.use){
+      const db = await window.claude.use('db');
+      if(db){
+        store = db;
+        const snaps = await Promise.all(COLLS.map(c=>db.collection(c).get()));
+        const any = snaps.some(s=>!s.empty);
+        if(any){
+          STATE = {attempts:{},exams:{},sessions:{},todos:{},notes:{}};
+          snaps.forEach((s,k)=>s.docs.forEach(d=>STATE[COLLS[k]][d.id]=d.data()));
+        } else if(local){
+          for(const c of COLLS) for(const [k,v] of Object.entries(local[c]||{})) await db.collection(c).doc(k).set(v);
+        }
+        lsSave();
+      }
+    }
+  }catch(err){ console.warn('db utilgjengelig', err); store = null; }
+}
+async function saveDoc(coll, id, data){
+  STATE[coll][id] = data; lsSave();
+  if(store){ try{ await store.collection(coll).doc(id).set(data); }catch(err){ console.warn('lagring feilet', err); toast('Kunne ikke lagre til databasen – lagret lokalt.'); } }
+}
+async function deleteDoc(coll, id){ delete STATE[coll][id]; lsSave(); if(store){ try{ await store.collection(coll).doc(id).delete(); }catch(err){ console.warn('sletting feilet', err); } } }
+async function deleteSession(s){
+  const t0 = s.ts - 2000, t1 = (s.end || Date.now()) + 2000;
+  for(const k of Object.keys(s.fields||{})){
+    const a = STATE.attempts[k]; if(!a) continue;
+    a.hist = (a.hist||[]).filter(r => !(r[0]>=t0 && r[0]<=t1 && r[2]===s.mode));
+    if(!a.hist.length){ await deleteDoc('attempts', k); continue; }
+    let streak = 0; for(const r of a.hist){ streak = r[1] ? streak+1 : 0; }
+    a.streak = streak; a.last = a.hist[a.hist.length-1][0]; a.ok = a.hist[a.hist.length-1][1];
+    await saveDoc('attempts', k, a);
+  }
+  await deleteDoc('sessions', s.id);
+}
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2600); }
+
+// ---------- Sammenligning av svar ----------
+const FUNCS = new Set(['sin','cos','tan','asin','acos','atan','atan2','sinh','cosh','tanh','exp','log','log10','sqrt','abs','ln','cbrt','sign','floor','ceil','round','max','min']);
+const CONSTS = new Set(['pi','e','i','Infinity','NaN','true','false']);
+function normalize(s){ return String(s).trim().replace(/\*\*/g,'^').replace(/\bln\(/g,'log(').replace(/\bepsilon_0\b/g,'eps0').replace(/\\/g,'').replace(/,(?=\d)/g,'.').replace(/\s+/g,''); }
+function freeVars(node){ const vars = new Set(); node.traverse((n, path, parent)=>{ if(n.isSymbolNode){ if(parent && parent.isFunctionNode && parent.fn === n) return; if(!FUNCS.has(n.name) && !CONSTS.has(n.name)) vars.add(n.name); } }); return vars; }
+function toNumArray(v){ if(v && v.isMatrix) v = v.toArray(); if(Array.isArray(v)) return v.flat(Infinity).map(x=>toNum(x)); return [toNum(v)]; }
+function toNum(x){ if(typeof x==='number') return x; if(x && x.isComplex){ return Math.abs(x.im) < 1e-9 ? x.re : NaN; } if(x && typeof x.valueOf==='function'){ const v = x.valueOf(); if(typeof v==='number') return v; } return Number(x); }
+function checkExpr(user, ans, tol){
+  try{
+    const u = normalize(user), a = normalize(ans);
+    if(!u) return {ok:false, reason:'tomt'};
+    const nu = math.parse(u), na = math.parse(a);
+    const vars = new Set([...freeVars(nu), ...freeVars(na)]);
+    const cu = nu.compile(), ca = na.compile();
+    const trials = vars.size ? 6 : 1; let rng = 0.37; const rand = () => { rng = (rng*9301+49297)%233280; return rng/233280; };
+    for(let t=0;t<trials;t++){
+      const scope = {}; vars.forEach(v=>{ scope[v] = 0.4 + 2.3*rand(); });
+      let vu, va;
+      try{ vu = toNumArray(cu.evaluate(Object.assign({},scope))); va = toNumArray(ca.evaluate(Object.assign({},scope))); }catch(e){ return {ok:false, reason:'kunne ikke regne ut uttrykket'}; }
+      if(vu.length !== va.length) return {ok:false, reason:'feil antall komponenter'};
+      for(let k=0;k<va.length;k++){ const x = vu[k], y = va[k]; if(!isFinite(x) || !isFinite(y)) return {ok:false, reason:'udefinert verdi'};
+        const absTol = tol != null ? Math.max(tol, Math.abs(y)*1e-3) : Math.max(1e-6*Math.abs(y), 1e-7); if(Math.abs(x-y) > absTol) return {ok:false}; }
+    }
+    return {ok:true};
+  }catch(e){ return {ok:false, reason:'syntaksfeil: ' + (e.message||'')}; }
+}
+
+// ---------- Historikk og mestring ----------
+// hist-rad: [tidspunkt, riktig(1/0), modus, hint(1/0), fasitVist(1/0)]. Fasit vist før svar => riktig alltid 0.
+function fieldKey(qid, i){ return qid + '_f' + i; }
+function isAuto(f){ return f.kind==='expr' || f.kind==='choice'; }
+function isGradable(f){ return f.kind!=='confirm' || true; } // alle felt kan registreres (selvsjekk for confirm/code/self)
+async function recordAttempt(q, f, r){
+  const k = fieldKey(q.id, f.i);
+  const a = STATE.attempts[k] || {q:q.id, i:f.i, topic:q.topic, hist:[], streak:0};
+  const ok = r.ok && !r.fasit ? 1 : 0;
+  a.hist = (a.hist||[]).concat([[Date.now(), ok, r.mode, r.hint?1:0, r.fasit?1:0]]).slice(-20);
+  a.streak = ok ? (a.streak||0)+1 : 0; a.last = Date.now(); a.ok = ok;
+  await saveDoc('attempts', k, a);
+}
+function fieldScore(a){
+  if(!a || !a.hist || !a.hist.length) return null;
+  const h = a.hist.slice(-3).reverse(); const w=[0.5,0.3,0.2]; let s=0, ws=0;
+  h.forEach((r,k)=>{ const v = (r[1]?1:0) * (r[3] ? 0.7 : 1); s += v*w[k]; ws += w[k]; });
+  return s/ws;
+}
+function lastLabel(a){ if(!a||!a.hist||!a.hist.length) return null; const r=a.hist[a.hist.length-1]; return r[4]?'seen':(r[1]?'ok':'bad'); }
+function questionScore(q){ const sc = q.fields.map(f=>fieldScore(STATE.attempts[fieldKey(q.id,f.i)])).filter(x=>x!=null); if(!sc.length) return null; return sc.reduce((a,b)=>a+b,0)/sc.length; }
+function topicStats(){
+  const out = {};
+  for(const [k,t] of Object.entries(TOPICS)){
+    const qs = Q.filter(q=>q.topic===k);
+    const scores = qs.map(questionScore).filter(x=>x!=null);
+    const exScores = [];
+    EXAMS.forEach(ex=>ex.tasks.forEach(tk=>{ if(tk[2]===k){ const r = STATE.exams[ex.key+'_'+tk[0]]; if(r && r.score!=null) exScores.push(r.score); } }));
+    const all = scores.concat(exScores);
+    const mastery = all.length ? all.reduce((a,b)=>a+b,0)/all.length : null;
+    const coverage = qs.length ? scores.length/qs.length : 0;
+    const need = t.vekt * (1 - (mastery==null ? 0.25 : mastery)) * (1 + 0.6*(1-coverage));
+    out[k] = Object.assign({key:k, qs:qs.length, done:scores.length, mastery, coverage, need}, t);
+  }
+  return out;
+}
+function dueFields(){
+  const now = Date.now(), list = [];
+  Q.forEach(q=>q.fields.forEach(f=>{
+    const a = STATE.attempts[fieldKey(q.id,f.i)]; if(!a || !a.hist.length) return;
+    const last = a.hist[a.hist.length-1];
+    if(last[4]) { list.push({q,f,why:'Fasit vist sist'}); return; }
+    if(!last[1]) { list.push({q,f,why:'Feil sist'}); return; }
+    const streak = a.streak||1; const days = [1,3,7,14,30][Math.min(streak-1,4)];
+    if(now - last[0] > days*86400000) list.push({q,f,why:'Repetisjon (' + days + ' d)'});
+  }));
+  const seen = new Set(); return list.filter(d=>{ if(seen.has(d.q.id)) return false; seen.add(d.q.id); return true; });
+}
+function todaysSession(){
+  const ts = topicStats(); const due = dueFields().slice(0,5); const picked = new Set(due.map(d=>d.q.id));
+  const byNeed = Object.values(ts).sort((a,b)=>b.need-a.need); const fresh = [];
+  for(const t of byNeed){
+    const qs = Q.filter(q=>q.topic===t.key && questionScore(q)==null && !picked.has(q.id));
+    for(const q of qs.slice(0,2)){ fresh.push({q, why:'Nytt – ' + shortTopic(t.navn)}); picked.add(q.id); if(fresh.length>=8-due.length) break; }
+    if(fresh.length>=8-due.length) break;
+  }
+  return {due, fresh};
+}
+const shortTopic = n => n.split(/[:,(]/)[0].trim();
+
+// ---------- Gjøremål ----------
+function fieldsOf(item){ return Q.filter(q=>q.oving===item.oving && (!item.nr || item.nr.includes(q.nr))).flatMap(q=>q.fields.map(f=>({q,f}))); }
+function itemStatus(item){
+  if(item.type==='manual'){ const t = STATE.todos[item.id]; return {done:!!(t&&t.done), prog: t&&t.done?1:0, sub:''}; }
+  if(item.type==='oving'){
+    const fs = fieldsOf(item); if(!fs.length) return {done:false, prog:0, sub:''};
+    const okc = fs.filter(({q,f})=>{ const a=STATE.attempts[fieldKey(q.id,f.i)]; return a && a.hist.some(r=>r[1]===1); }).length;
+    const tried = fs.filter(({q,f})=>STATE.attempts[fieldKey(q.id,f.i)]).length;
+    return {done: okc===fs.length, prog: okc/fs.length, sub:`${okc} av ${fs.length} felt riktig uten fasit · ${tried} forsøkt`};
+  }
+  if(item.type==='prove'){
+    const ss = Object.values(STATE.sessions).filter(s=>s.oving===item.oving && s.mode==='prove' && s.done);
+    const best = ss.length ? Math.max(...ss.map(s=>s.score||0)) : null;
+    return {done: best!=null && best>=item.min, prog: best==null?0:Math.min(1,best/item.min), sub: best==null?'ingen prøve levert ennå':`beste prøve ${Math.round(best*100)} %`};
+  }
+  if(item.type==='exam'){
+    const tasks = item.set ? EXBY[item.set].tasks.map(t=>[item.set,t[0]]) : item.tasks;
+    const logged = tasks.filter(([s,n])=>STATE.exams[s+'_'+n]).length;
+    return {done: logged===tasks.length, prog: logged/tasks.length, sub:`${logged} av ${tasks.length} oppgaver logget`};
+  }
+  return {done:false, prog:0, sub:''};
+}
+function weekOf(d=new Date()){ const t = d.toISOString().slice(0,10); return PLAN.find(w=>t>=w.start && t<=w.end) || (t<PLAN[0].start ? PLAN[0] : PLAN[PLAN.length-1]); }
+function planStatus(){
+  const now = new Date(); const cur = weekOf(now); const today = now.toISOString().slice(0,10);
+  let behind = [], ahead = 0, curDone = 0, curTot = 0;
+  PLAN.forEach(w=>w.items.forEach(it=>{ const s = itemStatus(it);
+    if(w.end < today && !s.done) behind.push({w,it});
+    else if(w.start > today && s.done) ahead++;
+    if(w===cur){ curTot++; if(s.done) curDone++; } }));
+  const days = (new Date(cur.end) - new Date(cur.start))/86400000 + 1;
+  const elapsed = Math.min(days, Math.max(0, (now - new Date(cur.start))/86400000 + 1));
+  const expected = elapsed/days; const actual = curTot ? curDone/curTot : 1;
+  let label, cls;
+  if(behind.length) { label = `Bak planen – ${behind.length} gjøremål fra tidligere uker gjenstår`; cls='bad'; }
+  else if(actual >= Math.min(1, expected + 0.15)) { label = ahead ? `Foran planen – ${ahead} gjøremål fra senere uker er gjort` : 'Foran planen denne uka'; cls='good'; }
+  else if(actual >= expected - 0.2) { label = 'I rute med planen'; cls='good'; }
+  else { label = `Litt bak denne uka – ${curTot-curDone} gjøremål gjenstår`; cls='warn'; }
+  return {cur, behind, ahead, curDone, curTot, expected, actual, label, cls};
+}
+function todoItemHtml(it, w){
+  const s = itemStatus(it); const manual = it.type==='manual';
+  let link = '';
+  if(it.type==='oving') link = `<a class="btn small" href="#oving-${it.oving}">Åpne øving</a>`;
+  else if(it.type==='prove') link = `<a class="btn small" href="#oving-${it.oving}">Start prøve</a>`;
+  else if(it.type==='exam') link = `<a class="btn small" href="#eksamen">Logg</a>`;
+  else if(it.komp) link = `<a class="btn small" href="#komp-${it.komp}">Les</a>`;
+  return `<div class="it ${s.done?'done':''}"><button class="chk ${s.done?'on':''} ${manual?'':'auto'}" data-id="${manual?it.id:''}" title="${manual?'Huk av':'Hukes av automatisk ut fra historikken'}" ${manual?'':'disabled'}>${s.done?'✓':''}</button>
+    <div class="tx"><div>${esc(it.text)}</div>${s.sub||(!manual&&!s.done)?`<div class="sub">${esc(s.sub)}${!s.done&&s.prog>0&&!manual?` · ${Math.round(s.prog*100)} %`:''}</div>`:''}</div>
+    <div class="row" style="gap:6px">${link}</div></div>`;
+}
+function bindTodos(root){
+  root.querySelectorAll('.chk[data-id]').forEach(b=>{ if(!b.dataset.id) return; b.onclick = async ()=>{ const id=b.dataset.id; const cur = STATE.todos[id]; await saveDoc('todos', id, {done: !(cur&&cur.done), ts: Date.now()}); route(); }; });
+}
+
+// ---------- Ruting ----------
+function route(){
+  const h = (location.hash||'#oversikt').slice(1);
+  TABS.sync('#'+h);
+  const sect = h.startsWith('oving')||h.startsWith('q-')||h.startsWith('forsok-') ? 'ovinger' : h.startsWith('komp')||h.startsWith('side-') ? 'komp' : h;
+  document.querySelectorAll('#topnav a').forEach(a=>a.classList.toggle('active', a.getAttribute('href')==='#'+sect));
+  renderSide(h);
+  const main = $('#main'); main.innerHTML='';
+  if(h==='oversikt') renderDashboard(main);
+  else if(h==='gjoremal') renderTodos(main);
+  else if(h==='ovinger') renderOvinger(main);
+  else if(/^oving-\d+$/.test(h)) renderOving(main, +h.slice(6));
+  else if(/^q-[or]\d+q\d+$/.test(h)) renderFree(main, h.slice(2));
+  else if(/^forsok-/.test(h)) renderAttempt(main, h.slice(7));
+  else if(h==='eksamen') renderEksamen(main);
+  else if(h==='komp') renderKomp(main);
+  else if(/^komp-/.test(h)) renderKompSection(main, h.slice(5));
+  else if(h==='om'||h==='notater') (h==='om'?renderOm:renderNotes)(main);
+  else renderDashboard(main);
+  typeset(main);
+  window.scrollTo(0,0);
+}
+function typeset(el){ if(window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]).catch(()=>{}); }
+function renderSide(h){
+  const s = $('#side');
+  s.innerHTML = `<a href="#oversikt" class="${h==='oversikt'?'active':''}">Oversikt</a>
+  <a href="#gjoremal" class="${h==='gjoremal'?'active':''}">Gjøremål</a>
+  <a href="#ovinger" class="${h==='ovinger'?'active':''}">Øvinger</a>
+  <div class="sub">${OVS.map(n=>`<a href="#oving-${n}" class="${h==='oving-'+n||h.startsWith('q-o'+n+'q')?'active':''}">Øving ${n}</a>`).join('')}${REPS.map(n=>`<a href="#oving-${n}" class="${h==='oving-'+n||h.startsWith('q-r'+(n-10)+'q')?'active':''}">Repetisjon ${n-10}</a>`).join('')}</div>
+  <a href="#eksamen" class="${h==='eksamen'?'active':''}">Eksamenssett</a>
+  <a href="#komp" class="${h.startsWith('komp')?'active':''}">Kompendium</a>
+  <a href="#om" class="${h==='om'?'active':''}">Om øvingsrommet</a>
+  <a href="#notater" class="${h==='notater'?'active':''}">Notater og feil</a>`;
+}
+function daysLeft(){ return Math.max(0, Math.ceil((EXAM_DATE - Date.now())/86400000)); }
+function statusDot(q){ const s = questionScore(q); if(s==null) return '<span class="dot"></span>'; return `<span class="dot ${s>=0.8?'good':s>=0.5?'warn':'bad'}"></span>`; }
+function pct(x){ return x==null ? '–' : Math.round(x*100)+' %'; }
+function fmtDate(ts){ const d = new Date(ts); return d.toLocaleDateString('nb-NO',{day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('nb-NO',{hour:'2-digit',minute:'2-digit'}); }
+
+// ---------- Oversikt ----------
+function renderDashboard(main){
+  const ts = topicStats(); const list = Object.values(ts);
+  const fields = Q.flatMap(q=>q.fields.map(f=>fieldKey(q.id,f.i)));
+  const attempted = fields.filter(k=>STATE.attempts[k] && STATE.attempts[k].hist.length);
+  const week = Date.now()-7*86400000; let n7=0, ok7=0, seen7=0;
+  Object.values(STATE.attempts).forEach(a=>(a.hist||[]).forEach(r=>{ if(r[0]>week){ n7++; if(r[1]) ok7++; if(r[4]) seen7++; } }));
+  const sess = todaysSession(); const ps = planStatus();
+  const weak = list.filter(t=>t.mastery!=null && t.mastery<0.6).sort((a,b)=>a.mastery-b.mastery).slice(0,4);
+  const overall = (()=>{ const w = list.reduce((a,t)=>a+t.vekt,0); return list.reduce((a,t)=>a + t.vekt*(t.mastery==null?0:t.mastery),0)/w; })();
+  const curItems = ps.cur.items.filter(it=>!itemStatus(it).done).slice(0,5);
+  main.innerHTML = `
+  <div class="row between"><h1>Oversikt</h1><span class="pill ${ps.cls}">${esc(ps.label)}</span></div>
+  <p class="lead">Eksamen 17. desember 2026 kl. 09:00. Alt under oppdateres fra det du svarer: svar med fasit vist teller aldri som riktig.</p>
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card kpi"><div class="n">${daysLeft()}</div><div class="l">dager til eksamen</div></div>
+    <div class="card kpi"><div class="n">${ps.curDone}<span class="muted" style="font-size:16px">/${ps.curTot}</span></div><div class="l">gjøremål gjort i uke ${ps.cur.uke}</div></div>
+    <div class="card kpi"><div class="n">${n7? Math.round(100*ok7/n7)+' %':'–'}</div><div class="l">riktig siste 7 dager (${n7} svar${seen7?`, ${seen7} med fasit`:''})</div></div>
+    <div class="card kpi"><div class="n">${Math.round(overall*100)} %</div><div class="l">vektet mestring av pensum</div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="row between"><h2 style="margin:0">Denne uka · uke ${ps.cur.uke}</h2><a class="btn small ghost" href="#gjoremal">Alle gjøremål →</a></div>
+      <p class="small muted" style="margin:4px 0 10px">${esc(ps.cur.tittel)}</p>
+      ${curItems.length ? `<div class="todo">${curItems.map(it=>todoItemHtml(it, ps.cur)).join('')}</div>` : '<p class="muted">Alt for denne uka er gjort. Ta neste ukes gjøremål eller et eksamenssett.</p>'}
+      ${ps.behind.length ? `<p class="warnnote" style="margin:10px 0 0">${ps.behind.length} gjøremål fra tidligere uker gjenstår – se <a href="#gjoremal">Gjøremål</a>.</p>` : ''}
+    </div>
+    <div class="card">
+      <h2>Dagens økt</h2>
+      <p class="small muted">Først det som var feil, hadde fasit vist eller har forfalt til repetisjon, deretter nye oppgaver fra temaene med størst behov.</p>
+      ${(sess.due.length||sess.fresh.length) ? `<div class="qlist">${
+        sess.due.map(d=>`<a href="#q-${d.q.id}"><span class="n">${ovShort(d.q.oving)}.${d.q.nr}</span><span class="t">${esc(d.q.title)}</span><span class="pill warn">${esc(d.why)}</span></a>`).join('') +
+        sess.fresh.map(d=>`<a href="#q-${d.q.id}"><span class="n">${ovShort(d.q.oving)}.${d.q.nr}</span><span class="t">${esc(d.q.title)}</span><span class="pill">${esc(d.why)}</span></a>`).join('')
+      }</div>` : '<p class="muted">Alt er gjort. Ta et eksamenssett.</p>'}
+      ${weak.length ? `<h3 style="margin-top:16px">Svake punkter</h3><table class="tbl"><tbody>${weak.map(t=>`<tr><td>${esc(t.navn)}</td><td class="num"><span class="pill ${t.mastery<0.4?'bad':'warn'}">${pct(t.mastery)}</span></td></tr>`).join('')}</tbody></table>` : ''}
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h2>Pensum og mestring</h2>
+    <p class="small muted">Grå stolpe: temaets andel av eksamen (lest ut av eksamenssettene 2025–2026). Blå stolpe: din mestring i temaet. Størst behov øverst.</p>
+    <div class="bars">${list.sort((a,b)=>b.need-a.need).map(t=>`
+      <div class="bar" title="${esc(t.navn)}: vekt ${Math.round(t.vekt*100)} %, mestring ${pct(t.mastery)}, ${t.done}/${t.qs} oppgaver forsøkt">
+        <div class="lab"><a href="#komp-${(t.pages[0]||{}).key||'1'}" style="color:inherit;text-decoration:none">${esc(t.navn)}</a></div>
+        <div class="trk"><b><i class="w" style="width:${Math.round(t.vekt/0.09*100)}%"></i></b><b><i style="width:${t.mastery==null?0:Math.round(t.mastery*100)}%"></i></b></div>
+        <div class="v">${pct(t.mastery)}</div>
+      </div>`).join('')}</div>
+    <div class="legend"><span class="w">Andel av eksamen (skalert, 9 % = full bredde)</span><span>Mestring</span></div>
+  </div>`;
+  bindTodos(main);
+}
+
+// ---------- Gjøremål ----------
+function renderTodos(main){
+  const ps = planStatus(); const today = new Date().toISOString().slice(0,10);
+  main.innerHTML = `<div class="row between"><h1>Gjøremål</h1><span class="pill ${ps.cls}">${esc(ps.label)}</span></div>
+  <p class="lead">Arbeidsplanen fram til eksamen, uke for uke. Øvings-, prøve- og eksamensgjøremål hukes av automatisk ut fra historikken; lesing og innlevering huker du av selv. Full plan med dagsoppsett ligger i dokumentet «Arbeidsplan IMAA3012 til eksamen 17. des».</p>
+  ${PLAN.map(w=>{ const st = w.items.map(itemStatus); const done = st.filter(s=>s.done).length; const cur = w===ps.cur; const past = w.end<today;
+    return `<div class="weekhd"><h2>Uke ${w.uke} <span class="muted" style="font-weight:400;font-size:14px">· ${esc(w.tittel)}</span></h2>
+      <div class="row"><span class="pill ${cur?'':'mute'}">${cur?'Denne uka':past?'Passert':fmtRange(w)}</span><span class="small muted">${done}/${w.items.length}</span><div class="prog ${done===w.items.length?'good':past&&done<w.items.length?'warn':''}"><i style="width:${Math.round(100*done/w.items.length)}%"></i></div></div></div>
+      <div class="todo">${w.items.map(it=>todoItemHtml(it,w)).join('')}</div>`; }).join('')}`;
+  bindTodos(main);
+}
+function fmtRange(w){ const a=new Date(w.start), b=new Date(w.end); const f=d=>d.toLocaleDateString('nb-NO',{day:'numeric',month:'short'}); return f(a)+'–'+f(b); }
+
+// ---------- Øvinger ----------
+function renderOvinger(main){
+  const groups = OVS.concat(REPS).map(n=>({n, qs:Q.filter(q=>q.oving===n)}));
+  main.innerHTML = `<h1>Øvinger</h1><p class="lead">${Q.length} oppgaver fra de obligatoriske øvingene og repetisjonsøvingene i Capquiz, ordrett. Velg en øving og start et nytt forsøk i øvingsmodus (hint, pensum og fasit under hver deloppgave) eller prøvemodus (alt uten hjelp, på tid). Kode- og Jupyter-oppgaver løser du i JupyterHub og registrerer resultatet her.</p>
+  <div class="stack">${groups.map(g=>{
+    const sc = g.qs.map(questionScore); const done = sc.filter(x=>x!=null).length; const avg = done? sc.filter(x=>x!=null).reduce((a,b)=>a+b,0)/done : null;
+    const ss = Object.values(STATE.sessions).filter(s=>s.oving===g.n && s.done).sort((a,b)=>b.ts-a.ts); const lastP = ss.find(s=>s.mode==='prove');
+    const open = Object.values(STATE.sessions).find(s=>s.oving===g.n && !s.done);
+    return `${g.n===11?'<h2 style="margin:8px 0 0">Repetisjonsøvinger</h2><p class="small muted" style="margin:0 0 4px">Varianter av øving 1–5 med andre tall – fin trening før eksamen.</p>':''}<div class="card"><div class="row between"><div><h2 style="margin:0">${ovName(g.n)} <span class="muted" style="font-weight:400;font-size:14px">· ${esc(OVINFO[g.n])}</span></h2>
+      <div class="small muted">${g.qs.length} oppgaver · ${done} forsøkt · mestring ${pct(avg)}${lastP?` · siste prøve ${Math.round(lastP.score*100)} %`:''}${open?` · <span class="pill warn">forsøk pågår</span>`:''}</div></div>
+      <div class="row">${open?`<a class="btn" href="#forsok-${open.id}">Fortsett forsøket</a>`:''}<a class="btn primary" href="#oving-${g.n}">Start nytt forsøk</a></div></div></div>`; }).join('')}</div>`;
+}
+function newSessionId(){ return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+async function startSession(n, mode){
+  const id = newSessionId(); const qs = Q.filter(q=>q.oving===n).map(q=>q.id);
+  const s = {id, oving:n, mode, ts:Date.now(), done:0, idx:0, qs, fields:{}};
+  await saveDoc('sessions', id, s); location.hash = '#forsok-' + id;
+}
+function renderOving(main, n){
+  const qs = Q.filter(q=>q.oving===n);
+  const ss = Object.values(STATE.sessions).filter(s=>s.oving===n).sort((a,b)=>b.ts-a.ts);
+  main.innerHTML = `<div class="row small muted" style="margin-bottom:6px"><a href="#ovinger">Øvinger</a> › ${ovName(n)}</div>
+  <h1>${ovName(n)} <span class="muted" style="font-weight:400;font-size:16px">· ${esc(OVINFO[n])}</span></h1>
+  <p class="lead">Start et nytt forsøk. Et forsøk går gjennom alle ${qs.length} oppgavene i øvingen, og hvert svar lagres med resultat og om fasit var vist først.</p>
+  <div class="modes">
+    <div class="mode"><h3>Øvingsmodus</h3><ul><li>Én oppgave om gangen, med hint, pensum fra kompendiet og fasit under hver deloppgave.</li><li>Svar registreres som riktig bare når du svarte uten å ha vist fasit.</li><li>Svar med hint teller 70 %.</li></ul><button class="btn primary" id="start-ov">Start nytt forsøk i øvingsmodus</button></div>
+    <div class="mode"><h3>Prøvemodus</h3><ul><li>Hele øvingen på én side, uten hint eller fasit, med tid.</li><li>Rettes når du leverer; alle felt teller fullt.</li><li>Etterpå kan du øve på det som ble feil med hint.</li></ul>${qs.some(q=>q.fields.some(isAuto))?`<button class="btn" id="start-pr">Start nytt forsøk i prøvemodus</button>`:`<span class="notice">Øvingen har bare kode- og selvsjekkoppgaver, så prøvemodus gir ingen automatisk retting. Bruk øvingsmodus.</span>`}</div>
+  </div>
+  ${ss.length ? `<div class="card" style="margin-top:16px"><h2>Tidligere forsøk</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Startet</th><th>Modus</th><th>Status</th><th>Resultat</th><th></th></tr></thead><tbody>
+    ${ss.slice(0,20).map(s=>{ const r = sessionSummary(s); return `<tr><td>${fmtDate(s.ts)}</td><td>${s.mode==='prove'?'Prøve':'Øving'}</td><td>${s.done?'Ferdig':`<span class="pill warn">Pågår</span>`}</td><td class="small">${r}</td><td class="num"><a class="btn small" href="#forsok-${s.id}">${s.done?'Se':'Fortsett'}</a> <button class="btn small del" data-sid="${s.id}" title="Slett forsøket og svarene fra historikken" style="color:var(--bad)">Slett</button></td></tr>`; }).join('')}</tbody></table></div>
+    <p class="small muted" style="margin:8px 0 0">Sletting fjerner forsøket og svarene som ble registrert i det fra historikken. Det kan ikke angres.</p></div>` : ''}
+  <div class="card" style="margin-top:16px"><h2>Oppgaver i øvingen</h2><p class="small muted">Fri øving: åpne én oppgave direkte, med hjelp. Fargen viser siste resultater: grønn ≥ 80 %, gul ≥ 50 %, rød under.</p>
+  <div class="qlist">${qs.map(q=>`<a href="#q-${q.id}"><span class="n">${q.nr}</span><span class="t">${esc(q.title)}</span><span class="row" style="gap:6px"><span class="pill mute">${esc(shortTopic(TOPICS[q.topic].navn))}</span>${statusDot(q)}</span></a>`).join('')}</div></div>`;
+  $('#start-ov').onclick = ()=>startSession(n,'ov'); if($('#start-pr')) $('#start-pr').onclick = ()=>startSession(n,'prove');
+  main.querySelectorAll('button.del').forEach(b=>b.onclick=async ()=>{ const sess = STATE.sessions[b.dataset.sid]; if(!sess) return;
+    if(!confirm(`Slette forsøket fra ${fmtDate(sess.ts)} (${sess.mode==='prove'?'prøvemodus':'øvingsmodus'})?\n\nForsøket og alle svar som ble registrert i det fjernes fra historikken. Dette kan IKKE angres.`)) return;
+    await deleteSession(sess); toast('Forsøket er slettet'); route(); });
+}
+function sessionSummary(s){
+  const v = Object.values(s.fields||{}); const ok = v.filter(x=>x.r==='ok').length, bad = v.filter(x=>x.r==='feil').length, seen = v.filter(x=>x.r==='fasit').length;
+  if(s.mode==='prove' && s.done) return `${s.got}/${s.tot} riktig (${Math.round((s.score||0)*100)} %)${s.sek?` · ${Math.floor(s.sek/60)} min`:''}`;
+  return `${ok} riktig · ${bad} feil · ${seen} fasit vist`;
+}
+
+// ---------- Oppgavetekst ----------
+function renderText(q, mode){
+  let t = esc(q.text);
+  t = t.replace(/\[BILDE:\s*([^\]]*)\]/g, (m,alt)=>`<span class="fig">Figur${alt.trim()?': '+alt.trim():''} (vises i Capquiz)</span>`);
+  const lines = t.split('\n'); const out=[]; let code=[];
+  const isCode = l => /^(import |from |def |for |if\(|if |elif |else:|return |print\(|plt\.|np\.|sp\.|pts|tri |p = |q = |r = |u = |v = |n = |avg|x = |y = |f = |z = |dx|dy|dA|svar|area|numSim|numHit|xmin|xmax|ymin|ymax|numx|numy|numval|a = |b = |c = |t = |xv|yv|I = |x,y|velx|vely|Muv|triangles|R = |rho_hat|#|\s{4}\S)/.test(l) && !/\\\(|\\\[|\$/.test(l);
+  const flush = ()=>{ if(code.length){ out.push('<pre>'+code.join('\n')+'</pre>'); code=[]; } };
+  for(const l of lines){ if(isCode(l)) code.push(l); else { if(l.trim()===''){ if(code.length) code.push(''); else out.push(''); } else { flush(); out.push(l); } } }
+  flush();
+  let html = out.join('\n').replace(/\n{2,}/g,'</p><p>').replace(/(?<!<\/pre>)\n/g,'<br>');
+  html = '<p>'+html+'</p>';
+  html = html.replace(/<p>\s*<\/p>/g,'').replace(/<p><pre>/g,'<pre>').replace(/<\/pre><\/p>/g,'</pre>');
+  html = html.replace(/\{\{f(\d+)\}\}/g, (m,i)=>fieldHtml(q, +i, mode));
+  return html;
+}
+function fieldHtml(q, i, mode){
+  const f = q.fields.find(x=>x.i===i); if(!f) return '';
+  const id = `fld_${q.id}_${i}`; const multi = q.fields.length>1; const tag = multi ? `<span class="tag">${i}</span>` : '';
+  const chk = mode==='ov' ? `<button class="btn small chk" data-q="${q.id}" data-i="${i}">Sjekk</button>` : '';
+  if(f.kind==='choice') return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<select id="${id}"><option value="">– velg –</option>${f.options.map(o=>`<option>${esc(o)}</option>`).join('')}</select>${chk}<span class="st"></span></span>`;
+  if(f.kind==='code') return `<span class="fld" data-q="${q.id}" data-i="${i}" style="display:block">${tag}<textarea class="code" id="${id}" placeholder="Lim gjerne inn koden fra JupyterHub her (rettes ikke automatisk – registrer «Fikk til»/«Fikk ikke til» under)"></textarea></span>`;
+  if(f.kind==='confirm') return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<span class="notice">Løs oppgaven i JupyterHub/på papir, og registrer «Fikk til» eller «Fikk ikke til» under.</span></span>`;
+  if(f.kind==='self') return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<input type="text" id="${id}" placeholder="svar"><span class="st muted">vurderes mot fasit under</span></span>`;
+  return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<input type="text" id="${id}" autocomplete="off" spellcheck="false" placeholder="f.eks. sqrt(2), pi/4, [1,2,3]">${chk}<span class="st"></span></span>`;
+}
+function mdInline(t){ // $..$ beholdes for MathJax, `kode` -> <code>, *kursiv*
+  return esc(t).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*([^*$]+)\*/g,'<em>$1</em>');
+}
+function stepsHtml(q){
+  if(!q.steg||!q.steg.length) return '<p class="muted small">Ingen stegvis utregning lagt inn for denne oppgaven ennå.</p>';
+  return `<ol class="steps">${q.steg.map(st=>`<li><div class="st-t">${esc(st.t)}${st.ref?` <a class="pill mute stref" href="#komp-${st.ref}" target="_blank" rel="noopener" title="Åpne §${esc(st.ref)} i kompendiet i ny fane">§${esc(st.ref)} ↗</a>`:''}</div><div class="st-s">${mdInline(st.s)}</div></li>`).join('')}</ol>`;
+}
+function ansHtml(f){
+  if(f.kind==='code') return `<pre class="mono" style="white-space:pre-wrap;margin:0">${esc(f.ref||'')}</pre>`;
+  if(f.kind==='confirm') return '<span class="muted">Se forklaringen – oppgaven vurderes med selvsjekk.</span>';
+  return `<code>${esc(f.ans||'–')}</code>`;
+}
+
+// ---------- Kompendiumvisning ----------
+function pageImg(p){ return `komp/s${String(p).padStart(3,'0')}.jpg`; }
+function kompViewerHtml(refs, uid){
+  if(!refs || !refs.length) return '';
+  const r = refs[0]; const p = r.focus || r.start;
+  return `<div class="pv" id="pv_${uid}" data-start="${r.start}" data-end="${r.end}" data-p="${p}">
+    ${refs.length>1?`<div class="tabs">${refs.map((x,k)=>`<button class="btn small ${k===0?'on':''}" data-k="${k}" data-start="${x.start}" data-end="${x.end}" data-p="${x.focus||x.start}">§${esc(x.key)} ${esc(x.title)}</button>`).join('')}</div>`:''}
+    <div class="bar2"><span><strong>Kompendiet</strong> <span class="ttl">§${esc(r.key)} ${esc(r.title)}</span> <span class="muted pinfo">· s. ${p-PAGE_OFFSET} (pdf ${p})</span></span>
+      <span class="row" style="gap:6px"><button class="btn small" data-nav="-1">◀ Forrige</button><span class="small muted pno">${p-PAGE_OFFSET}</span><button class="btn small" data-nav="1">Neste ▶</button><a class="btn small" href="${pageImg(p)}" target="_blank" rel="noopener">Full størrelse</a><a class="btn small nt" href="#komp-${esc(r.key)}" target="_blank" rel="noopener" title="Åpne seksjonen i en egen fane i øvingsrommet">Ny fane ↗</a></span></div>
+    <img src="${pageImg(p)}" alt="Kompendiet side ${p-PAGE_OFFSET}" loading="lazy"></div>`;
+}
+function bindViewer(root){
+  root.querySelectorAll('.pv').forEach(pv=>{
+    const img = pv.querySelector('img'), pno = pv.querySelector('.pno'), full = pv.querySelector('a[target]');
+    const show = p => { p = Math.max(+pv.dataset.start, Math.min(+pv.dataset.end, p)); pv.dataset.p = p; img.src = pageImg(p); img.alt = 'Kompendiet side ' + (p-PAGE_OFFSET); pno.textContent = p-PAGE_OFFSET; full.href = pageImg(p); pv.querySelector('.pinfo').textContent = `· s. ${p-PAGE_OFFSET} (pdf ${p})`; };
+    pv.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>show(+pv.dataset.p + +b.dataset.nav));
+    pv.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{ pv.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); pv.dataset.start=b.dataset.start; pv.dataset.end=b.dataset.end; pv.querySelector('.ttl').textContent = b.textContent; const nt=pv.querySelector('.nt'); if(nt) nt.href = '#komp-' + b.textContent.split(' ')[0].slice(1); show(+b.dataset.p); });
+  });
+}
+function renderKomp(main){
+  const secs = (window.BANK.sections||[]);
+  main.innerHTML = `<h1>Kompendium</h1><p class="lead">«Forelesningsnotater Matematikk 3B (IMAx3012)», versjon 2. november 2026, side for side. Velg et kapittel eller en seksjon. Sidetallene er de trykte.</p>
+  <div class="card"><div class="tblwrap"><table class="tbl"><tbody>${secs.filter(s=>s.lvl<=2).map(s=>`<tr><td class="num muted" style="text-align:left;font-family:var(--mono);font-size:12px">${esc(s.key)}</td><td style="${s.lvl===1?'font-weight:600':''}"><a href="#komp-${s.key}">${esc(s.title)}</a>${s.lvl===2?`<div class="small muted">${secs.filter(x=>x.key.startsWith(s.key+'.')).map(x=>`<a href="#komp-${x.key}" class="muted" style="margin-right:10px">${esc(x.key)} ${esc(x.title)}</a>`).join('')}</div>`:''}</td><td class="num muted">s. ${s.start-PAGE_OFFSET}${s.end>s.start?'–'+(s.end-PAGE_OFFSET):''}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+function renderKompSection(main, key){
+  const s = (window.BANK.sections||[]).find(x=>x.key===key); if(!s){ main.innerHTML='<p>Fant ikke seksjonen.</p>'; return; }
+  const qs = Q.filter(q=>q.refs.some(r=>r.key===key || r.key.startsWith(key+'.')));
+  main.innerHTML = `<div class="row small muted" style="margin-bottom:6px"><a href="#komp">Kompendium</a> › §${esc(key)}</div><h1>§${esc(key)} ${esc(s.title)}</h1><p class="lead">Side ${s.start-PAGE_OFFSET}–${s.end-PAGE_OFFSET}. Bla med knappene. Denne fanen kan du la stå åpen ved siden av øvingen.</p>
+  ${kompViewerHtml([Object.assign({focus:s.start},s)], 'sec')}
+  ${qs.length?`<div class="card" style="margin-top:16px"><h2>Øvingsoppgaver som bygger på denne seksjonen</h2><div class="qlist">${qs.map(q=>`<a href="#q-${q.id}"><span class="n">${ovShort(q.oving)}.${q.nr}</span><span class="t">${esc(q.title)}</span>${statusDot(q)}</a>`).join('')}</div></div>`:''}`;
+  bindViewer(main);
+}
+
+// ---------- Oppgave med hjelp under hver deloppgave ----------
+// ctx: {mode:'ov'|'fri', sess (ev.), hints:0, usedHint:false, answered:Set, seen:Set}
+function questionHtml(q, ctx){
+  const t = TOPICS[q.topic];
+  return `<div class="row small muted" style="margin-bottom:6px"><a href="#oving-${q.oving}">${ovName(q.oving)}</a> › Oppgave ${q.nr}${q.base?` · <span class="pill mute">variant av Ø${q.base[1]}.${q.base.split('q')[1]}</span>`:''} · <span class="pill mute">${esc(t.navn)}</span>${q.maxp?` · ${q.maxp} poeng`:''}</div>
+  <h1>${esc(q.title)}</h1>
+  <p class="lead small">Kompendiet ${esc(q.komp)} · forelesning ${esc(q.forel)}${q.fields.length>1?` · ${q.fields.length} svarfelt – hjelp ligger under hvert felt`:''}</p>
+  <div class="card"><div class="qtext" id="qtext">${renderText(q,'ov')}</div></div>`;
+}
+function helpPanelHtml(q, f, ctx){
+  const multi = q.fields.length>1; const selfKind = !isAuto(f);
+  return `<div class="help" data-i="${f.i}"><div class="hd"><span class="lab">${multi?`Felt ${f.i}`:'Hjelp'}</span>
+    <button class="btn small h-hint">Hint <span class="hc">(${ctx.hints}/${q.hints.length})</span></button>
+    <button class="btn small h-komp">Pensum</button>
+    <button class="btn small h-fasit">Fasit og forklaring</button>
+    ${selfKind?`<span class="muted small" style="margin-left:4px">Selvsjekk:</span><button class="btn small h-ok">Fikk til</button><button class="btn small h-bad">Fikk ikke til</button>`:''}
+    <span class="st small muted" style="margin-left:auto"></span></div><div class="body" hidden></div></div>`;
+}
+function attachHelp(root, q, ctx){
+  const qt = root.querySelector('#qtext');
+  // sett inn hjelpepanel rett etter blokken som inneholder feltet
+  q.fields.forEach(f=>{
+    const wrap = qt.querySelector(`.fld[data-i="${f.i}"]`); if(!wrap) return;
+    let block = wrap; while(block.parentElement && block.parentElement!==qt) block = block.parentElement;
+    const tmp = document.createElement('div'); tmp.innerHTML = helpPanelHtml(q,f,ctx); const panel = tmp.firstElementChild;
+    // Del avsnittet rett etter feltets linje, slik at panelet havner under akkurat denne deloppgaven
+    if(block.tagName==='P' && wrap.parentElement===block){
+      let n = wrap.nextSibling; while(n && !(n.nodeType===1 && n.tagName==='BR')) n = n.nextSibling;
+      if(n){ const rest = document.createElement('p'); let m = n.nextSibling; while(m){ const nx = m.nextSibling; rest.appendChild(m); m = nx; } n.remove(); if(rest.childNodes.length) block.insertAdjacentElement('afterend', rest); }
+    }
+    block.insertAdjacentElement('afterend', panel);
+    const body = panel.querySelector('.body'), st = panel.querySelector('.hd .st'); const k = fieldKey(q.id,f.i);
+    const prev = STATE.attempts[k]; const ll = lastLabel(prev);
+    if(ll) st.textContent = 'Sist: ' + (ll==='ok'?'riktig':ll==='bad'?'feil':'fasit vist');
+    const open = ()=>{ body.hidden=false; };
+    const section = (cls, html) => { let el = body.querySelector('.'+cls); if(!el){ el = document.createElement('div'); el.className = cls; body.appendChild(el); } el.innerHTML = html; open(); typeset(el); return el; };
+    panel.querySelector('.h-hint').onclick = ()=>{
+      if(ctx.hints >= q.hints.length){ open(); return; }
+      ctx.hints++; ctx.usedHint = true;
+      root.querySelectorAll('.help .hc').forEach(x=>x.textContent=`(${ctx.hints}/${q.hints.length})`);
+      const el = section('hints', q.hints.slice(0,ctx.hints).map((h,i)=>`<div class="hintbox"><div class="k">Hint ${i+1}</div>${esc(h)}</div>`).join(''));
+    };
+    panel.querySelector('.h-komp').onclick = ()=>{
+      const el = body.querySelector('.komp'); if(el){ el.hidden = !el.hidden; open(); return; }
+      const sec = section('komp', `<div class="fasit"><h4>Pensum til oppgaven</h4><p class="small" style="margin:0 0 8px">Kompendiet ${esc(q.komp)} · forelesning ${esc(q.forel)} · tema: ${esc(TOPICS[q.topic].navn)}. ${q.refs.length?`Åpnes på siden der stoffet står; bla for å se eksempler og figurer, eller åpne i egen fane: ${q.refs.map(r=>`<a href="#komp-${r.key}" target="_blank" rel="noopener">§${esc(r.key)} ↗</a>`).join(' ')}`:''}</p>${q.sitat?`<div class="sitat">«${esc(q.sitat)}»</div>`:''}${kompViewerHtml(q.refs, q.id+'_'+f.i)}</div>`);
+      bindViewer(sec);
+    };
+    panel.querySelector('.h-fasit').onclick = async ()=>{
+      const el = body.querySelector('.fas'); if(el){ el.hidden = !el.hidden; open(); return; }
+      let note = '';
+      if(!ctx.answered.has(k)){
+        if(!ctx.seen.has(k)){ ctx.seen.add(k); await recordAttempt(q,f,{ok:false,mode:ctx.mode,hint:ctx.usedHint,fasit:true}); if(ctx.sess) await sessField(ctx.sess, k, {r:'fasit', hint:ctx.usedHint?1:0}); }
+        note = `<p class="warnnote" style="margin:0 0 8px">Fasit vist før svar: feltet er registrert som «fasit vist» og teller ikke som riktig i historikken.</p>`;
+        wrap.classList.remove('ok','bad'); wrap.classList.add('seen'); const ws = wrap.querySelector('.st'); if(ws) ws.textContent = 'Fasit vist';
+        st.textContent = 'Fasit vist'; markStep(root, q, 'seen');
+        panel.querySelectorAll('.h-ok').forEach(b=>{ b.disabled = true; b.title='Fasit ble vist før svar'; });
+      }
+      section('fas', `${note}<div class="fasit"><h4>Fasit${q.fields.length>1?' – felt '+f.i:''}</h4>${ansHtml(f)}${q.fields.length>1?`<details style="margin-top:8px"><summary class="small muted" style="cursor:pointer">Fasit for alle felt i oppgaven</summary><div class="stack" style="gap:4px;margin-top:6px">${q.fields.map(x=>`<div><span class="muted small">Felt ${x.i}:</span> ${ansHtml(x)}</div>`).join('')}</div></details>`:''}
+        <h4 style="margin-top:12px">Utregning steg for steg</h4>${stepsHtml(q)}
+        ${q.fig?`<figure class="figbox"><img src="fig/${q.fig}.png" alt="Figur til ${esc(q.title)}" loading="lazy"><figcaption class="small muted">Skisse til oppgaven – slik en eksamensfigur kan se ut.</figcaption></figure>`:''}
+        <h4 style="margin-top:12px">Kort oppsummert</h4><p style="margin:0">${esc(q.explain)}</p>${q.sitat?`<div class="sitat">«${esc(q.sitat)}»<br><span class="small">— Kompendiet IMAx3012, ${esc(q.komp)}</span></div>`:''}
+        <p class="ref" style="margin:8px 0 0">Pensum: ${q.refs.map(r=>`<a href="#komp-${r.key}" target="_blank" rel="noopener">§${esc(r.key)} ${esc(r.title)} (s. ${r.side})</a>`).join(' · ')} · forelesning ${esc(q.forel)}. Lenkene åpner i ny fane.</p></div>`);
+    };
+    const selfBtn = (ok) => async ()=>{
+      if(ctx.seen.has(k) && ok) return;
+      if(ctx.answered.has(k)) { st.textContent = 'Allerede registrert i dette forsøket'; return; }
+      ctx.answered.add(k);
+      await recordAttempt(q,f,{ok,mode:ctx.mode,hint:ctx.usedHint,fasit:false}); if(ctx.sess) await sessField(ctx.sess, k, {r:ok?'ok':'feil', hint:ctx.usedHint?1:0});
+      st.textContent = ok?'Registrert: fikk til':'Registrert: fikk ikke til'; wrap.classList.add(ok?'ok':'bad'); markStep(root, q, ok?'ok':'bad'); toast(ok?'Registrert som riktig':'Registrert – kommer tilbake i dagens økt');
+    };
+    if(panel.querySelector('.h-ok')){ panel.querySelector('.h-ok').onclick = selfBtn(true); panel.querySelector('.h-bad').onclick = selfBtn(false); }
+  });
+  // Sjekk-knapper
+  qt.querySelectorAll('button.chk').forEach(b=>b.onclick = async ()=>{
+    const f = q.fields.find(x=>x.i===+b.dataset.i); const wrap = b.closest('.fld'); const inp = wrap.querySelector('input,select'); const st = wrap.querySelector('.st'); const k = fieldKey(q.id,f.i);
+    const pst = root.querySelector(`.help[data-i="${f.i}"] .hd .st`);
+    let ok, reason='';
+    if(f.kind==='choice') ok = inp.value === f.ans; else { const r = checkExpr(inp.value, f.ans, f.tol); ok = r.ok; reason = r.reason||''; }
+    wrap.classList.remove('ok','bad','seen');
+    if(ctx.seen.has(k)){ wrap.classList.add(ok?'ok':'bad'); st.textContent = ok ? 'Riktig – men fasit var vist, teller ikke' : 'Feil (fasit vist)'; return; }
+    wrap.classList.add(ok?'ok':'bad'); st.textContent = ok ? 'Riktig' : ('Feil' + (reason?' · '+reason:'')); st.title = reason;
+    ctx.answered.add(k);
+    await recordAttempt(q,f,{ok,mode:ctx.mode,hint:ctx.usedHint,fasit:false}); if(ctx.sess) await sessField(ctx.sess, k, {r:ok?'ok':'feil', hint:ctx.usedHint?1:0});
+    if(pst) pst.textContent = ok?'Riktig':'Feil'; markStep(root, q, ok?'ok':'bad');
+    if(ok) inp.disabled = true, b.disabled = true;
+  });
+  // Enter = Sjekk
+  qt.querySelectorAll('.fld input[type=text]').forEach(inp=>inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ const b = inp.parentElement.querySelector('button.chk'); if(b) b.click(); } }));
+}
+function markStep(root, q, cls){ const a = root.querySelector(`.stepper a[data-q="${q.id}"]`); if(!a) return; if(cls==='bad' && a.classList.contains('ok')) return; a.classList.remove('ok','bad','seen'); a.classList.add(cls); }
+async function sessField(s, k, data){ s.fields = s.fields||{}; const cur = s.fields[k]; if(cur && cur.r==='ok') return; if(cur && cur.r==='fasit' && data.r!=='fasit') return; s.fields[k] = Object.assign({ts:Date.now()}, data); await saveDoc('sessions', s.id, s); }
+
+function renderFree(main, qid){
+  const q = QBY[qid]; if(!q){ main.innerHTML='<p>Fant ikke oppgaven.</p>'; return; }
+  const qs = Q.filter(x=>x.oving===q.oving); const idx = qs.indexOf(q); const prev = qs[idx-1], next = qs[idx+1];
+  const ctx = {mode:'fri', hints:0, usedHint:false, answered:new Set(), seen:new Set()};
+  main.innerHTML = questionHtml(q, ctx) + `<p class="small muted" style="margin:10px 0 0">Fri øving utenfor et forsøk – svarene lagres likevel i historikken.</p>
+  <div class="qnav">${prev?`<a class="btn" href="#q-${prev.id}">← Oppgave ${prev.nr}</a>`:'<span></span>'}${next?`<a class="btn" href="#q-${next.id}">Oppgave ${next.nr} →</a>`:`<a class="btn" href="#oving-${q.oving}">Tilbake til ${ovName(q.oving).toLowerCase()}</a>`}</div>`;
+  attachHelp(main, q, ctx);
+}
+
+// ---------- Forsøk (økt) ----------
+function renderAttempt(main, sid){
+  const s = STATE.sessions[sid]; if(!s){ main.innerHTML='<p>Fant ikke forsøket.</p>'; return; }
+  if(s.mode==='prove') return renderProve(main, s);
+  const qs = s.qs.map(id=>QBY[id]).filter(Boolean);
+  if(s.done) return renderAttemptResult(main, s, qs);
+  const idx = Math.min(s.idx||0, qs.length-1); const q = qs[idx];
+  const stepCls = x => { const st = q2status(s, x); return st; };
+  const ctx = {mode:'ov', sess:s, hints:0, usedHint:false, answered:new Set(Object.keys(s.fields||{}).filter(k=>k.startsWith(q.id+'_') && s.fields[k].r!=='fasit')), seen:new Set(Object.keys(s.fields||{}).filter(k=>k.startsWith(q.id+'_') && s.fields[k].r==='fasit'))};
+  main.innerHTML = `<div class="row between" style="margin-bottom:8px"><div class="row small muted"><a href="#oving-${s.oving}">${ovName(s.oving)}</a> › Forsøk i øvingsmodus · startet ${fmtDate(s.ts)}</div><div class="row"><span class="small muted">Oppgave ${idx+1} av ${qs.length}</span><button class="btn small" id="avslutt">Avslutt forsøket</button></div></div>
+  <div class="stepper" style="margin-bottom:14px">${qs.map((x,k)=>`<a href="#" data-q="${x.id}" data-k="${k}" class="${k===idx?'cur':''} ${stepCls(x)}" title="Oppgave ${x.nr}">${x.nr}</a>`).join('')}</div>
+  ${questionHtml(q, ctx)}
+  <div class="qnav">${idx>0?`<button class="btn" data-go="${idx-1}">← Forrige</button>`:'<span></span>'}${idx<qs.length-1?`<button class="btn primary" data-go="${idx+1}">Neste oppgave →</button>`:`<button class="btn primary" id="avslutt2">Avslutt og se resultat</button>`}</div>`;
+  attachHelp(main, q, ctx);
+  main.querySelectorAll('[data-go]').forEach(b=>b.onclick=async ()=>{ s.idx = +b.dataset.go; await saveDoc('sessions', s.id, s); route(); });
+  main.querySelectorAll('.stepper a').forEach(a=>a.onclick=async e=>{ e.preventDefault(); s.idx = +a.dataset.k; await saveDoc('sessions', s.id, s); route(); });
+  const finish = async ()=>{ s.done = 1; s.end = Date.now(); await saveDoc('sessions', s.id, s); route(); };
+  $('#avslutt').onclick = finish; if($('#avslutt2')) $('#avslutt2').onclick = finish;
+  // vis tidligere resultater i dette forsøket på feltene
+  q.fields.forEach(f=>{ const r = (s.fields||{})[fieldKey(q.id,f.i)]; if(!r) return; const wrap = main.querySelector(`.fld[data-i="${f.i}"]`); if(!wrap) return; wrap.classList.add(r.r==='ok'?'ok':r.r==='feil'?'bad':'seen'); const st=wrap.querySelector('.st'); if(st) st.textContent = r.r==='ok'?'Riktig':r.r==='feil'?'Feil':'Fasit vist'; });
+}
+function q2status(s, q){ const rs = q.fields.map(f=>(s.fields||{})[fieldKey(q.id,f.i)]).filter(Boolean); if(!rs.length) return ''; if(rs.some(r=>r.r==='fasit')) return 'seen'; if(rs.every(r=>r.r==='ok')) return 'ok'; return 'bad'; }
+function renderAttemptResult(main, s, qs){
+  const v = Object.values(s.fields||{}); const ok = v.filter(x=>x.r==='ok').length, bad = v.filter(x=>x.r==='feil').length, seen = v.filter(x=>x.r==='fasit').length;
+  const tot = qs.reduce((a,q)=>a+q.fields.length,0);
+  main.innerHTML = `<div class="row small muted" style="margin-bottom:6px"><a href="#oving-${s.oving}">${ovName(s.oving)}</a> › Forsøk i øvingsmodus · ${fmtDate(s.ts)}</div><h1>Resultat av forsøket</h1>
+  <div class="grid g4" style="margin:14px 0"><div class="card kpi"><div class="n" style="color:var(--good)">${ok}</div><div class="l">felt riktig uten fasit</div></div><div class="card kpi"><div class="n" style="color:var(--bad)">${bad}</div><div class="l">felt feil</div></div><div class="card kpi"><div class="n" style="color:var(--warn)">${seen}</div><div class="l">felt med fasit vist før svar</div></div><div class="card kpi"><div class="n">${tot-ok-bad-seen}</div><div class="l">felt ikke besvart</div></div></div>
+  <div class="card"><div class="tblwrap"><table class="tbl"><thead><tr><th>Oppgave</th><th>Tema</th><th>Felt</th><th></th></tr></thead><tbody>${qs.map(q=>{ const rs=q.fields.map(f=>(s.fields||{})[fieldKey(q.id,f.i)]); const st = q2status(s,q);
+    return `<tr><td>${q.nr} · ${esc(q.title)}</td><td class="small muted">${esc(shortTopic(TOPICS[q.topic].navn))}</td><td>${rs.map(r=>`<span class="pill ${!r?'mute':r.r==='ok'?'good':r.r==='feil'?'bad':'warn'}">${!r?'–':r.r==='ok'?'riktig':r.r==='feil'?'feil':'fasit'}</span>`).join(' ')}</td><td class="num"><a class="btn small" href="#q-${q.id}">${st==='ok'?'Se':'Øv igjen'}</a></td></tr>`; }).join('')}</tbody></table></div></div>
+  <div class="row" style="margin-top:14px"><a class="btn primary" href="#oving-${s.oving}">Start nytt forsøk</a><a class="btn" href="#oversikt">Til oversikten</a></div>`;
+}
+function renderProve(main, s){
+  const qs = s.qs.map(id=>QBY[id]).filter(Boolean); const n = s.oving;
+  if(s.done){
+    main.innerHTML = `<div class="row small muted" style="margin-bottom:6px"><a href="#oving-${n}">${ovName(n)}</a> › Prøvemodus · ${fmtDate(s.ts)}</div><h1>Resultat: ${s.got}/${s.tot} felt riktig (${Math.round((s.score||0)*100)} %)</h1><p class="lead">Brukt tid ${Math.floor((s.sek||0)/60)} min ${(s.sek||0)%60} s.</p>
+    <div class="card"><div class="tblwrap"><table class="tbl"><thead><tr><th>Oppgave</th><th>Tema</th><th>Riktig</th><th></th></tr></thead><tbody>${(s.rows||[]).map(r=>{ const q=QBY[r.q]; return `<tr><td>${q.nr} · ${esc(q.title)}</td><td class="small muted">${esc(shortTopic(TOPICS[q.topic].navn))}</td><td class="num">${r.qn?r.qg+'/'+r.qn:'<span class="muted">selvsjekk</span>'}</td><td class="num"><a class="btn small" href="#q-${q.id}">Øv med hint</a></td></tr>`; }).join('')}</tbody></table></div></div>
+    <div class="row" style="margin-top:14px"><a class="btn primary" href="#oving-${n}">Start nytt forsøk</a><a class="btn" href="#oversikt">Til oversikten</a></div>`; return;
+  }
+  const start = s.ts;
+  main.innerHTML = `<div class="row between"><div><div class="row small muted"><a href="#oving-${n}">${ovName(n)}</a> › Prøvemodus</div><h1>Prøve · ${ovName(n)}</h1></div><span class="timer" id="timer">00:00</span></div>
+  <p class="lead">Ingen hint, ingen fasit før du leverer. Alle felt med automatisk retting teller. Kode- og selvsjekkoppgaver vurderer du selv etterpå i øvingsmodus.</p>
+  <div class="stack">${qs.map(q=>`<div class="card" id="pq_${q.id}"><h3>Oppgave ${q.nr} · ${esc(q.title)}</h3><div class="qtext">${renderText(q,'prove')}</div></div>`).join('')}</div>
+  <div class="row" style="margin-top:16px"><button class="btn primary" id="lever">Lever prøven</button><a class="btn" href="#oving-${n}">Avbryt</a></div><div id="result"></div>`;
+  const tm = setInterval(()=>{ const el=$('#timer'); if(!el){ clearInterval(tm); return; } const t=Math.floor((Date.now()-start)/1000); el.textContent = String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); },1000);
+  $('#lever').onclick = async ()=>{
+    clearInterval(tm); let tot=0, got=0; const rows=[]; s.fields = {};
+    for(const q of qs){
+      let qn=0, qg=0;
+      for(const f of q.fields){
+        const wrap = main.querySelector(`#pq_${q.id} .fld[data-i="${f.i}"]`); if(!wrap) continue;
+        const inp = wrap.querySelector('input,select'); const st = wrap.querySelector('.st');
+        if(isAuto(f)){
+          const ok = f.kind==='choice' ? inp.value===f.ans : checkExpr(inp.value, f.ans, f.tol).ok;
+          wrap.classList.add(ok?'ok':'bad'); if(st) st.textContent = ok?'Riktig':'Feil · fasit: '+f.ans;
+          qn++; if(ok) qg++; await recordAttempt(q,f,{ok,mode:'prove',hint:false,fasit:false}); s.fields[fieldKey(q.id,f.i)] = {r:ok?'ok':'feil', hint:0, ts:Date.now()};
+        }
+      }
+      if(qn){ tot+=qn; got+=qg; } rows.push({q:q.id,qn,qg});
+    }
+    Object.assign(s, {done:1, score: tot? got/tot : 0, got, tot, sek:Math.floor((Date.now()-start)/1000), rows, end:Date.now()});
+    await saveDoc('sessions', s.id, s);
+    $('#result').innerHTML = `<div class="card" style="margin-top:16px"><h2>Resultat: ${got}/${tot} felt riktig (${Math.round(s.score*100)} %)</h2><p class="small muted">Resultatet er lagret og inngår i mestringen og gjøremålene. <a href="#forsok-${s.id}">Se oppsummeringen</a> eller bla opp for å se fasit ved hvert felt.</p></div>`;
+    $('#lever').disabled = true; $('#result').scrollIntoView({behavior:'smooth'});
+  };
+}
+
+// ---------- Eksamenssett ----------
+function renderEksamen(main){
+  main.innerHTML = `<h1>Eksamenssett</h1><p class="lead">Fire sett med løsningsforslag. Jobb på papir med formelark og Python, rett med løsningsforslaget, og logg resultatet per oppgave så det teller med i mestringen og gjøremålene.</p>
+  <div class="stack">${EXAMS.map(ex=>{
+    const done = ex.tasks.filter(t=>STATE.exams[ex.key+'_'+t[0]]).length;
+    return `<div class="card"><div class="row between"><div><h2 style="margin:0">${esc(ex.navn)}</h2><div class="small muted">${esc(ex.dato)} · ${ex.tasks.length} oppgaver · ${done} logget</div></div>
+      <div class="row"><a class="btn" href="${ex.pdf}" target="_blank" rel="noopener">Åpne oppgavesett</a><a class="btn" href="${ex.lf}" target="_blank" rel="noopener">Løsningsforslag</a><button class="btn small" data-show="${ex.key}">Vis her</button></div></div>
+      <div id="frame_${ex.key}" hidden style="margin-top:12px"></div>
+      <div class="tblwrap" style="margin-top:12px"><table class="tbl"><thead><tr><th>Nr</th><th>Oppgave</th><th>Tema</th><th>Poeng</th><th>Resultat</th></tr></thead><tbody>
+      ${ex.tasks.map(t=>{ const r = STATE.exams[ex.key+'_'+t[0]]; const v = r? r.score : null;
+        return `<tr><td class="num">${t[0]}</td><td>${esc(t[1])}</td><td class="small muted"><a href="#komp-${(TOPICS[t[2]].pages[0]||{}).key||''}" class="muted">${esc(shortTopic(TOPICS[t[2]].navn))}</a></td><td class="num">${t[3]}</td><td><span class="seg" data-ex="${ex.key}" data-nr="${t[0]}"><button class="g ${v===1?'on':''}" data-v="1">Riktig</button><button class="w ${v===0.5?'on':''}" data-v="0.5">Delvis</button><button class="b ${v===0?'on':''}" data-v="0">Feil</button></span></td></tr>`; }).join('')}
+      </tbody></table></div></div>`; }).join('')}</div>`;
+  main.querySelectorAll('button[data-show]').forEach(b=>b.onclick=()=>{ const ex = EXBY[b.dataset.show]; const box=$('#frame_'+ex.key); box.hidden=!box.hidden; if(!box.innerHTML) box.innerHTML=`<iframe class="pdfframe" src="${ex.pdf}" title="${esc(ex.navn)}"></iframe><p class="small muted">Vises ikke PDF-en her, bruk knappen «Åpne oppgavesett».</p>`; });
+  main.querySelectorAll('.seg button').forEach(b=>b.onclick=async ()=>{ const seg=b.parentElement; const ex=seg.dataset.ex, nr=+seg.dataset.nr; const task = EXBY[ex].tasks.find(t=>t[0]===nr);
+    seg.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+    await saveDoc('exams', ex+'_'+nr, {set:ex, nr, topic:task[2], score:+b.dataset.v, ts:Date.now()}); });
+}
+
+// ---------- Om ----------
+function renderOm(main){
+  main.innerHTML = `<h1>Om øvingsrommet</h1><div class="card stack">
+  <p><strong>For educational purposes only.</strong> Oppgavetekstene er hentet ordrett fra de obligatoriske øvingene og repetisjonsøvingene i IMAx3012 (Capquiz, NTNU høsten 2026) og brukes kun til egen eksamensforberedelse. Hint, forklaringer og pensumsider peker til kompendiet «Forelesningsnotater Matematikk 3B (IMAx3012)», versjon 2. november 2026 (sidene vises som bilder under «Pensum»), og til forelesningsslidene F1–F26.</p>
+  <p><strong>Retting.</strong> Svar sammenlignes numerisk med fasit: uttrykk med variabler evalueres i flere punkter, tall sammenlignes innenfor toleransen oppgaven oppgir. Skriv som i Capquiz: <code class="mono">sqrt(2)</code>, <code class="mono">pi/4</code>, <code class="mono">x^2</code> eller <code class="mono">x**2</code>, <code class="mono">[1,2,3]</code>, <code class="mono">theta</code>, <code class="mono">rho</code>, <code class="mono">phi</code>, <code class="mono">exp(x)</code>, <code class="mono">log(x)</code> for naturlig logaritme. Enter i et felt er det samme som «Sjekk».</p>
+  <p><strong>Historikk.</strong> Hvert svar lagres med tidspunkt, riktig/feil, modus (øving, prøve, fri), om hint var brukt og om fasit var vist før svaret. Et felt der fasit ble vist før svar registreres som «fasit vist» og teller aldri som riktig – det kommer tilbake i «Dagens økt» til du klarer det uten fasit. Svar med hint teller 70 %. Mestring per felt er vektet over de tre siste svarene (50/30/20 %); tema-mestring er snittet over oppgavene du har prøvd pluss loggede eksamensoppgaver. Repetisjon forfaller etter 1, 3, 7, 14 og 30 dager for hvert riktige svar på rad.</p>
+  <p><strong>Faner.</strong> Kompendium-menyen og alle «↗»-lenker åpner en fane inne i øvingsrommet, så du kan hoppe mellom forsøket og kompendiet uten å miste noe. Fanelinja vises øverst når du har mer enn én fane; lukk med ×.</p>
+  <p><strong>Gjøremål.</strong> Planen fram til eksamen er delt i gjøremål per uke. Øvings-, prøve- og eksamensgjøremål hukes av automatisk ut fra historikken; lesing og innlevering huker du av selv. Statusen øverst sier om du ligger foran, i rute eller bak.</p>
+  <p class="small muted">${store?'Historikken lagres i sidens database og følger deg mellom enheter.':FILE.supported()?'<strong>Historikkfil.</strong> Øverst på siden kan du velge «Lagre som …» for å opprette en historikkfil (JSON) på PC-en, eller «Åpne historikk» for å fortsette fra en fil. Når en fil er åpen, lagres hvert svar automatisk til fila (status øverst), og neste gang du åpner øvingsrommet kan du trykke «Fortsett». Hver person bruker sin egen fil – så flere kan dele samme mappe/repo uten å blande historikk. Uten fil ligger historikken bare i denne nettleseren.':'Historikken lagres lokalt i denne nettleseren (localStorage). Ta en sikkerhetskopi med knappen under før du bytter maskin eller nettleser.'}</p>
+  <div class="row">${window.claude?'':'<button class="btn" id="exp">Last ned historikk (JSON)</button>'}<label class="btn">Importer historikk <input type="file" id="imp" accept="application/json" hidden></label><button class="btn" id="nuke" style="color:var(--bad)">Slett all historikk</button></div></div>`;
+  if($('#exp')) $('#exp').onclick = ()=>{ const blob = new Blob([JSON.stringify(STATE)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='matte3b_historikk_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); };
+  $('#imp').onchange = async e=>{ const f=e.target.files[0]; if(!f) return; try{ const d = JSON.parse(await f.text()); let n=0; for(const c of COLLS) for(const [k,v] of Object.entries(d[c]||{})){ await saveDoc(c,k,v); n++; } toast('Importerte '+n+' poster'); route(); }catch(err){ toast('Kunne ikke lese fila'); } };
+  $('#nuke').onclick = async ()=>{ if(!confirm('Slette all historikk? Dette kan ikke angres.')) return; if(store){ for(const c of COLLS) for(const k of Object.keys(STATE[c])){ try{ await store.collection(c).doc(k).delete(); }catch(e){} } } STATE={attempts:{},exams:{},sessions:{},todos:{},notes:{}}; lsSave(); toast('Historikken er slettet'); route(); };
+}
+
+// ---------- Notater ----------
+function renderNotes(main){
+  const notes = Object.values(STATE.notes||{}).sort((a,b)=>a.ts-b.ts);
+  const open = notes.filter(n=>!n.done), done = notes.filter(n=>n.done);
+  const item = n => `<div class="it ${n.done?'done':''}"><button class="chk ${n.done?'on':''}" data-id="${n.id}" title="${n.done?'Merk som åpen':'Merk som håndtert'}">${n.done?'✓':''}</button><div class="tx"><div>${esc(n.text)}</div><div class="sub">${fmtDate(n.ts)}${n.ctx?` · <a href="${esc(n.ctx)}">${esc(n.ctxTitle||'der jeg var')}</a>`:''}</div></div><button class="btn small ghost ndel" data-id="${n.id}" title="Slett notatet" style="color:var(--bad)">Slett</button></div>`;
+  main.innerHTML = `<h1>Notater og feil</h1><p class="lead">Skriv ned feil du finner, forbedringer eller ting du kommer på mens du jobber. Ett punkt per linje – notatene lagres i historikken (fila/databasen) sammen med alt annet, og det huskes hvor du var da du skrev dem.</p>
+  <div class="card"><textarea id="note-in" class="code" style="min-height:90px;font-family:var(--sans);font-size:14px" placeholder="F.eks.: Ø2.14 – fasit godtar ikke 12pi-32 skrevet som 4*(3pi-8)&#10;Forslag: vis sidetall fra kompendiet også i hintene"></textarea>
+  <div class="row between" style="margin-top:8px"><span class="small muted">Enter = ny linje · Ctrl/Cmd+Enter = lagre. Hver linje blir ett punkt.</span><button class="btn primary" id="note-add">Lagre punkt(er)</button></div></div>
+  <h2 style="margin:18px 0 8px">Åpne <span class="muted" style="font-weight:400">(${open.length})</span></h2>
+  <div class="todo">${open.length?open.map(item).join(''):'<p class="muted small">Ingen åpne notater.</p>'}</div>
+  ${done.length?`<h2 style="margin:18px 0 8px">Håndtert <span class="muted" style="font-weight:400">(${done.length})</span></h2><div class="todo">${done.map(item).join('')}</div>`:''}
+  <p class="small muted" style="margin-top:14px">Når du vil at jeg skal fikse noe: eksporter historikken eller bare si ifra – notatene ligger i «notes» i historikkfila.</p>`;
+  const ta = $('#note-in');
+  const add = async ()=>{ const lines = ta.value.split('\n').map(x=>x.trim().replace(/^[-•*]\s*/,'')).filter(Boolean); if(!lines.length) return;
+    const back = TABS.back(); for(const [k,text] of lines.entries()){ const id = 'n'+Date.now().toString(36)+k; await saveDoc('notes', id, {id, text, ts:Date.now()+k, done:0, ctx: back?back.hash:'', ctxTitle: back?back.title:''}); }
+    ta.value=''; toast(lines.length+' punkt lagret'); route(); };
+  $('#note-add').onclick = add; ta.addEventListener('keydown', e=>{ if((e.ctrlKey||e.metaKey) && e.key==='Enter') add(); });
+  main.querySelectorAll('.chk[data-id]').forEach(b=>b.onclick=async ()=>{ const n=STATE.notes[b.dataset.id]; if(!n) return; n.done = n.done?0:1; await saveDoc('notes', n.id, n); route(); });
+  main.querySelectorAll('.ndel').forEach(b=>b.onclick=async ()=>{ if(!confirm('Slette notatet? Kan ikke angres.')) return; await deleteDoc('notes', b.dataset.id); route(); });
+  setTimeout(()=>ta.focus(), 50);
+}
+
+// ---------- Faner inne i øvingsrommet ----------
+const TABS = {
+  list: [], active: 0,
+  load(){ try{ const d = JSON.parse(sessionStorage.getItem('m3b_tabs')||'null'); if(d && d.list && d.list.length){ this.list=d.list; this.active=Math.min(d.active||0, d.list.length-1); } }catch(e){} if(!this.list.length) this.list=[{hash:location.hash||'#oversikt', title:'Oversikt'}]; },
+  save(){ try{ sessionStorage.setItem('m3b_tabs', JSON.stringify({list:this.list, active:this.active})); }catch(e){} },
+  cur(){ return this.list[this.active]; },
+  prev:null,
+  back(){ const ok = t => t && !t.hash.startsWith('#notater') && !t.hash.startsWith('#komp'); const p = this.list.find(t=>t.hash===this.prev); if(ok(p)) return p; return this.list.find((t,i)=>i!==this.active && ok(t)) || null; },
+  open(hash){ this.prev = this.cur().hash; const k = this.list.findIndex(t=>t.hash===hash); if(k>=0){ this.active=k; } else { this.list.push({hash, title:titleFor(hash)}); this.active=this.list.length-1; } this.save(); this.go(); },
+  close(k){ this.list.splice(k,1); if(!this.list.length) this.list=[{hash:'#oversikt',title:'Oversikt'}]; if(this.active>=this.list.length) this.active=this.list.length-1; else if(k<this.active) this.active--; this.save(); this.go(); },
+  switch(k){ this.prev = this.cur().hash; this.active=k; this.save(); this.go(); },
+  go(){ const h = this.cur().hash; if(location.hash!==h) location.hash = h; else route(); },
+  sync(h){ const t=this.cur(); t.hash=h; t.title=titleFor(h); this.save(); this.render(); },
+  render(){ const bar = $('#tabs'); if(!bar) return; if(this.list.length<2){ bar.hidden=true; bar.innerHTML=''; return; } bar.hidden=false;
+    bar.innerHTML = this.list.map((t,k)=>`<div class="tab ${k===this.active?'on':''}" data-k="${k}" title="${esc(t.hash)}"><span class="tt">${esc(t.title)}</span><button class="x" data-k="${k}" title="Lukk fanen" aria-label="Lukk fanen">×</button></div>`).join('') + `<button class="tab plus" id="tab-plus" title="Ny fane (oversikt)">+</button>`;
+    bar.querySelectorAll('.tab[data-k]').forEach(el=>el.onclick=e=>{ if(e.target.classList.contains('x')) return; this.switch(+el.dataset.k); });
+    bar.querySelectorAll('.x').forEach(b=>b.onclick=e=>{ e.stopPropagation(); this.close(+b.dataset.k); });
+    $('#tab-plus').onclick=()=>{ this.list.push({hash:'#oversikt',title:'Oversikt'}); this.active=this.list.length-1; this.save(); this.go(); };
+  }
+};
+function titleFor(h){
+  h = h.replace(/^#/,'');
+  if(h==='oversikt'||h==='') return 'Oversikt'; if(h==='gjoremal') return 'Gjøremål'; if(h==='ovinger') return 'Øvinger'; if(h==='eksamen') return 'Eksamenssett'; if(h==='om') return 'Om'; if(h==='notater') return 'Notater'; if(h==='komp') return 'Kompendium';
+  if(h.startsWith('komp-')) { const sec=(window.BANK.sections||[]).find(x=>x.key===h.slice(5)); return 'Komp. §'+h.slice(5)+(sec?' '+sec.title.split(' ').slice(0,3).join(' '):''); }
+  if(h.startsWith('oving-')) return ovName(+h.slice(6));
+  if(h.startsWith('q-')) { const q=QBY[h.slice(2)]; return q? ovShort(q.oving)+'.'+q.nr+' '+q.title : 'Oppgave'; }
+  if(h.startsWith('forsok-')) { const s=STATE.sessions[h.slice(7)]; return s? ovName(s.oving)+' · '+(s.mode==='prove'?'prøve':'forsøk') : 'Forsøk'; }
+  return h;
+}
+// Lenker som ber om ny fane (target=_blank, intern #-lenke) og Kompendium-menyen åpner fane i øvingsrommet i stedet for nytt nettleservindu
+document.addEventListener('click', e=>{
+  const a = e.target.closest('a[href^="#"]'); if(!a) return;
+  const href = a.getAttribute('href');
+  const wantsTab = a.target==='_blank' || ((href==='#komp' || href.startsWith('#komp-') || href==='#notater') && a.closest('#topnav, #side'));
+  if(wantsTab){ e.preventDefault(); TABS.open(href); }
+});
+
+// ---------- Oppstart ----------
+async function boot(){
+  try{
+    if(!window.BANK) throw new Error('bank.js mangler');
+    Q = window.BANK.questions; TOPICS = window.BANK.topics; Q.forEach(q=>QBY[q.id]=q);
+    Q.forEach(q=>q.fields.forEach(f=>{ if(f.kind==='expr' && f.ans && /=/.test(f.ans)) f.kind='self'; }));
+  }catch(e){ $('#main').innerHTML = '<div class="card"><p>Kunne ikke laste oppgavebanken (bank.js).</p></div>'; return; }
+  await initStore();
+  await FILE.init();
+  TABS.load(); if(location.hash && location.hash!==TABS.cur().hash) TABS.sync(location.hash); else if(!location.hash) location.hash = TABS.cur().hash;
+  window.addEventListener('hashchange', route);
+  route();
+}
+boot();
+})();
+</script>

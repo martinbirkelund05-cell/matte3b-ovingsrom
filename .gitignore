@@ -1,0 +1,5 @@
+# Personlige historikkfiler holdes utenfor repoet
+historikk/*.json
+*_historikk.json
+.DS_Store
+Thumbs.db

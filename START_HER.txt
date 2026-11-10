@@ -1,0 +1,3 @@
+Matte 3B Øvingsrom – lokal versjon
+Dobbeltklikk index.html for å åpne i nettleseren (Chrome/Edge). Alt kjører lokalt, uten internett.
+Historikken lagres i nettleseren på denne maskinen. Ta sikkerhetskopi med «Om øvingsrommet → Last ned historikk» av og til.
