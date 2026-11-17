@@ -139,6 +139,12 @@ textarea.code{width:100%;min-height:160px;font-family:var(--mono);font-size:13px
 .que .formulation .qtext pre{background:var(--surface);color:var(--fg)}
 .que .formulation .fig{background:var(--surface)}
 .que .formulation a{color:var(--cq-prim)}
+/* lilla merking av Python-oppgaver */
+.pybox{display:flex;gap:10px;align-items:flex-start;background:#ece6f8;color:#3d2470;border:1px solid #c9b8ea;border-left:4px solid #6f42c1;border-radius:4px;padding:8px 12px;margin:0 0 10px;font-size:14px;line-height:1.45}
+.pybox .py-ic{flex:none;background:#6f42c1;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;border-radius:4px;padding:2px 6px;margin-top:1px}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .pybox{background:#2c2244;color:#e2d8f7;border-color:#5a4590;border-left-color:#a98be6}:root:not([data-theme="light"]) .pybox .py-ic{background:#a98be6;color:#1c1430}}
+:root[data-theme="dark"] .pybox{background:#2c2244;color:#e2d8f7;border-color:#5a4590;border-left-color:#a98be6}:root[data-theme="dark"] .pybox .py-ic{background:#a98be6;color:#1c1430}
+.pybox.paper{background:var(--cq-info);color:var(--fg);border-color:var(--cq-line);border-left-color:#8f959e}.pybox.paper .py-ic{background:#8f959e;color:#fff}
 /* celler og knapper som i Moodle */
 .cq .fld input[type=text],.cq .fld select{border:1px solid #8f959e;border-radius:.5rem;background:var(--surface);color:var(--fg);padding:6px 10px}
 .cq .fld .tag{background:var(--surface);border:1px solid var(--cq-line)}
@@ -744,8 +750,8 @@ function fieldHtml(q, i, mode){
   const id = `fld_${q.id}_${i}`; const multi = q.fields.length>1; const tag = multi ? `<span class="tag">${i}</span>` : '';
   const chk = mode==='ov' ? `<button class="btn small chk" data-q="${q.id}" data-i="${i}">Sjekk</button>` : '';
   if(f.kind==='choice') return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<select id="${id}"><option value="">– velg –</option>${f.options.map(o=>`<option>${esc(o)}</option>`).join('')}</select>${chk}<span class="st"></span></span>`;
-  if(f.kind==='code') return `<span class="fld" data-q="${q.id}" data-i="${i}" style="display:block">${tag}<textarea class="code" id="${id}" placeholder="Lim gjerne inn koden fra JupyterHub her (rettes ikke automatisk – registrer «Fikk til»/«Fikk ikke til» under)"></textarea></span>`;
-  if(f.kind==='confirm') return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<span class="notice">Løs oppgaven i JupyterHub/på papir, og registrer «Fikk til» eller «Fikk ikke til» under.</span></span>`;
+  if(f.kind==='code') return `<span class="fld" data-q="${q.id}" data-i="${i}" style="display:block">${tag}<textarea class="code" id="${id}" aria-label="Koden din (rettes ikke automatisk)"></textarea></span>`;
+  if(f.kind==='confirm') return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<input type="text" id="${id}" autocomplete="off" spellcheck="false" aria-label="Svaret ditt (rettes ikke automatisk)"><span class="st"></span></span>`;
   if(f.kind==='self') return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<input type="text" id="${id}"><span class="st muted">vurderes mot fasit under</span></span>`;
   return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<input type="text" id="${id}" autocomplete="off" spellcheck="false">${chk}<span class="st"></span></span>`;
 }
@@ -812,8 +818,18 @@ function infoHtml(q, st){
   return `<div class="info"><h3>Spørsmål <span class="qno">${q.nr}</span></h3><div class="state ${st.cls}">${st.txt}</div><div class="grade">Karakter av maks ${komma(q.maxp||1)}</div>
     <div class="meta">${esc(shortTopic(t.navn))}<br>Komp. ${esc(q.komp.split(/[;,(]/)[0].trim())}${q.base?`<br>Variant av Ø${q.base[1]}.${q.base.split('q')[1]}`:''}</div></div>`;
 }
+const PYT = new Set(['numint','differ','tidpde','evm']);
+const PYID = new Set(['o1q9','o1q10','o1q11','o1q12','o1q13','o1q14','o1q15','o2q10','o3q1','o3q11','o4q1','o4q3','o5q1','o5q14','o7q3']);
+function isPy(q){ return q.fields.some(f=>f.kind==='code') || PYT.has(q.topic) || PYID.has(q.base||q.id); }
+function pyBoxHtml(q, mode){
+  const self = q.fields.some(f=>!isAuto(f)), auto = q.fields.some(isAuto);
+  const how = mode==='prove' ? (auto ? 'Skriv inn svaret i cellen.' : 'Denne rettes ikke i prøvemodus – registrer resultatet i øvingsmodus.')
+    : self && auto ? 'Skriv inn svarene i cellene, og velg «Fikk til» eller «Fikk ikke til» der det ikke rettes automatisk.'
+    : self ? 'Skriv inn svaret i cellen og velg om du fikk det til eller ikke.' : 'Skriv inn svaret i cellen og trykk «Sjekk».';
+  return `<div class="pybox"><span class="py-ic">Py</span><div><strong>Python-oppgave – løses i JupyterHub.</strong> ${how}</div></div>`;
+}
 function queHtml(q, mode, st, idAttr){
-  return `<div class="que" data-q="${q.id}" ${idAttr||''}>${infoHtml(q, st)}<div class="content"><div class="formulation"><p class="qtitle">${esc(q.title)}</p><div class="qtext" ${mode==='ov'?'id="qtext"':''}>${renderText(q, mode)}</div></div></div></div>`;
+  return `<div class="que" data-q="${q.id}" ${idAttr||''}>${infoHtml(q, st)}<div class="content"><div class="formulation">${isPy(q)?pyBoxHtml(q, mode):(mode==='ov'&&q.fields.some(f=>!isAuto(f))?`<div class="pybox paper"><span class="py-ic">✎</span><div><strong>Løses på papir.</strong> Noter gjerne svaret i cellen og velg «Fikk til» eller «Fikk ikke til».</div></div>`:'')}<p class="qtitle">${esc(q.title)}</p><div class="qtext" ${mode==='ov'?'id="qtext"':''}>${renderText(q, mode)}</div></div></div></div>`;
 }
 function setInfoState(root, q, res){
   const st = stateOf(q, res); const el = root.querySelector(`.que[data-q="${q.id}"] .info .state`);
