@@ -746,8 +746,8 @@ function fieldHtml(q, i, mode){
   if(f.kind==='choice') return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<select id="${id}"><option value="">– velg –</option>${f.options.map(o=>`<option>${esc(o)}</option>`).join('')}</select>${chk}<span class="st"></span></span>`;
   if(f.kind==='code') return `<span class="fld" data-q="${q.id}" data-i="${i}" style="display:block">${tag}<textarea class="code" id="${id}" placeholder="Lim gjerne inn koden fra JupyterHub her (rettes ikke automatisk – registrer «Fikk til»/«Fikk ikke til» under)"></textarea></span>`;
   if(f.kind==='confirm') return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<span class="notice">Løs oppgaven i JupyterHub/på papir, og registrer «Fikk til» eller «Fikk ikke til» under.</span></span>`;
-  if(f.kind==='self') return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<input type="text" id="${id}" placeholder="svar"><span class="st muted">vurderes mot fasit under</span></span>`;
-  return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<input type="text" id="${id}" autocomplete="off" spellcheck="false" placeholder="f.eks. sqrt(2), pi/4, [1,2,3]">${chk}<span class="st"></span></span>`;
+  if(f.kind==='self') return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<input type="text" id="${id}"><span class="st muted">vurderes mot fasit under</span></span>`;
+  return `<span class="fld" data-q="${q.id}" data-i="${i}">${tag}<input type="text" id="${id}" autocomplete="off" spellcheck="false">${chk}<span class="st"></span></span>`;
 }
 function mdInline(t){ // $..$ beholdes for MathJax, `kode` -> <code>, *kursiv*
   return esc(t).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*([^*$]+)\*/g,'<em>$1</em>');
