@@ -109,6 +109,89 @@ textarea.code{width:100%;min-height:160px;font-family:var(--mono);font-size:13px
 .sitat{border-left:3px solid var(--muted);padding:6px 12px;color:var(--muted);font-style:italic;margin:8px 0}
 .ref{font-size:13px;color:var(--muted)}
 .warnnote{font-size:13px;color:var(--warn);background:var(--warn-soft);border-radius:6px;padding:6px 10px}
+
+/* ===== Capquiz/Moodle-layout inne i øving og prøve ===== */
+.cq{--cq-info:#f8f9fa;--cq-line:#dee2e6;--cq-form:#e7f3f5;--cq-form-fg:#001a1e;--cq-out:#fcefdc;--cq-out-fg:#7d5a29;--cq-ok:#357a32;--cq-ok-bg:#d7e4d6;--cq-ok-fg:#1c3f1a;--cq-bad:#ca3120;--cq-bad-bg:#f4d6d2;--cq-bad-fg:#691911;--cq-part:#f0ad4e;--cq-part-bg:#fcefdc;--cq-part-fg:#7d5a29;--cq-sec:#ced4da;--cq-sec-h:#b8c1ca;--cq-sec-fg:#1d2125;--cq-prim:#0f6cbf;--cq-prim-h:#0c589c}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .cq{--cq-info:#22272e;--cq-line:#3a424c;--cq-form:#1b2f36;--cq-form-fg:#e3eef0;--cq-out:#3a3118;--cq-out-fg:#ecd9a8;--cq-ok:#6fbf73;--cq-ok-bg:#1f3322;--cq-ok-fg:#cfe8d0;--cq-bad:#ef8a8a;--cq-bad-bg:#3d2222;--cq-bad-fg:#f6d3d3;--cq-part:#e0b45c;--cq-part-bg:#3a3118;--cq-part-fg:#ecd9a8;--cq-sec:#4a535e;--cq-sec-h:#5a6470;--cq-sec-fg:#e8eaed;--cq-prim:#5aa5e8;--cq-prim-h:#7bb8ee}}
+:root[data-theme="dark"] .cq{--cq-info:#22272e;--cq-line:#3a424c;--cq-form:#1b2f36;--cq-form-fg:#e3eef0;--cq-out:#3a3118;--cq-out-fg:#ecd9a8;--cq-ok:#6fbf73;--cq-ok-bg:#1f3322;--cq-ok-fg:#cfe8d0;--cq-bad:#ef8a8a;--cq-bad-bg:#3d2222;--cq-bad-fg:#f6d3d3;--cq-part:#e0b45c;--cq-part-bg:#3a3118;--cq-part-fg:#ecd9a8;--cq-sec:#4a535e;--cq-sec-h:#5a6470;--cq-sec-fg:#e8eaed;--cq-prim:#5aa5e8;--cq-prim-h:#7bb8ee}
+.cq{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:1100px){.cq{grid-template-columns:minmax(0,1fr) 230px;align-items:start}}
+.cq-main{min-width:0;display:grid;gap:16px}
+.cq-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+/* spørsmålsblokk: infoboks til venstre, blå oppgaveboks til høyre */
+.que{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+@media(min-width:700px){.que{grid-template-columns:8.2em minmax(0,1fr);gap:12px}}
+.que .info{background:var(--cq-info);border:1px solid var(--cq-line);border-radius:4px;padding:8px 10px;font-size:12.5px;line-height:1.45;align-self:start;color:var(--fg)}
+.que .info h3{font-size:12.5px;font-weight:400;margin:0 0 4px}
+.que .info h3 .qno{font-size:20px;font-weight:700}
+.que .info .state{font-weight:600}
+.que .info .state.ok{color:var(--cq-ok)}.que .info .state.bad{color:var(--cq-bad)}.que .info .state.part,.que .info .state.seen{color:var(--cq-part-fg)}
+.que .info .grade{color:var(--muted);margin-top:2px}
+.que .info .meta{margin-top:6px;padding-top:6px;border-top:1px solid var(--cq-line);color:var(--muted);font-size:11.5px}
+.que .content{min-width:0;display:grid;gap:8px;grid-template-columns:minmax(0,1fr)}
+.que .formulation{background:var(--cq-form);color:var(--cq-form-fg);border-radius:4px;padding:12px 16px;min-width:0;overflow-wrap:anywhere}
+.que .formulation .qtext pre{white-space:pre;overflow-x:auto;max-width:100%}
+.que .formulation mjx-container{max-width:100%;overflow-x:auto;overflow-y:hidden}
+.cq .fld{max-width:100%}.cq .fld input[type=text]{min-width:0;max-width:100%}
+.que .formulation .qtitle{font-weight:600;margin:0 0 8px}
+.que .formulation .qtext{max-width:none;font-size:15px;line-height:1.6}
+.que .formulation .qtext pre{background:var(--surface);color:var(--fg)}
+.que .formulation .fig{background:var(--surface)}
+.que .formulation a{color:var(--cq-prim)}
+/* celler og knapper som i Moodle */
+.cq .fld input[type=text],.cq .fld select{border:1px solid #8f959e;border-radius:.5rem;background:var(--surface);color:var(--fg);padding:6px 10px}
+.cq .fld .tag{background:var(--surface);border:1px solid var(--cq-line)}
+.cq .fld.ok input,.cq .fld.ok select{border-color:var(--cq-ok);background:var(--surface);box-shadow:0 0 0 1px var(--cq-ok)}
+.cq .fld.bad input,.cq .fld.bad select{border-color:var(--cq-bad);background:var(--surface);box-shadow:0 0 0 1px var(--cq-bad)}
+.cq .fld.seen input,.cq .fld.seen select{border-color:var(--cq-part);background:var(--surface);box-shadow:0 0 0 1px var(--cq-part)}
+.cq .fld .st{font-size:13px;font-weight:600;padding:2px 8px;border-radius:4px}
+.cq .fld .st:empty{display:none}
+.cq .fld.ok .st{background:var(--cq-ok-bg);color:var(--cq-ok-fg)}.cq .fld.ok .st::before{content:"✓ "}
+.cq .fld.bad .st{background:var(--cq-bad-bg);color:var(--cq-bad-fg)}.cq .fld.bad .st::before{content:"✗ "}
+.cq .fld.seen .st{background:var(--cq-part-bg);color:var(--cq-part-fg)}
+.cq .btn{border-radius:.5rem}
+.cq .btn.sec,.cq button.chk{background:var(--cq-sec);border-color:var(--cq-sec);color:var(--cq-sec-fg)}
+.cq .btn.sec:hover,.cq button.chk:hover{background:var(--cq-sec-h);border-color:var(--cq-sec-h)}
+.cq .btn.primary{background:var(--cq-prim);border-color:var(--cq-prim)}
+.cq .btn.primary:hover{background:var(--cq-prim-h);border-color:var(--cq-prim-h)}
+.cq textarea.code{border:1px solid #8f959e;border-radius:.5rem}
+/* nedtrekk under hvert felt */
+.cq .help{border:0;background:transparent;padding:0;margin:6px 0 14px;max-width:none}
+.cq .help .hd{gap:6px}
+.cq .help .hd .lab{font-size:12px;color:var(--cq-form-fg);opacity:.75}
+.dd{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--cq-sec);background:var(--surface);color:var(--fg);border-radius:.5rem;padding:4px 10px;font-size:13px;cursor:pointer}
+.dd::after{content:"▾";font-size:11px;color:var(--muted);transition:transform .15s}
+.dd[aria-expanded="true"]{background:var(--cq-sec);border-color:var(--cq-sec);color:var(--cq-sec-fg)}
+.dd[aria-expanded="true"]::after{transform:rotate(180deg);color:inherit}
+.dd:hover{border-color:var(--cq-prim)}
+.cq .help .body{margin-top:8px;gap:8px}
+.ddp{border-radius:4px;padding:10px 14px;position:relative}
+.ddp .ddx{position:absolute;top:6px;right:8px;border:0;background:transparent;color:inherit;opacity:.7;cursor:pointer;font-size:12px;padding:2px 6px;border-radius:4px}
+.ddp .ddx:hover{opacity:1;background:rgba(0,0,0,.08)}
+.ddp h4{margin:0 0 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.ddp.hints,.ddp.komp{background:var(--surface);border:1px solid var(--cq-line);color:var(--fg)}
+.ddp.fas{background:var(--cq-out);color:var(--cq-out-fg)}
+.ddp.fas .steps li{color:var(--fg)}
+.ddp.fas .rightanswer{font-size:15px;margin:0 0 10px}
+.ddp.fas code{font-family:var(--mono);background:var(--surface);color:var(--fg);border:1px solid var(--cq-line);padding:2px 6px;border-radius:4px}
+.ddp .warnnote{margin-right:64px!important;background:var(--surface);color:var(--cq-part-fg);border:1px solid var(--cq-part)}
+/* navigasjon i quizen */
+.qnav-block{background:var(--surface);border:1px solid var(--cq-line);border-radius:8px;padding:14px}
+@media(min-width:1100px){.qnav-block{position:sticky;top:calc(64px + env(safe-area-inset-top,0px))}}
+.qnav-block h3{font-size:15px;margin:0 0 10px}
+.qn-buttons{display:flex;flex-wrap:wrap;gap:6px}
+.qnbutton{width:30px;height:40px;border:1px solid var(--cq-line);border-radius:4px;background:var(--surface);color:var(--fg);text-decoration:none;font-size:13px;display:grid;grid-template-rows:1fr 14px;overflow:hidden;cursor:pointer;padding:0;box-sizing:border-box}
+.qnbutton .num{display:grid;place-items:center}
+.qnbutton .tl{background:var(--cq-info);border-top:1px solid var(--cq-line);display:grid;place-items:center;font-size:9px;color:#fff;line-height:1}
+.qnbutton.ok .tl{background:var(--cq-ok)}.qnbutton.ok .tl::before{content:"✓"}
+.qnbutton.bad .tl{background:var(--cq-bad)}.qnbutton.bad .tl::before{content:"✗"}
+.qnbutton.part .tl,.qnbutton.seen .tl{background:var(--cq-part)}.qnbutton.part .tl::before{content:"◐"}.qnbutton.seen .tl::before{content:"!"}
+.qnbutton.cur{border:3px solid var(--fg)}
+.qnav-block .legend2{font-size:11.5px;color:var(--muted);margin-top:10px;display:grid;gap:2px}
+.qnav-block .legend2 i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.qnav-block .fin{display:block;margin-top:12px;font-size:13px}
+.qnav-block .timer{display:block;font-size:18px;margin:0 0 10px}
+.cq-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 /* faner */
 .tabs{display:flex;gap:4px;align-items:flex-end;border-bottom:1px solid var(--line);margin:-6px 0 14px;overflow-x:auto;padding-bottom:0}
 .tab{display:inline-flex;align-items:center;gap:6px;padding:6px 8px 6px 12px;border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--grey-soft);color:var(--muted);font-size:13px;cursor:pointer;white-space:nowrap;max-width:260px;position:relative;top:1px}
@@ -705,75 +788,105 @@ function renderKompSection(main, key){
   bindViewer(main);
 }
 
-// ---------- Oppgave med hjelp under hver deloppgave ----------
-// ctx: {mode:'ov'|'fri', sess (ev.), hints:0, usedHint:false, answered:Set, seen:Set}
-function questionHtml(q, ctx){
+// ---------- Oppgave i Capquiz-layout, med nedtrekk under hver deloppgave ----------
+// ctx: {mode:'ov'|'fri', sess (ev.), hints:0, usedHint:false, answered:Set, seen:Set, res:{feltnøkkel:'ok'|'bad'|'seen'}}
+function stateOf(q, res){ // samlet status for en oppgave ut fra feltresultatene
+  const rs = q.fields.map(f=>res[fieldKey(q.id,f.i)]).filter(Boolean);
+  if(!rs.length) return {cls:'', txt:'Ikke besvart'};
+  if(rs.some(r=>r==='seen')) return {cls:'seen', txt:'Fasit vist'};
+  const ok = rs.filter(r=>r==='ok').length;
+  if(ok===q.fields.length) return {cls:'ok', txt:'Riktig'};
+  if(ok===0) return {cls:'bad', txt:'Feil'};
+  return {cls:'part', txt:'Delvis riktig'};
+}
+function komma(x){ return (x==null?1:x).toFixed(2).replace('.',','); }
+function infoHtml(q, st){
   const t = TOPICS[q.topic];
-  return `<div class="row small muted" style="margin-bottom:6px"><a href="#oving-${q.oving}">${ovName(q.oving)}</a> › Oppgave ${q.nr}${q.base?` · <span class="pill mute">variant av Ø${q.base[1]}.${q.base.split('q')[1]}</span>`:''} · <span class="pill mute">${esc(t.navn)}</span>${q.maxp?` · ${q.maxp} poeng`:''}</div>
-  <h1>${esc(q.title)}</h1>
-  <p class="lead small">Kompendiet ${esc(q.komp)} · forelesning ${esc(q.forel)}${q.fields.length>1?` · ${q.fields.length} svarfelt – hjelp ligger under hvert felt`:''}</p>
-  <div class="card"><div class="qtext" id="qtext">${renderText(q,'ov')}</div></div>`;
+  return `<div class="info"><h3>Spørsmål <span class="qno">${q.nr}</span></h3><div class="state ${st.cls}">${st.txt}</div><div class="grade">Karakter av maks ${komma(q.maxp||1)}</div>
+    <div class="meta">${esc(shortTopic(t.navn))}<br>Komp. ${esc(q.komp.split(/[;,(]/)[0].trim())}${q.base?`<br>Variant av Ø${q.base[1]}.${q.base.split('q')[1]}`:''}</div></div>`;
+}
+function queHtml(q, mode, st, idAttr){
+  return `<div class="que" data-q="${q.id}" ${idAttr||''}>${infoHtml(q, st)}<div class="content"><div class="formulation"><p class="qtitle">${esc(q.title)}</p><div class="qtext" ${mode==='ov'?'id="qtext"':''}>${renderText(q, mode)}</div></div></div></div>`;
+}
+function setInfoState(root, q, res){
+  const st = stateOf(q, res); const el = root.querySelector(`.que[data-q="${q.id}"] .info .state`);
+  if(el){ el.className = 'state ' + st.cls; el.textContent = st.txt; }
+  const nb = root.querySelector(`.qnbutton[data-q="${q.id}"]`); if(nb){ nb.classList.remove('ok','bad','part','seen'); if(st.cls) nb.classList.add(st.cls); }
+}
+function navBlockHtml(qs, curIdx, statusOf, extraTop, extraBottom){
+  return `<aside class="qnav-block"><h3>Navigasjon i quizen</h3>${extraTop||''}<div class="qn-buttons">${qs.map((x,k)=>`<a href="#" class="qnbutton ${k===curIdx?'cur':''} ${statusOf(x)}" data-q="${x.id}" data-k="${k}" title="Spørsmål ${x.nr}: ${esc(x.title)}"><span class="num">${x.nr}</span><span class="tl"></span></a>`).join('')}</div>
+    <div class="legend2"><span><i style="background:var(--cq-ok)"></i>Riktig</span><span><i style="background:var(--cq-part)"></i>Delvis riktig / fasit vist</span><span><i style="background:var(--cq-bad)"></i>Feil</span></div>${extraBottom||''}</aside>`;
 }
 function helpPanelHtml(q, f, ctx){
   const multi = q.fields.length>1; const selfKind = !isAuto(f);
-  return `<div class="help" data-i="${f.i}"><div class="hd"><span class="lab">${multi?`Felt ${f.i}`:'Hjelp'}</span>
-    <button class="btn small h-hint">Hint <span class="hc">(${ctx.hints}/${q.hints.length})</span></button>
-    <button class="btn small h-komp">Pensum</button>
-    <button class="btn small h-fasit">Fasit og forklaring</button>
-    ${selfKind?`<span class="muted small" style="margin-left:4px">Selvsjekk:</span><button class="btn small h-ok">Fikk til</button><button class="btn small h-bad">Fikk ikke til</button>`:''}
-    <span class="st small muted" style="margin-left:auto"></span></div><div class="body" hidden></div></div>`;
+  return `<div class="help" data-i="${f.i}"><div class="hd">${multi?`<span class="lab">Felt ${f.i}</span>`:''}
+    <button class="dd h-hint" aria-expanded="false">Hint <span class="hc">${ctx.hints}/${q.hints.length}</span></button>
+    <button class="dd h-komp" aria-expanded="false">Vis kompendium</button>
+    <button class="dd h-fasit" aria-expanded="false">Fasit og forklaring</button>
+    ${selfKind?`<span class="small" style="margin-left:6px;opacity:.8">Selvsjekk:</span><button class="btn small sec h-ok">Fikk til</button><button class="btn small sec h-bad">Fikk ikke til</button>`:''}
+    <span class="st small" style="margin-left:auto;opacity:.75"></span></div><div class="body" hidden></div></div>`;
 }
 function attachHelp(root, q, ctx){
   const qt = root.querySelector('#qtext');
-  // sett inn hjelpepanel rett etter blokken som inneholder feltet
+  ctx.res = ctx.res || {};
+  const setRes = (k, v) => { if(ctx.res[k]==='ok' && v==='bad') return; ctx.res[k] = v; setInfoState(root, q, ctx.res); };
   q.fields.forEach(f=>{
     const wrap = qt.querySelector(`.fld[data-i="${f.i}"]`); if(!wrap) return;
     let block = wrap; while(block.parentElement && block.parentElement!==qt) block = block.parentElement;
     const tmp = document.createElement('div'); tmp.innerHTML = helpPanelHtml(q,f,ctx); const panel = tmp.firstElementChild;
-    // Del avsnittet rett etter feltets linje, slik at panelet havner under akkurat denne deloppgaven
+    // Del avsnittet rett etter feltets linje, slik at nedtrekkene havner under akkurat denne deloppgaven
     if(block.tagName==='P' && wrap.parentElement===block){
       let n = wrap.nextSibling; while(n && !(n.nodeType===1 && n.tagName==='BR')) n = n.nextSibling;
       if(n){ const rest = document.createElement('p'); let m = n.nextSibling; while(m){ const nx = m.nextSibling; rest.appendChild(m); m = nx; } n.remove(); if(rest.childNodes.length) block.insertAdjacentElement('afterend', rest); }
     }
     block.insertAdjacentElement('afterend', panel);
     const body = panel.querySelector('.body'), st = panel.querySelector('.hd .st'); const k = fieldKey(q.id,f.i);
-    const prev = STATE.attempts[k]; const ll = lastLabel(prev);
+    const ll = lastLabel(STATE.attempts[k]);
     if(ll) st.textContent = 'Sist: ' + (ll==='ok'?'riktig':ll==='bad'?'feil':'fasit vist');
-    const open = ()=>{ body.hidden=false; };
-    const section = (cls, html) => { let el = body.querySelector('.'+cls); if(!el){ el = document.createElement('div'); el.className = cls; body.appendChild(el); } el.innerHTML = html; open(); typeset(el); return el; };
-    panel.querySelector('.h-hint').onclick = ()=>{
-      if(ctx.hints >= q.hints.length){ open(); return; }
-      ctx.hints++; ctx.usedHint = true;
-      root.querySelectorAll('.help .hc').forEach(x=>x.textContent=`(${ctx.hints}/${q.hints.length})`);
-      const el = section('hints', q.hints.slice(0,ctx.hints).map((h,i)=>`<div class="hintbox"><div class="k">Hint ${i+1}</div>${esc(h)}</div>`).join(''));
-    };
-    panel.querySelector('.h-komp').onclick = ()=>{
-      const el = body.querySelector('.komp'); if(el){ el.hidden = !el.hidden; open(); return; }
-      const sec = section('komp', `<div class="fasit"><h4>Pensum til oppgaven</h4><p class="small" style="margin:0 0 8px">Kompendiet ${esc(q.komp)} · forelesning ${esc(q.forel)} · tema: ${esc(TOPICS[q.topic].navn)}. ${q.refs.length?`Åpnes på siden der stoffet står; bla for å se eksempler og figurer, eller åpne i egen fane: ${q.refs.map(r=>`<a href="#komp-${r.key}" target="_blank" rel="noopener">§${esc(r.key)} ↗</a>`).join(' ')}`:''}</p>${q.sitat?`<div class="sitat">«${esc(q.sitat)}»</div>`:''}${kompViewerHtml(q.refs, q.id+'_'+f.i)}</div>`);
-      bindViewer(sec);
-    };
-    panel.querySelector('.h-fasit').onclick = async ()=>{
-      const el = body.querySelector('.fas'); if(el){ el.hidden = !el.hidden; open(); return; }
+    // Nedtrekk: hver knapp åpner og lukker sin egen seksjon
+    const ORDER = ['hints','komp','fas'];
+    const btn = { hints: panel.querySelector('.h-hint'), komp: panel.querySelector('.h-komp'), fas: panel.querySelector('.h-fasit') };
+    const sync = () => { let any=false; for(const c of ORDER){ const el = body.querySelector('.ddp.'+c); const open = !!el && !el.hidden; btn[c].setAttribute('aria-expanded', open?'true':'false'); any = any||open; } body.hidden = !any; };
+    const toggle = cls => { const el = body.querySelector('.ddp.'+cls); if(!el) return false; el.hidden = !el.hidden; sync(); return true; };
+    const section = (cls, html) => {
+      let el = body.querySelector('.ddp.'+cls);
+      if(!el){ el = document.createElement('div'); el.className = 'ddp '+cls; const after = ORDER.slice(ORDER.indexOf(cls)+1).map(c=>body.querySelector('.ddp.'+c)).find(Boolean); body.insertBefore(el, after||null); }
+      el.hidden = false; el.innerHTML = `<button class="ddx" title="Lukk">Lukk ▴</button>` + html; el.querySelector('.ddx').onclick = ()=>{ el.hidden = true; sync(); };
+      sync(); typeset(el); return el; };
+    const setHc = () => root.querySelectorAll('.help .hc').forEach(x=>x.textContent=`${ctx.hints}/${q.hints.length}`);
+    const showHints = () => {
+      const el = section('hints', `<h4>Hint</h4><div class="stack" style="gap:6px">${q.hints.slice(0,ctx.hints).map((h,i)=>`<div class="hintbox"><div class="k">Hint ${i+1}</div>${esc(h)}</div>`).join('')}</div>${ctx.hints<q.hints.length?`<button class="btn small sec more" style="margin-top:8px">Neste hint</button>`:''}`);
+      const more = el.querySelector('.more'); if(more) more.onclick = ()=>{ ctx.hints++; setHc(); showHints(); }; };
+    btn.hints.onclick = ()=>{
+      const el = body.querySelector('.ddp.hints'); if(el && !el.hidden){ el.hidden = true; sync(); return; }
+      if(ctx.hints===0){ ctx.hints = 1; ctx.usedHint = true; setHc(); }
+      showHints(); };
+    btn.komp.onclick = ()=>{
+      if(toggle('komp')) return;
+      const sec = section('komp', `<h4>Kompendiet</h4><p class="small" style="margin:0 0 8px">${esc(q.komp)} · forelesning ${esc(q.forel)}. ${q.refs.length?`Åpne i egen fane: ${q.refs.map(r=>`<a href="#komp-${r.key}" target="_blank" rel="noopener">§${esc(r.key)} ↗</a>`).join(' ')}`:''}</p>${q.sitat?`<div class="sitat">«${esc(q.sitat)}»</div>`:''}${kompViewerHtml(q.refs, q.id+'_'+f.i)}`);
+      bindViewer(sec); };
+    btn.fas.onclick = async ()=>{
+      if(toggle('fas')) return;
       let note = '';
       if(!ctx.answered.has(k)){
         if(!ctx.seen.has(k)){ ctx.seen.add(k); await recordAttempt(q,f,{ok:false,mode:ctx.mode,hint:ctx.usedHint,fasit:true}); if(ctx.sess) await sessField(ctx.sess, k, {r:'fasit', hint:ctx.usedHint?1:0}); }
-        note = `<p class="warnnote" style="margin:0 0 8px">Fasit vist før svar: feltet er registrert som «fasit vist» og teller ikke som riktig i historikken.</p>`;
+        note = `<p class="warnnote" style="margin:0 0 10px">Fasit vist før svar: feltet er registrert som «fasit vist» og teller ikke som riktig i historikken.</p>`;
         wrap.classList.remove('ok','bad'); wrap.classList.add('seen'); const ws = wrap.querySelector('.st'); if(ws) ws.textContent = 'Fasit vist';
-        st.textContent = 'Fasit vist'; markStep(root, q, 'seen');
+        st.textContent = ''; setRes(k, 'seen');
         panel.querySelectorAll('.h-ok').forEach(b=>{ b.disabled = true; b.title='Fasit ble vist før svar'; });
       }
-      section('fas', `${note}<div class="fasit"><h4>Fasit${q.fields.length>1?' – felt '+f.i:''}</h4>${ansHtml(f)}${q.fields.length>1?`<details style="margin-top:8px"><summary class="small muted" style="cursor:pointer">Fasit for alle felt i oppgaven</summary><div class="stack" style="gap:4px;margin-top:6px">${q.fields.map(x=>`<div><span class="muted small">Felt ${x.i}:</span> ${ansHtml(x)}</div>`).join('')}</div></details>`:''}
-        <h4 style="margin-top:12px">Utregning steg for steg</h4>${stepsHtml(q)}
-        ${q.fig?`<figure class="figbox"><img src="fig/${q.fig}.png" alt="Figur til ${esc(q.title)}" loading="lazy"><figcaption class="small muted">Skisse til oppgaven – slik en eksamensfigur kan se ut.</figcaption></figure>`:''}
-        <h4 style="margin-top:12px">Kort oppsummert</h4><p style="margin:0">${esc(q.explain)}</p>${q.sitat?`<div class="sitat">«${esc(q.sitat)}»<br><span class="small">— Kompendiet IMAx3012, ${esc(q.komp)}</span></div>`:''}
-        <p class="ref" style="margin:8px 0 0">Pensum: ${q.refs.map(r=>`<a href="#komp-${r.key}" target="_blank" rel="noopener">§${esc(r.key)} ${esc(r.title)} (s. ${r.side})</a>`).join(' · ')} · forelesning ${esc(q.forel)}. Lenkene åpner i ny fane.</p></div>`);
+      section('fas', `${note}<h4>Fasit${q.fields.length>1?' – felt '+f.i:''}</h4><p class="rightanswer">Riktig svar er: ${ansHtml(f)}</p>${q.fields.length>1?`<details style="margin:0 0 10px"><summary class="small" style="cursor:pointer">Fasit for alle felt i oppgaven</summary><div class="stack" style="gap:4px;margin-top:6px">${q.fields.map(x=>`<div><span class="small">Felt ${x.i}:</span> ${ansHtml(x)}</div>`).join('')}</div></details>`:''}
+        <h4>Utregning steg for steg</h4>${stepsHtml(q)}
+        ${q.fig?`<figure class="figbox"><img src="fig/${q.fig}.png" alt="Figur til ${esc(q.title)}" loading="lazy"><figcaption class="small muted">Skisse til oppgaven.</figcaption></figure>`:''}
+        <h4 style="margin-top:12px">Kort oppsummert</h4><p style="margin:0">${esc(q.explain)}</p>
+        <p class="small" style="margin:8px 0 0">Pensum: ${q.refs.map(r=>`<a href="#komp-${r.key}" target="_blank" rel="noopener">§${esc(r.key)} ${esc(r.title)} (s. ${r.side})</a>`).join(' · ')} · forelesning ${esc(q.forel)}.</p>`);
     };
     const selfBtn = (ok) => async ()=>{
       if(ctx.seen.has(k) && ok) return;
       if(ctx.answered.has(k)) { st.textContent = 'Allerede registrert i dette forsøket'; return; }
       ctx.answered.add(k);
       await recordAttempt(q,f,{ok,mode:ctx.mode,hint:ctx.usedHint,fasit:false}); if(ctx.sess) await sessField(ctx.sess, k, {r:ok?'ok':'feil', hint:ctx.usedHint?1:0});
-      st.textContent = ok?'Registrert: fikk til':'Registrert: fikk ikke til'; wrap.classList.add(ok?'ok':'bad'); markStep(root, q, ok?'ok':'bad'); toast(ok?'Registrert som riktig':'Registrert – kommer tilbake i dagens økt');
+      st.textContent = ok?'Registrert: fikk til':'Registrert: fikk ikke til'; wrap.classList.add(ok?'ok':'bad'); setRes(k, ok?'ok':'bad'); toast(ok?'Registrert som riktig':'Registrert – kommer tilbake i dagens økt');
     };
     if(panel.querySelector('.h-ok')){ panel.querySelector('.h-ok').onclick = selfBtn(true); panel.querySelector('.h-bad').onclick = selfBtn(false); }
   });
@@ -785,25 +898,30 @@ function attachHelp(root, q, ctx){
     if(f.kind==='choice') ok = inp.value === f.ans; else { const r = checkExpr(inp.value, f.ans, f.tol); ok = r.ok; reason = r.reason||''; }
     wrap.classList.remove('ok','bad','seen');
     if(ctx.seen.has(k)){ wrap.classList.add(ok?'ok':'bad'); st.textContent = ok ? 'Riktig – men fasit var vist, teller ikke' : 'Feil (fasit vist)'; return; }
-    wrap.classList.add(ok?'ok':'bad'); st.textContent = ok ? 'Riktig' : ('Feil' + (reason?' · '+reason:'')); st.title = reason;
+    wrap.classList.add(ok?'ok':'bad'); st.textContent = ok ? 'Riktig svar, godt jobbet.' : ('Feil svar.' + (reason?' '+reason:'')); st.title = reason;
     ctx.answered.add(k);
     await recordAttempt(q,f,{ok,mode:ctx.mode,hint:ctx.usedHint,fasit:false}); if(ctx.sess) await sessField(ctx.sess, k, {r:ok?'ok':'feil', hint:ctx.usedHint?1:0});
-    if(pst) pst.textContent = ok?'Riktig':'Feil'; markStep(root, q, ok?'ok':'bad');
+    if(pst) pst.textContent = ''; setRes(k, ok?'ok':'bad');
     if(ok) inp.disabled = true, b.disabled = true;
   });
   // Enter = Sjekk
   qt.querySelectorAll('.fld input[type=text]').forEach(inp=>inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ const b = inp.parentElement.querySelector('button.chk'); if(b) b.click(); } }));
 }
-function markStep(root, q, cls){ const a = root.querySelector(`.stepper a[data-q="${q.id}"]`); if(!a) return; if(cls==='bad' && a.classList.contains('ok')) return; a.classList.remove('ok','bad','seen'); a.classList.add(cls); }
 async function sessField(s, k, data){ s.fields = s.fields||{}; const cur = s.fields[k]; if(cur && cur.r==='ok') return; if(cur && cur.r==='fasit' && data.r!=='fasit') return; s.fields[k] = Object.assign({ts:Date.now()}, data); await saveDoc('sessions', s.id, s); }
+const R2C = {ok:'ok', feil:'bad', fasit:'seen'};
 
 function renderFree(main, qid){
   const q = QBY[qid]; if(!q){ main.innerHTML='<p>Fant ikke oppgaven.</p>'; return; }
   const qs = Q.filter(x=>x.oving===q.oving); const idx = qs.indexOf(q); const prev = qs[idx-1], next = qs[idx+1];
-  const ctx = {mode:'fri', hints:0, usedHint:false, answered:new Set(), seen:new Set()};
-  main.innerHTML = questionHtml(q, ctx) + `<p class="small muted" style="margin:10px 0 0">Fri øving utenfor et forsøk – svarene lagres likevel i historikken.</p>
-  <div class="qnav">${prev?`<a class="btn" href="#q-${prev.id}">← Oppgave ${prev.nr}</a>`:'<span></span>'}${next?`<a class="btn" href="#q-${next.id}">Oppgave ${next.nr} →</a>`:`<a class="btn" href="#oving-${q.oving}">Tilbake til ${ovName(q.oving).toLowerCase()}</a>`}</div>`;
+  const ctx = {mode:'fri', hints:0, usedHint:false, answered:new Set(), seen:new Set(), res:{}};
+  const hist = x => { const sc = questionScore(x); return sc==null ? '' : sc>=0.8 ? 'ok' : sc>=0.5 ? 'part' : 'bad'; };
+  main.innerHTML = `<div class="cq"><div class="cq-main">
+    <div class="cq-head"><div class="row small muted"><a href="#oving-${q.oving}">${ovName(q.oving)}</a> › Fri øving</div><span class="small muted">Svarene lagres i historikken</span></div>
+    ${queHtml(q, 'ov', stateOf(q, {}))}
+    <div class="cq-foot">${prev?`<a class="btn sec" href="#q-${prev.id}">Forrige side</a>`:'<span></span>'}${next?`<a class="btn primary" href="#q-${next.id}">Neste side</a>`:`<a class="btn primary" href="#oving-${q.oving}">Tilbake til ${ovName(q.oving).toLowerCase()}</a>`}</div>
+  </div>${navBlockHtml(qs, idx, hist, '', `<a class="fin" href="#oving-${q.oving}">Start et forsøk …</a><div class="small muted" style="margin-top:6px">Fargene viser historikken din.</div>`)}</div>`;
   attachHelp(main, q, ctx);
+  main.querySelectorAll('.qnbutton').forEach(a=>a.onclick=e=>{ e.preventDefault(); location.hash = '#q-' + a.dataset.q; });
 }
 
 // ---------- Forsøk (økt) ----------
@@ -813,19 +931,21 @@ function renderAttempt(main, sid){
   const qs = s.qs.map(id=>QBY[id]).filter(Boolean);
   if(s.done) return renderAttemptResult(main, s, qs);
   const idx = Math.min(s.idx||0, qs.length-1); const q = qs[idx];
-  const stepCls = x => { const st = q2status(s, x); return st; };
-  const ctx = {mode:'ov', sess:s, hints:0, usedHint:false, answered:new Set(Object.keys(s.fields||{}).filter(k=>k.startsWith(q.id+'_') && s.fields[k].r!=='fasit')), seen:new Set(Object.keys(s.fields||{}).filter(k=>k.startsWith(q.id+'_') && s.fields[k].r==='fasit'))};
-  main.innerHTML = `<div class="row between" style="margin-bottom:8px"><div class="row small muted"><a href="#oving-${s.oving}">${ovName(s.oving)}</a> › Forsøk i øvingsmodus · startet ${fmtDate(s.ts)}</div><div class="row"><span class="small muted">Oppgave ${idx+1} av ${qs.length}</span><button class="btn small" id="avslutt">Avslutt forsøket</button></div></div>
-  <div class="stepper" style="margin-bottom:14px">${qs.map((x,k)=>`<a href="#" data-q="${x.id}" data-k="${k}" class="${k===idx?'cur':''} ${stepCls(x)}" title="Oppgave ${x.nr}">${x.nr}</a>`).join('')}</div>
-  ${questionHtml(q, ctx)}
-  <div class="qnav">${idx>0?`<button class="btn" data-go="${idx-1}">← Forrige</button>`:'<span></span>'}${idx<qs.length-1?`<button class="btn primary" data-go="${idx+1}">Neste oppgave →</button>`:`<button class="btn primary" id="avslutt2">Avslutt og se resultat</button>`}</div>`;
+  const resOf = x => { const r = {}; x.fields.forEach(f=>{ const v=(s.fields||{})[fieldKey(x.id,f.i)]; if(v) r[fieldKey(x.id,f.i)] = R2C[v.r]; }); return r; };
+  const ctx = {mode:'ov', sess:s, hints:0, usedHint:false, res:resOf(q),
+    answered:new Set(Object.keys(s.fields||{}).filter(k=>k.startsWith(q.id+'_') && s.fields[k].r!=='fasit')), seen:new Set(Object.keys(s.fields||{}).filter(k=>k.startsWith(q.id+'_') && s.fields[k].r==='fasit'))};
+  main.innerHTML = `<div class="cq"><div class="cq-main">
+    <div class="cq-head"><div class="row small muted"><a href="#oving-${s.oving}">${ovName(s.oving)}</a> › Forsøk i øvingsmodus · startet ${fmtDate(s.ts)}</div><span class="small muted">Spørsmål ${idx+1} av ${qs.length}</span></div>
+    ${queHtml(q, 'ov', stateOf(q, ctx.res))}
+    <div class="cq-foot">${idx>0?`<button class="btn sec" data-go="${idx-1}">Forrige side</button>`:'<span></span>'}${idx<qs.length-1?`<button class="btn primary" data-go="${idx+1}">Neste side</button>`:`<button class="btn primary" id="avslutt2">Fullfør forsøk …</button>`}</div>
+  </div>${navBlockHtml(qs, idx, x=>stateOf(x, resOf(x)).cls, '', `<a class="fin" href="#" id="avslutt">Fullfør forsøk …</a>`)}</div>`;
   attachHelp(main, q, ctx);
   main.querySelectorAll('[data-go]').forEach(b=>b.onclick=async ()=>{ s.idx = +b.dataset.go; await saveDoc('sessions', s.id, s); route(); });
-  main.querySelectorAll('.stepper a').forEach(a=>a.onclick=async e=>{ e.preventDefault(); s.idx = +a.dataset.k; await saveDoc('sessions', s.id, s); route(); });
-  const finish = async ()=>{ s.done = 1; s.end = Date.now(); await saveDoc('sessions', s.id, s); route(); };
+  main.querySelectorAll('.qnbutton').forEach(a=>a.onclick=async e=>{ e.preventDefault(); s.idx = +a.dataset.k; await saveDoc('sessions', s.id, s); route(); });
+  const finish = async e=>{ if(e) e.preventDefault(); s.done = 1; s.end = Date.now(); await saveDoc('sessions', s.id, s); route(); };
   $('#avslutt').onclick = finish; if($('#avslutt2')) $('#avslutt2').onclick = finish;
   // vis tidligere resultater i dette forsøket på feltene
-  q.fields.forEach(f=>{ const r = (s.fields||{})[fieldKey(q.id,f.i)]; if(!r) return; const wrap = main.querySelector(`.fld[data-i="${f.i}"]`); if(!wrap) return; wrap.classList.add(r.r==='ok'?'ok':r.r==='feil'?'bad':'seen'); const st=wrap.querySelector('.st'); if(st) st.textContent = r.r==='ok'?'Riktig':r.r==='feil'?'Feil':'Fasit vist'; });
+  q.fields.forEach(f=>{ const r = (s.fields||{})[fieldKey(q.id,f.i)]; if(!r) return; const wrap = main.querySelector(`.fld[data-i="${f.i}"]`); if(!wrap) return; wrap.classList.add(R2C[r.r]); const st=wrap.querySelector('.st'); if(st) st.textContent = r.r==='ok'?'Riktig svar, godt jobbet.':r.r==='feil'?'Feil svar.':'Fasit vist'; });
 }
 function q2status(s, q){ const rs = q.fields.map(f=>(s.fields||{})[fieldKey(q.id,f.i)]).filter(Boolean); if(!rs.length) return ''; if(rs.some(r=>r.r==='fasit')) return 'seen'; if(rs.every(r=>r.r==='ok')) return 'ok'; return 'bad'; }
 function renderAttemptResult(main, s, qs){
@@ -845,13 +965,19 @@ function renderProve(main, s){
     <div class="row" style="margin-top:14px"><a class="btn primary" href="#oving-${n}">Start nytt forsøk</a><a class="btn" href="#oversikt">Til oversikten</a></div>`; return;
   }
   const start = s.ts;
-  main.innerHTML = `<div class="row between"><div><div class="row small muted"><a href="#oving-${n}">${ovName(n)}</a> › Prøvemodus</div><h1>Prøve · ${ovName(n)}</h1></div><span class="timer" id="timer">00:00</span></div>
-  <p class="lead">Ingen hint, ingen fasit før du leverer. Alle felt med automatisk retting teller. Kode- og selvsjekkoppgaver vurderer du selv etterpå i øvingsmodus.</p>
-  <div class="stack">${qs.map(q=>`<div class="card" id="pq_${q.id}"><h3>Oppgave ${q.nr} · ${esc(q.title)}</h3><div class="qtext">${renderText(q,'prove')}</div></div>`).join('')}</div>
-  <div class="row" style="margin-top:16px"><button class="btn primary" id="lever">Lever prøven</button><a class="btn" href="#oving-${n}">Avbryt</a></div><div id="result"></div>`;
+  main.innerHTML = `<div class="cq"><div class="cq-main">
+    <div class="cq-head"><div class="row small muted"><a href="#oving-${n}">${ovName(n)}</a> › Prøvemodus</div><span class="small muted">Ingen hint eller fasit før du leverer</span></div>
+    ${qs.map(q=>queHtml(q, 'prove', {cls:'', txt:'Ikke besvart'}, `id="pq_${q.id}"`)).join('')}
+    <div class="cq-foot"><a class="btn sec" href="#oving-${n}">Avbryt</a><button class="btn primary" id="lever">Fullfør forsøk …</button></div><div id="result"></div>
+  </div>${navBlockHtml(qs, -1, ()=>'', `<span class="small muted">Tid brukt</span><span class="timer" id="timer">00:00</span>`, `<a class="fin" href="#" id="lever2">Fullfør forsøk …</a>`)}</div>`;
+  main.querySelectorAll('.qnbutton').forEach(a=>a.onclick=e=>{ e.preventDefault(); const el = $('#pq_'+a.dataset.q); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); });
   const tm = setInterval(()=>{ const el=$('#timer'); if(!el){ clearInterval(tm); return; } const t=Math.floor((Date.now()-start)/1000); el.textContent = String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); },1000);
-  $('#lever').onclick = async ()=>{
-    clearInterval(tm); let tot=0, got=0; const rows=[]; s.fields = {};
+  let levert = false;
+  const lever = async e=>{
+    if(e) e.preventDefault(); if(levert) return;
+    const tomme = qs.reduce((a,q)=>a+q.fields.filter(isAuto).filter(f=>{ const w=main.querySelector(`#pq_${q.id} .fld[data-i="${f.i}"] input, #pq_${q.id} .fld[data-i="${f.i}"] select`); return w && !w.value.trim(); }).length,0);
+    if(!confirm(`Levere prøven?${tomme?` ${tomme} felt er ikke besvart.`:''} Etter levering kan du ikke endre svarene.`)) return;
+    levert = true; clearInterval(tm); let tot=0, got=0; const rows=[]; s.fields = {};
     for(const q of qs){
       let qn=0, qg=0;
       for(const f of q.fields){
@@ -859,20 +985,26 @@ function renderProve(main, s){
         const inp = wrap.querySelector('input,select'); const st = wrap.querySelector('.st');
         if(isAuto(f)){
           const ok = f.kind==='choice' ? inp.value===f.ans : checkExpr(inp.value, f.ans, f.tol).ok;
-          wrap.classList.add(ok?'ok':'bad'); if(st) st.textContent = ok?'Riktig':'Feil · fasit: '+f.ans;
+          wrap.classList.add(ok?'ok':'bad'); if(st) st.textContent = ok?'Riktig svar.':'Feil svar. Riktig svar er: '+f.ans; inp.disabled = true;
           qn++; if(ok) qg++; await recordAttempt(q,f,{ok,mode:'prove',hint:false,fasit:false}); s.fields[fieldKey(q.id,f.i)] = {r:ok?'ok':'feil', hint:0, ts:Date.now()};
         }
       }
-      if(qn){ tot+=qn; got+=qg; } rows.push({q:q.id,qn,qg});
+      if(qn){ tot+=qn; got+=qg;
+        const stt = qg===qn?{cls:'ok',txt:'Riktig'}:qg===0?{cls:'bad',txt:'Feil'}:{cls:'part',txt:'Delvis riktig'};
+        const el = main.querySelector(`#pq_${q.id} .info .state`); el.className='state '+stt.cls; el.textContent=stt.txt;
+        main.querySelector(`#pq_${q.id} .info .grade`).textContent = `Karakter ${komma(qg/qn*(q.maxp||1))} av ${komma(q.maxp||1)}`;
+        const nb = main.querySelector(`.qnbutton[data-q="${q.id}"]`); if(nb) nb.classList.add(stt.cls); }
+      rows.push({q:q.id,qn,qg});
     }
     Object.assign(s, {done:1, score: tot? got/tot : 0, got, tot, sek:Math.floor((Date.now()-start)/1000), rows, end:Date.now()});
     await saveDoc('sessions', s.id, s);
-    $('#result').innerHTML = `<div class="card" style="margin-top:16px"><h2>Resultat: ${got}/${tot} felt riktig (${Math.round(s.score*100)} %)</h2><p class="small muted">Resultatet er lagret og inngår i mestringen og gjøremålene. <a href="#forsok-${s.id}">Se oppsummeringen</a> eller bla opp for å se fasit ved hvert felt.</p></div>`;
+    $('#result').innerHTML = `<div class="ddp fas" style="margin-top:4px"><h4>Resultat</h4><p style="margin:0;font-size:16px"><strong>${got}/${tot} felt riktig (${Math.round(s.score*100)} %)</strong></p><p class="small" style="margin:6px 0 0">Resultatet er lagret og inngår i mestringen og gjøremålene. <a href="#forsok-${s.id}">Se oppsummeringen</a>, eller bla opp for å se riktig svar ved hvert felt.</p></div>`;
     $('#lever').disabled = true; $('#result').scrollIntoView({behavior:'smooth'});
   };
+  $('#lever').onclick = lever; $('#lever2').onclick = lever;
 }
 
-// ---------- Eksamenssett ----------
+// ---------- Eksamenssett (side) ----------
 function renderEksamen(main){
   main.innerHTML = `<h1>Eksamenssett</h1><p class="lead">Fire sett med løsningsforslag. Jobb på papir med formelark og Python, rett med løsningsforslaget, og logg resultatet per oppgave så det teller med i mestringen og gjøremålene.</p>
   <div class="stack">${EXAMS.map(ex=>{
