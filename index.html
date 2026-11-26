@@ -694,7 +694,7 @@ function route(){
   const setKey = x => /^\d+$/.test(x) ? +x : x;
   if(h==='hjem') renderHjem(main);
   else if(h==='kalender') renderKalender(main);
-  else if(h==='oversikt' || h==='fag-matte') renderDashboard(main);
+  else if(h==='oversikt' || h==='fag-matte') renderFag(main, 'matte');
   else if(h==='gjoremal') renderGjoremal(main);
   else if(h==='gjoremal-matte') renderTodos(main);
   else if(/^fag-(mek|fem)$/.test(h)) renderFag(main, h.slice(4));
@@ -721,26 +721,10 @@ function ctxFag(h){
 }
 function renderSide(h){
   const s = $('#side'); const ctx = ctxFag(h);
-  const glob = `<a href="#hjem" class="${h==='hjem'?'active':''}">Hjem</a><a href="#kalender" class="${h==='kalender'?'active':''}">Kalender</a><a href="#gjoremal" class="${h==='gjoremal'?'active':''}">Gjøremål</a>`;
-  const fagLinks = f => { const sets = Object.entries(window.__SETS||{}).filter(([k,x])=>x.fag===f);
-    return `<a href="#fag-${f}" class="${h==='fag-'+f?'active':''}">Oversikt</a><div class="sub">${sets.map(([k,x])=>`<a href="#oving-${k}" class="${h==='oving-'+k||(h.startsWith('q-')&&(QBY[h.slice(2)]||{}).oving===k)?'active':''}">${esc(x.navn)}</a>`).join('')}</div>`; };
-  if(ctx==='mek' || ctx==='fem'){
-    s.innerHTML = glob + `<div class="grp">${ctx==='mek'?'Mekanikk 1':'Elementmetoden'}</div>` + fagLinks(ctx) + `<div class="grp">Andre fag</div><a href="#oversikt">Matte 3B</a><a href="#fag-${ctx==='mek'?'fem':'mek'}">${ctx==='mek'?'Elementmetoden':'Mekanikk 1'}</a><a href="#om" class="${h==='om'?'active':''}">Om plattformen</a><a href="#notater" class="${h==='notater'?'active':''}">Notater og feil</a>`;
-    return;
-  }
-  if(ctx!=='matte'){
-    s.innerHTML = glob + `<div class="grp">Fag</div><a href="#oversikt">Matte 3B</a><a href="#fag-mek">Mekanikk 1</a><a href="#fag-fem">Elementmetoden</a><div class="grp">Annet</div><a href="#om" class="${h==='om'?'active':''}">Om plattformen</a><a href="#notater" class="${h==='notater'?'active':''}">Notater og feil</a>`;
-    return;
-  }
-  s.innerHTML = glob + `<div class="grp">Matte 3B</div><a href="#oversikt" class="${h==='oversikt'?'active':''}">Oversikt</a>
-  <a href="#gjoremal-matte" class="${h==='gjoremal-matte'?'active':''}">Ukeplan (matte)</a>
-  <a href="#ovinger" class="${h==='ovinger'?'active':''}">Øvinger</a>
-  <div class="sub">${OVS.map(n=>`<a href="#oving-${n}" class="${h==='oving-'+n||h.startsWith('q-o'+n+'q')?'active':''}">Øving ${n}</a>`).join('')}${REPS.map(n=>`<a href="#oving-${n}" class="${h==='oving-'+n||h.startsWith('q-r'+(n-10)+'q')?'active':''}">Repetisjon ${n-10}</a>`).join('')}</div>
-  <a href="#eksamen" class="${h==='eksamen'?'active':''}">Eksamenssett</a>
-  <a href="#komp" class="${h.startsWith('komp')?'active':''}">Kompendium</a>
-  <div class="grp">Andre fag</div><a href="#fag-mek">Mekanikk 1</a><a href="#fag-fem">Elementmetoden</a>
-  <a href="#om" class="${h==='om'?'active':''}">Om plattformen</a>
-  <a href="#notater" class="${h==='notater'?'active':''}">Notater og feil</a>`;
+  const a = (href, txt, on) => `<a href="${href}" class="${on?'active':''}">${txt}</a>`;
+  s.innerHTML = a('#hjem','Hjem',h==='hjem') + a('#kalender','Kalender',h==='kalender') + a('#gjoremal','Gjøremål',h==='gjoremal')
+    + `<div class="grp">Fag</div>` + a('#oversikt','Matte 3B',ctx==='matte') + a('#fag-mek','Mekanikk 1',ctx==='mek') + a('#fag-fem','Elementmetoden',ctx==='fem')
+    + `<div class="grp">Annet</div>` + a('#notater','Notater og feil',h==='notater') + a('#om','Om plattformen',h==='om');
 }
 function daysLeft(){ return Math.max(0, Math.ceil((EXAM_DATE - Date.now())/86400000)); }
 function statusDot(q){ const s = questionScore(q); if(s==null) return '<span class="dot"></span>'; return `<span class="dot ${s>=0.8?'good':s>=0.5?'warn':'bad'}"></span>`; }
@@ -1601,31 +1585,33 @@ const stripMd = s => String(s).replace(/\$[^$]*\$/g, m=>m.slice(1,-1).replace(/\
 
 // ---------- Fagoversikt (Mekanikk / Elementmetoden) ----------
 function renderFag(main, f){
-  if(f==='matte'){ renderDashboard(main); return; }
   const F = FAG[f]; const pr = fagProgress(f), ms = fagMastery(f); const nx = nextActFor(f);
-  const topics = Object.entries(TOPICS).filter(([k,t])=>t.fag===f);
-  const qs = QF(f); const sets = Object.entries(SETS).filter(([k,s])=>s.fag===f);
+  const topics = Object.entries(TOPICS).filter(([k,t])=>(t.fag||'matte')===f);
+  const qs = QF(f); const sets = f==='matte' ? OVS.concat(REPS).map(n=>[n,{navn:ovName(n), info:OVINFO[n]||''}]) : Object.entries(SETS).filter(([k,s])=>s.fag===f);
   const due = dueFields(f);
   const setCard = ([k,s]) => { const sq = qs.filter(q=>q.oving===k); const tried = sq.filter(q=>questionScore(q)!=null).length;
-    return `<a class="setkort" href="#oving-${k}" style="--fc:${F.farge}"><div class="sk-n">${esc(s.navn)}</div><div class="small muted">${sq.length} ${f==='mek'?'deloppgaver':'spørsmål'}${f==='mek'?' · interaktiv med fasit':''}</div>
+    return `<a class="setkort" href="#oving-${k}" style="--fc:${F.farge}"><div class="sk-n">${esc(s.navn)}</div><div class="small muted">${f==='matte'?esc(s.info)+' · ':''}${sq.length} ${f==='mek'?'deloppgaver':f==='matte'?'oppgaver':'spørsmål'}</div>
       <div class="prog" style="margin-top:8px"><i style="width:${sq.length?Math.round(tried/sq.length*100):0}%;background:${F.farge}"></i></div><div class="small muted" style="margin-top:4px">${tried}/${sq.length} forsøkt</div></a>`; };
   main.innerHTML = `<div class="row between"><h1>${esc(F.navn)}</h1><span class="pill" style="background:${F.farge}22;color:${F.farge}">${f==='fem'?'Muntlig':'Eksamen'} ${fmtD(F.exam)} · ${daysTo(F.exam)} dager</span></div>
-  <div class="kpiline small muted">${Math.round(pr.pct*100)} % av planen · ${ms.tried}/${ms.n} ${f==='mek'?'deloppgaver':'spørsmål'} forsøkt · mestring ${pct(ms.m)}</div>
-  <h2 style="margin-top:18px">${f==='mek'?'Eksamenssett (øv med fasit)':'Spørsmålssett'}</h2>
+  <div class="kpiline small muted">${Math.round(pr.pct*100)} % av planen · ${ms.tried}/${ms.n} ${f==='mek'?'deloppgaver':f==='matte'?'oppgaver':'spørsmål'} forsøkt · mestring ${pct(ms.m)}</div>
+  <h2 style="margin-top:18px">${f==='mek'?'Eksamenssett (øv med fasit)':f==='matte'?'Øvinger':'Spørsmålssett'}</h2>
   <div class="setgrid">${sets.map(setCard).join('')}</div>
   ${f==='mek'?`<details class="card fold" style="margin-top:14px"><summary><strong>Tidligere eksamener (PDF)</strong> <span class="small muted">· V26 til H18, logg poengsummen</span></summary>${mekExamsHtml()}</details>
   <details class="card fold"><summary><strong>Regneøvinger</strong> <span class="small muted">· løsningsforslag 1–14</span></summary><div class="row" style="margin-top:10px">${(BM.res.lfov||[]).map(o=>`<a class="btn small ghost" href="${o.pdf}" target="_blank" rel="noopener">LF Øving ${o.n}</a>`).join('')}</div><p class="small muted" style="margin:8px 0 0">Oppgavetekstene til øvingene er ikke med i Canvas-eksporten.</p></details>
   <details class="card fold"><summary><strong>Hjelpemidler</strong> <span class="small muted">· formelark, oppgavesamling, diagramregler</span></summary><div class="row" style="margin-top:10px"><a class="btn small" href="${BM.res.formelark}" target="_blank" rel="noopener">Formelark</a><a class="btn small" href="${BM.res.oppgavesamling}" target="_blank" rel="noopener">Oppgavesamling</a><a class="btn small" href="${BM.res.examprep}" target="_blank" rel="noopener">ExamPrep H24</a><a class="btn small" href="${BM.res.skjaer_torsjon}" target="_blank" rel="noopener">Skjær og torsjon</a></div></details>`:''}
+  ${f==='matte'?`<details class="card fold" style="margin-top:14px"><summary><strong>Eksamenssett</strong> <span class="small muted">· ${EXAMS.length} sett med løsningsforslag, logg per oppgave</span></summary><div class="tblwrap" style="margin-top:10px"><table class="tbl"><tbody>${EXAMS.map(e=>`<tr><td><strong>${esc(e.navn)}</strong> <span class="small muted">${esc(e.dato)}</span></td><td class="small"><a href="${e.pdf}" target="_blank" rel="noopener">Oppgaver</a> · <a href="${e.lf}" target="_blank" rel="noopener">Løsning</a></td></tr>`).join('')}</tbody></table></div><a class="btn small" href="#eksamen" style="margin-top:10px">Logg resultater per oppgave →</a></details>
+  <details class="card fold"><summary><strong>Kompendium</strong> <span class="small muted">· forelesningsnotatene side for side</span></summary><div class="row" style="margin-top:10px">${(window.BANK.sections||[]).filter(x=>x.lvl===1).map(x=>`<a class="btn small ghost" href="#komp-${x.key}">§${esc(x.key)} ${esc(x.title)}</a>`).join('')}</div></details>
+  <details class="card fold"><summary><strong>Ukeplan</strong> <span class="small muted">· den opprinnelige matteplanen uke for uke</span></summary><a class="btn small" href="#gjoremal-matte" style="margin-top:10px">Åpne ukeplanen</a></details>`:''}
   ${f==='fem'?`<details class="card fold" style="margin-top:14px"><summary><strong>Kilder</strong> <span class="small muted">· forelesninger og dokumenter</span></summary><div class="row" style="margin-top:10px">${(BF.res||[]).map(r=>`<a class="btn small ghost" href="${r.pdf}" target="_blank" rel="noopener">${esc(r.t.split(' (')[0])}</a>`).join('')}</div>
     <p class="small muted" style="margin:10px 0 0">Mangler (bare SharePoint-lenker i Canvas): ${(BF.missing||[]).map(esc).join('; ')}.</p></details>`:''}
   <div class="grid g2" style="align-items:start;margin-top:14px">
     <div class="card"><h2>Neste i planen</h2>${nx?`<div class="todo">${actItemHtml(nx.p.a,{noFag:true, rem:nx.p.rem})}</div><p class="small muted" style="margin:6px 0 0">${nx.d===todayStr()?'I dag':fmtD(nx.d)} · <a href="#gjoremal">hele planen</a></p>`:'<p class="muted">Alt i planen er gjort.</p>'}</div>
     <div class="card"><h2>Repetisjon</h2>${due.length?`<div class="qlist">${due.slice(0,8).map(d=>`<a href="#q-${d.q.id}"><span class="n">${esc(ovShort(d.q.oving))}.${esc(d.q.nr)}</span><span class="t">${mdInline(d.q.title)}</span><span class="pill warn">${esc(d.why)}</span></a>`).join('')}</div>`:'<p class="muted small">Oppgaver du bommer på dukker opp her.</p>'}</div>
   </div>
-  <details class="card fold" style="margin-top:14px"><summary><strong>Temaer</strong> <span class="small muted">· mestring og ${f==='mek'?'lysark':'kilder'}</span></summary><div class="tblwrap"><table class="tbl"><thead><tr><th>Tema</th><th>Oppg.</th><th>Mestring</th><th>${f==='mek'?'Lysark':''}</th></tr></thead><tbody>
+  <details class="card fold" style="margin-top:14px"><summary><strong>Temaer</strong> <span class="small muted">· mestring og ${f==='mek'?'lysark':'kilder'}</span></summary><div class="tblwrap"><table class="tbl"><thead><tr><th>Tema</th><th>Oppg.</th><th>Mestring</th><th>${f==='mek'?'Lysark':f==='matte'?'Kompendiet':''}</th></tr></thead><tbody>
     ${topics.map(([k,t])=>{ const tq = qs.filter(q=>q.topic===k); const sc = tq.map(questionScore).filter(x=>x!=null); const m = sc.length? sc.reduce((a,b)=>a+b,0)/sc.length : null;
       return `<tr><td>${esc(t.navn)}</td><td class="num">${tq.length}</td><td class="num"><span class="pill ${m==null?'mute':m>=0.8?'good':m>=0.5?'warn':'bad'}">${pct(m)}</span></td>
-        <td class="small">${(t.lysark||[]).map(l=>`<a href="${l.pdf}" target="_blank" rel="noopener">${esc(l.t.replace(/^\d+\.?\s*/,''))}</a>`).join(' · ')}</td></tr>`; }).join('')}</tbody></table></div></details>`;
+        <td class="small">${f==='matte'&&t.pages?t.pages.map(p=>`<a href="#komp-${p.key}">§${esc(p.key)} ${esc(p.title)}</a>`).join(' · '):''}${(t.lysark||[]).map(l=>`<a href="${l.pdf}" target="_blank" rel="noopener">${esc(l.t.replace(/^\d+\.?\s*/,''))}</a>`).join(' · ')}</td></tr>`; }).join('')}</tbody></table></div></details>`;
   bindActs(main);
   main.querySelectorAll('.mexlog').forEach(inp=>inp.onchange = async ()=>{ const k = inp.dataset.k; const v = inp.value.trim(); if(v===''){ await deleteDoc('exams','mek-'+k); } else await saveDoc('exams','mek-'+k, {set:k, fag:'mek', score:+v, max:100, ts:Date.now()}); PLAN_CACHE=null; toast('Lagret'); });
 }
