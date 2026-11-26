@@ -335,6 +335,33 @@ textarea.ans{width:100%;max-width:76ch;min-height:90px;font:inherit;font-size:14
 .lb-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 14px;background:var(--surface);color:var(--fg)}
 .lb-body{flex:1;overflow:auto;padding:16px;display:flex;justify-content:center;align-items:flex-start}
 .lb-body img{background:#fff;max-width:none;height:auto}
+
+.hjem-grid{display:grid;gap:18px;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);margin-top:18px;align-items:start}
+@media(max-width:900px){.hjem-grid{grid-template-columns:1fr}}
+.fk-top{height:70px}
+.fdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--fc);margin-right:7px;vertical-align:1px;flex:none}
+.it.act .actlink{color:inherit;text-decoration:none;flex:1;min-width:0}
+.it.act .actlink:hover .at{color:var(--accent)}
+.it.act .at{font-size:14.5px}
+.it.act .sub{font-size:12.5px;margin-top:2px}
+.evlist{list-style:none;margin:0;padding:0}
+.evlist li{display:flex;gap:12px;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px}
+.evlist li:first-child{border-top:0}
+.evlist .d{color:var(--muted);min-width:82px;white-space:nowrap}
+.evlist li.eksamen{font-weight:600}
+.warnbox{padding:8px 12px;font-size:13px}
+label.capctl{margin:0}
+.kpiline{margin-top:-4px}
+.setgrid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.setkort{display:block;text-decoration:none;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--fc);border-radius:6px;padding:12px 14px}
+.setkort:hover{box-shadow:0 3px 10px rgba(0,0,0,.12)}
+.sk-n{font-weight:600;font-size:15px;margin-bottom:2px}
+details.fold{margin-top:10px;padding:10px 14px}
+details.fold summary{cursor:pointer}
+.fld.exf{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:16px;padding:4px 0}
+.fld.exf input[type=text]{width:130px;flex:none}
+.fld.exf .flab{font-size:17px}
+.fdesc{font-size:12.5px;color:var(--muted);margin:0 0 4px 2px}
 </style>
 
 <header class="topbar">
@@ -945,7 +972,7 @@ function navBlockHtml(qs, curIdx, statusOf, extraTop, extraBottom){
 }
 function helpPanelHtml(q, f, ctx){
   const multi = q.fields.length>1; const selfKind = !isAuto(f);
-  return `<div class="help" data-i="${f.i}"><div class="hd">${multi?`<span class="lab">Felt ${f.i}</span>`:''}
+  return `<div class="help" data-i="${f.i}"><div class="hd">${multi?`<span class="lab">${f.tex?'$'+f.tex+'$':'Felt '+f.i}</span>`:''}
     <button class="dd h-hint" aria-expanded="false" ${q.hints.length?'':'hidden'}>Hint <span class="hc">${ctx.hints}/${q.hints.length}</span></button>
     <button class="dd h-komp" aria-expanded="false">${isNew(q)?'Vis kilde':'Vis kompendium'}</button>
     ${f.kind==='card'?'':`<button class="dd h-fasit" aria-expanded="false">${isNew(q)&&!q.lf?(f.kind==='text'?'Modellsvar og forklaring':'Svar og forklaring'):'Fasit og forklaring'}</button>`}
@@ -1449,30 +1476,35 @@ function fagProgress(f){ const acts = ACTS.filter(a=>a.fag===f); const tot = act
 function fagMastery(f){ const qs = QF(f); const sc = qs.map(questionScore).filter(x=>x!=null); return {n:qs.length, tried:sc.length, m: sc.length ? sc.reduce((a,b)=>a+b,0)/sc.length : null}; }
 
 // ---------- Visning av aktiviteter ----------
+function splitTitle(t){ const m = String(t).match(/^(.*?)\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)\s*$/); return m ? [m[1], m[2]] : [t, '']; }
 function actItemHtml(a, opts){
   opts = opts||{};
   const st = actStatus(a); const lock = st.done && st.auto && !st.manual;
   const link = actLink(a); const ext = a.ext || /\.pdf|\.html/.test(link);
+  const [main, extra] = splitTitle(a.t);
+  const meta = [fmtMin(opts.rem && opts.rem!==a.min && !st.done ? opts.rem : a.min)];
+  if((a.type==='qs'||a.type==='set') && !st.done && st.prog>0) meta.push(Math.round(st.prog*100)+' % besvart');
+  if(st.manual) meta.push('merket som gjort');
   return `<div class="it act ${st.done?'done':''}" data-act="${a.id}"><button class="chk ${st.done?'on':''}" data-act="${a.id}" title="${lock?'Fullført automatisk ut fra svarene dine':st.done?'Merk som ikke gjort':'Merk som gjort'}" ${lock?'disabled':''}>${st.done?'✓':''}</button>
-    <div class="tx"><div>${opts.noFag?'':fagTag(a.fag)+' '}${mdInline(a.t)}</div>
-    <div class="sub">${fmtMin(a.min)}${opts.rem&&opts.rem!==a.min?` (≈ ${fmtMin(opts.rem)} igjen)`:''}${a.g?' · '+mdInline(a.g):''}${st.sub?` · <span class="${st.done?'':'muted'}">${esc(st.sub)}</span>`:''}${opts.late?' · <span class="pill bad">etter fristen</span>':''}${opts.from?` · <span class="pill warn">flyttet fra ${fmtD(opts.from)}</span>`:''}</div></div>
-    <div class="row" style="gap:6px"><a class="btn small ${st.done?'':'primary'}" href="${esc(link)}" ${ext?'target="_blank" rel="noopener"':''}>${st.done?'Åpne':a.type==='qs'||a.type==='set'?'Start':'Åpne'}</a></div></div>`;
+    <a class="tx actlink" href="${esc(link)}" ${ext?'target="_blank" rel="noopener"':''} title="${esc(stripMd(a.g||''))}"><div class="at">${opts.noFag?'':fagDot(a.fag)}${mdInline(main)}</div>
+    <div class="sub">${extra?`<span class="muted">${mdInline(extra)}</span> · `:''}${meta.join(' · ')}${opts.from?' · <span class="pill warn">flyttet</span>':''}${opts.late?' · <span class="pill bad">etter frist</span>':''}</div></a></div>`;
 }
+const fagDot = f => `<i class="fdot" style="--fc:${FAG[f]?FAG[f].farge:'#888'}" title="${esc(FAG[f]?FAG[f].navn:'')}"></i>`;
 function bindActs(root){
-  root.querySelectorAll('.chk[data-act]').forEach(b=>b.onclick = async ()=>{
+  root.querySelectorAll('.chk[data-act]').forEach(b=>b.onclick = async (e)=>{
+    e.preventDefault();
     const a = ACTBY[b.dataset.act]; if(!a) return; const st = actStatus(a);
     if(st.done && st.auto && !st.manual) return;
     const cur = STATE.todos[a.id];
     await saveDoc('todos', a.id, {done: !(cur&&cur.done), ts: Date.now()});
     PLAN_CACHE = null; route();
   });
-  root.querySelectorAll('a[href^="#"]').forEach(x=>{ if(x.target==='_blank') x.removeAttribute('target'); });
 }
-function capControlHtml(d){
+function capControlHtml(d, dayOnly){
   const ps = planSettings(); const v = capOf(d, ps);
-  return `<div class="capctl"><label>Studietid per dag <input type="number" min="0" max="16" step="0.5" id="cap-all" value="${ps.cap/60}"> t</label>
-    <label>${d===todayStr()?'I dag':fmtD(d)} <input type="number" min="0" max="16" step="0.5" id="cap-day" data-d="${d}" value="${v/60}"> t</label>
-    ${ps.days[d]!=null?`<button class="btn small ghost" id="cap-reset" data-d="${d}">Bruk standard</button>`:''}</div>`;
+  if(!dayOnly) return `<label class="capctl">Studietid per dag <input type="number" min="0" max="16" step="0.5" id="cap-all" value="${ps.cap/60}"> t</label>`;
+  return `<div class="capctl"><label>Studietid ${d===todayStr()?'i dag':fmtD(d)} <input type="number" min="0" max="16" step="0.5" id="cap-day" data-d="${d}" value="${v/60}"> t</label>
+    ${ps.days[d]!=null?`<button class="btn small ghost" id="cap-reset" data-d="${d}">Bruk standard (${ps.cap/60} t)</button>`:''}</div>`;
 }
 function bindCap(root){
   const all = root.querySelector('#cap-all'), day = root.querySelector('#cap-day'), rs = root.querySelector('#cap-reset');
@@ -1481,49 +1513,46 @@ function bindCap(root){
   if(rs) rs.onclick = async ()=>{ const ps = planSettings(); delete ps.days[rs.dataset.d]; await savePlanSettings(ps); PLAN_CACHE=null; route(); };
 }
 function overflowHtml(P){
-  if(!P.overflow.length && !P.excluded.length && !P.late.length) return '';
+  if(!P.overflow.length && !P.excluded.length) return '';
   const byF = {}; P.overflow.concat(P.excluded).forEach(p=>{ (byF[p.a.fag]=byF[p.a.fag]||[]).push(p); });
-  const lines = Object.entries(byF).map(([f,ps])=>{ const m = ps.reduce((s,p)=>s+p.rem,0); return `<li>${fagTag(f)} <strong>${fmtMin(m)}</strong> får ikke plass før ${fmtD(lastStudy(f))}: ${ps.map(p=>mdInline(p.a.t.replace(/\s*\(.*?\)\s*$/,''))).join('; ')}.</li>`; }).join('');
-  const prio = FAG_ORDER.map(f=>{ const top = ACTS.filter(a=>a.fag===f && a.pri===1 && !actStatus(a).done).length; return top? `${FAG[f].kort}: ${top} aktiviteter med høy prioritet gjenstår` : ''; }).filter(Boolean).join(' · ');
-  return `<div class="warnbox"><strong>Tiden strekker ikke helt til.</strong> Planen er laget med ${fmtMin(P.ps.cap)} per dag. Det som har lavest prioritet er tatt ut av planen først:<ul>${lines}</ul>
-    ${P.late.length?`<p class="small" style="margin:4px 0">${P.late.length} aktivitet(er) er lagt etter sin frist.</p>`:''}
-    <p class="small" style="margin:4px 0 0">Prioriter: ${esc(prio)}. Øk studietiden per dag for å få med alt.</p></div>`;
+  const parts = Object.entries(byF).map(([f,ps])=>`${FAG[f].kort} ${fmtMin(ps.reduce((s,p)=>s+p.rem,0))}`).join(', ');
+  return `<div class="warnbox"><strong>Tiden strekker ikke til.</strong> Det som får plass er det viktigste; ${esc(parts)} med lavere prioritet er tatt ut. <a href="#gjoremal">Se hva</a> eller øk studietiden per dag.</div>`;
 }
-
-// ---------- Hjem ----------
 function fagCardHtml(f){
-  const F = FAG[f], pr = fagProgress(f), ms = fagMastery(f), n = daysTo(F.exam), nx = nextActFor(f);
+  const F = FAG[f], pr = fagProgress(f), n = daysTo(F.exam), nx = nextActFor(f);
   const href = f==='matte' ? '#oversikt' : '#fag-'+f;
   return `<a class="fagkort" href="${href}" style="--fc:${F.farge}">
     <div class="fk-top"><span class="fk-kode">${esc(F.kode)}</span><span class="fk-dager">${n>1?n+' dager':n===1?'i morgen':n===0?'i dag':'ferdig'}</span></div>
-    <div class="fk-body"><div class="fk-tittel">${esc(F.canvas)}</div><div class="fk-sem">${esc(F.sem)} · 2026 HØST</div>
-    <div class="fk-ex">Eksamen ${fmtD(F.exam)} · ${esc(F.tid)}</div>
-    <div class="prog" title="Plan: ${pr.ndone} av ${pr.n} aktiviteter"><i style="width:${Math.round(pr.pct*100)}%;background:${F.farge}"></i></div>
-    <div class="fk-kpi"><span>${Math.round(pr.pct*100)} % av planen</span><span>mestring ${pct(ms.m)}</span></div>
-    <div class="fk-next">${nx?`Neste: ${mdInline(nx.p.a.t)} <span class="muted">(${nx.d===todayStr()?'i dag':fmtD(nx.d)})</span>`:'Ingen planlagte aktiviteter igjen.'}</div></div></a>`;
+    <div class="fk-body"><div class="fk-tittel">${esc(F.navn)}</div>
+    <div class="fk-sem">${f==='fem'?'Muntlig':'Eksamen'} ${fmtD(F.exam)}${f!=='fem'?' kl. 09':''}</div>
+    <div class="prog"><i style="width:${Math.round(pr.pct*100)}%;background:${F.farge}"></i></div>
+    <div class="fk-kpi"><span>${Math.round(pr.pct*100)} % av planen</span><span>${pr.ndone}/${pr.n} gjort</span></div></div></a>`;
 }
 function renderHjem(main){
   const P = buildPlan(); const t = todayStr();
   const todays = planFor(t); const done = doneOn(t);
-  const tot = todays.reduce((s,p)=>s+p.rem,0) + P.doneToday;
+  const left = todays.reduce((s,p)=>s+p.rem,0);
   const events = EVENTS.filter(e=>e.date>=t).slice(0,6);
-  main.innerHTML = `<div class="row between"><h1>Hjem</h1><span class="small muted">${fmtD(t)} · ${daysTo(PLAN_END)+1} dager igjen av eksamensperioden</span></div>
-  <p class="lead">Tre fag, én plan. Kortene viser framdrift og tid til eksamen. Dagens gjøremål kommer fra den samme planen som kalenderen og fagoversiktene, og de hukes av automatisk når du har løst oppgavene.</p>
+  const next = dayRange(addDays(t,1), addDays(t,4));
+  main.innerHTML = `<div class="row between"><h1>Hjem</h1><span class="small muted">${fmtD(t)}</span></div>
   <div class="fagkort-grid">${FAG_ORDER.map(fagCardHtml).join('')}</div>
-  <div class="grid g2" style="margin-top:18px;align-items:start">
-    <div class="card"><div class="row between"><h2 style="margin:0">I dag · ${fmtD(t)}</h2><span class="small muted">${fmtMin(tot)} av ${fmtMin(capOf(t))}</span></div>
-      ${capControlHtml(t)}
-      <div class="todo" style="margin-top:10px">${done.map(x=>actItemHtml(x.a)).join('')}${todays.map(p=>actItemHtml(p.a,{rem:p.rem, from: p.a.due<t ? p.a.due : null})).join('')}</div>
+  <div class="hjem-grid">
+    <div class="card"><div class="row between"><h2 style="margin:0">I dag</h2><span class="small muted">${left?fmtMin(left)+' igjen':'ferdig'}${done.length?` · ${done.length} gjort`:''}</span></div>
+      <div class="todo" style="margin-top:10px">${todays.map(p=>actItemHtml(p.a,{rem:p.rem, from: p.a.due<t ? p.a.due : null})).join('')}${done.map(x=>actItemHtml(x.a)).join('')}</div>
       ${!todays.length&&!done.length?'<p class="muted">Ingenting planlagt i dag.</p>':''}
-      ${!todays.length&&done.length?'<p class="small" style="color:var(--good);margin:8px 0 0">Dagens plan er gjort. Det du gjør i tillegg trekkes fra de neste dagene.</p>':''}
-      <div class="row" style="margin-top:12px"><a class="btn small" href="#gjoremal">Hele gjøremålslisten</a><a class="btn small" href="#kalender">Kalender</a></div></div>
+      ${!todays.length&&done.length?'<p class="small" style="color:var(--good);margin:8px 0 0">Dagens plan er gjort.</p>':''}
+      <div class="row between" style="margin-top:12px">${capControlHtml(t)}<a class="btn small ghost" href="#gjoremal">Hele planen →</a></div>
+      ${overflowHtml(P)}</div>
     <div class="stack">
-      ${overflowHtml(P)}
-      <div class="card"><h2>Kommende hendelser</h2><table class="tbl"><tbody>${events.map(e=>`<tr><td class="num" style="text-align:left;white-space:nowrap">${fmtD(e.date)}</td><td>${e.type==='eksamen'?'<span class="pill bad">Eksamen</span> ':'<span class="pill warn">Frist</span> '}${esc(e.tekst)}</td></tr>`).join('')}</tbody></table>
-        <p class="small muted" style="margin:8px 0 0">Fra Canvas. Kandidatnummer er utelatt.</p></div>
-      <div class="card"><h2>Neste dager</h2>${dayRange(addDays(t,1), addDays(t,3)).map(d=>{ const ps2 = planFor(d); return `<div class="nday"><div class="small"><strong>${fmtD(d)}</strong> <span class="muted">· ${fmtMin(ps2.reduce((s,p)=>s+p.rem,0))} av ${fmtMin(capOf(d))}</span></div>${ps2.length?`<ul class="plain small">${ps2.map(p=>`<li>${fagTag(p.a.fag)} ${mdInline(p.a.t)}</li>`).join('')}</ul>`:'<div class="small muted">Ingenting planlagt.</div>'}</div>`; }).join('')}</div>
+      <div class="card"><h2>Eksamener og frister</h2><ul class="evlist">${events.map(e=>`<li class="${e.type}"><span class="d">${fmtD(e.date)}</span><span>${esc(shortEvent(e))}</span></li>`).join('')}</ul></div>
+      <div class="card"><div class="row between"><h2 style="margin:0">Neste dager</h2><a class="small" href="#kalender">Kalender →</a></div><ul class="evlist" style="margin-top:8px">${next.map(d=>{ const ps2 = planFor(d); const fs = [...new Set(ps2.map(p=>p.a.fag))];
+        return `<li><span class="d">${fmtD(d)}</span><span>${ps2.length? fs.map(fagDot).join('')+` ${ps2.length} aktiviteter · ${fmtMin(ps2.reduce((s,p)=>s+p.rem,0))}` : '<span class="muted">fri</span>'}</span></li>`; }).join('')}</ul></div>
     </div></div>`;
   bindActs(main); bindCap(main);
+}
+function shortEvent(e){
+  if(e.type==='eksamen') return (e.fag==='fem'?'Muntlig ':'Eksamen ')+FAG[e.fag].navn+(e.fag==='fem'?'':' kl. 09:00');
+  return e.tekst.replace(/\s*\(Inspera\)/,'').replace(/^(\S+) [^:]+:\s*/, '$1: ');
 }
 
 // ---------- Gjøremål (alle fag) ----------
@@ -1532,10 +1561,9 @@ function renderGjoremal(main){
   const days = Object.keys(P.plan).filter(d=>P.plan[d].length);
   const doneAll = ACTS.map(a=>({a, st:actStatus(a)})).filter(x=>x.st.done).sort((x,y)=>(y.st.ts||0)-(x.st.ts||0));
   main.innerHTML = `<div class="row between"><h1>Gjøremål</h1><a class="btn small" href="#kalender">Vis i kalender</a></div>
-  <p class="lead">Alle aktiviteter i de tre fagene, fordelt baklengs fra eksamensdatoene og innenfor studietiden du har satt. Det du ikke rekker, blir liggende som utestående og flyttes automatisk til neste dag med ledig kapasitet.</p>
-  ${capControlHtml(t)}${overflowHtml(P)}
+  <div class="row between" style="margin-bottom:6px">${capControlHtml(t)}<span class="small muted">Ugjort flyttes til neste ledige dag</span></div>${overflowHtml(P)}
   ${days.map(d=>{ const ps2 = P.plan[d]; const m = ps2.reduce((s,p)=>s+p.rem,0); const extra = d===t ? doneOn(t) : [];
-    return `<div class="weekhd"><h2>${d===t?'I dag · ':''}${fmtD(d)}</h2><span class="small muted">${fmtMin(m)} av ${fmtMin(capOf(d))}</span></div>
+    return `<div class="weekhd"><h2>${d===t?'I dag · ':''}${fmtD(d)}</h2><span class="small muted">${fmtMin(m)}</span></div>
     <div class="todo">${extra.map(x=>actItemHtml(x.a)).join('')}${ps2.map(p=>actItemHtml(p.a,{rem:p.rem, from: d===t && p.a.due<t ? p.a.due : null, late: p.a.due<d && p.a.due>=t})).join('')}</div>`; }).join('')}
   ${P.excluded.length?`<h2 style="margin-top:18px">Nedprioritert (får ikke plass)</h2><div class="todo">${P.excluded.map(p=>actItemHtml(p.a,{rem:p.rem})).join('')}</div>`:''}
   ${doneAll.length?`<details style="margin-top:18px"><summary class="small" style="cursor:pointer">Fullført (${doneAll.length})</summary><div class="todo" style="margin-top:8px">${doneAll.map(x=>actItemHtml(x.a)).join('')}</div></details>`:''}`;
@@ -1558,13 +1586,12 @@ function renderKalender(main, sel){
       ${ps2.map(p=>`<div class="cd-it" style="--fc:${FAG[p.a.fag].farge}">${esc(stripMd(p.a.t))}</div>`).join('')}</button>`;
   };
   const selPlan = CAL_SEL>=t ? (P.plan[CAL_SEL]||[]) : []; const selDone = doneOn(CAL_SEL); const selEv = EVENTS.filter(e=>e.date===CAL_SEL);
-  main.innerHTML = `<div class="row between"><h1>Kalender</h1><div class="row small">${FAG_ORDER.map(f=>fagTag(f)).join(' ')}</div></div>
-  <p class="lead">Hele planen fram til siste eksamen. Eksamensdagene er markert, og dagene etter eksamen i et fag har ikke flere aktiviteter i det faget. Velg en dag for å se gjøremålene og justere studietiden.</p>
+  main.innerHTML = `<div class="row between"><h1>Kalender</h1><div class="row small">${FAG_ORDER.map(f=>fagDot(f)+esc(FAG[f].kort)).join(' &nbsp; ')}</div></div>
   ${overflowHtml(P)}
   <div class="cal"><div class="cal-h">${['man','tir','ons','tor','fre','lør','søn'].map(x=>`<div>${x}</div>`).join('')}</div>${weeks.map(w=>`<div class="cal-w">${w.map(cell).join('')}</div>`).join('')}</div>
   <div class="card" style="margin-top:16px"><div class="row between"><h2 style="margin:0">${CAL_SEL===t?'I dag · ':''}${fmtD(CAL_SEL)}</h2><span class="small muted">${fmtMin(selPlan.reduce((s,p)=>s+p.rem,0))} planlagt</span></div>
     ${selEv.map(e=>`<p class="${e.type==='eksamen'?'warnnote':'small'}" style="margin:8px 0">${esc(e.tekst)}</p>`).join('')}
-    ${CAL_SEL>=t?capControlHtml(CAL_SEL):''}
+    ${CAL_SEL>=t?capControlHtml(CAL_SEL, true):''}
     <div class="todo" style="margin-top:10px">${selDone.map(x=>actItemHtml(x.a)).join('')}${selPlan.map(p=>actItemHtml(p.a,{rem:p.rem})).join('')}</div>
     ${!selPlan.length&&!selDone.length?`<p class="muted">${CAL_SEL<t?'Ingen aktiviteter ble fullført denne dagen.':'Ingenting planlagt.'}</p>`:''}</div>`;
   main.querySelectorAll('.calday').forEach(b=>b.onclick=()=>{ CAL_SEL = b.dataset.d; renderKalender(main, CAL_SEL); typeset(main); });
@@ -1575,48 +1602,37 @@ const stripMd = s => String(s).replace(/\$[^$]*\$/g, m=>m.slice(1,-1).replace(/\
 // ---------- Fagoversikt (Mekanikk / Elementmetoden) ----------
 function renderFag(main, f){
   if(f==='matte'){ renderDashboard(main); return; }
-  const F = FAG[f]; const P = buildPlan(); const pr = fagProgress(f), ms = fagMastery(f); const nx = nextActFor(f);
+  const F = FAG[f]; const pr = fagProgress(f), ms = fagMastery(f); const nx = nextActFor(f);
   const topics = Object.entries(TOPICS).filter(([k,t])=>t.fag===f);
   const qs = QF(f); const sets = Object.entries(SETS).filter(([k,s])=>s.fag===f);
   const due = dueFields(f);
-  const upcoming = Object.keys(P.plan).sort().flatMap(d=>P.plan[d].filter(p=>p.a.fag===f).map(p=>({d,p}))).slice(0,6);
-  main.innerHTML = `<div class="row between"><h1>${esc(F.navn)} <span class="muted" style="font-weight:400;font-size:16px">· ${esc(F.kode)}</span></h1><span class="pill" style="background:${F.farge}22;color:${F.farge}">${daysTo(F.exam)>0?daysTo(F.exam)+' dager til eksamen':'Eksamen '+fmtD(F.exam)}</span></div>
-  <p class="lead">Eksamen ${fmtD(F.exam)}, ${esc(F.tid)}. ${esc(F.form)}</p>
-  <div class="grid g4" style="margin-bottom:16px">
-    <div class="card kpi"><div class="n">${daysTo(F.exam)}</div><div class="l">dager til eksamen</div></div>
-    <div class="card kpi"><div class="n">${Math.round(pr.pct*100)} %</div><div class="l">av planen gjort (${pr.ndone}/${pr.n} aktiviteter)</div></div>
-    <div class="card kpi"><div class="n">${ms.tried}<span class="muted" style="font-size:16px">/${ms.n}</span></div><div class="l">${f==='mek'?'deloppgaver':'spørsmål'} forsøkt</div></div>
-    <div class="card kpi"><div class="n">${pct(ms.m)}</div><div class="l">mestring i oppgavene du har prøvd</div></div>
+  const setCard = ([k,s]) => { const sq = qs.filter(q=>q.oving===k); const tried = sq.filter(q=>questionScore(q)!=null).length;
+    return `<a class="setkort" href="#oving-${k}" style="--fc:${F.farge}"><div class="sk-n">${esc(s.navn)}</div><div class="small muted">${sq.length} ${f==='mek'?'deloppgaver':'spørsmål'}${f==='mek'?' · interaktiv med fasit':''}</div>
+      <div class="prog" style="margin-top:8px"><i style="width:${sq.length?Math.round(tried/sq.length*100):0}%;background:${F.farge}"></i></div><div class="small muted" style="margin-top:4px">${tried}/${sq.length} forsøkt</div></a>`; };
+  main.innerHTML = `<div class="row between"><h1>${esc(F.navn)}</h1><span class="pill" style="background:${F.farge}22;color:${F.farge}">${f==='fem'?'Muntlig':'Eksamen'} ${fmtD(F.exam)} · ${daysTo(F.exam)} dager</span></div>
+  <div class="kpiline small muted">${Math.round(pr.pct*100)} % av planen · ${ms.tried}/${ms.n} ${f==='mek'?'deloppgaver':'spørsmål'} forsøkt · mestring ${pct(ms.m)}</div>
+  <h2 style="margin-top:18px">${f==='mek'?'Eksamenssett (øv med fasit)':'Spørsmålssett'}</h2>
+  <div class="setgrid">${sets.map(setCard).join('')}</div>
+  ${f==='mek'?`<details class="card fold" style="margin-top:14px"><summary><strong>Tidligere eksamener (PDF)</strong> <span class="small muted">· V26 til H18, logg poengsummen</span></summary>${mekExamsHtml()}</details>
+  <details class="card fold"><summary><strong>Regneøvinger</strong> <span class="small muted">· løsningsforslag 1–14</span></summary><div class="row" style="margin-top:10px">${(BM.res.lfov||[]).map(o=>`<a class="btn small ghost" href="${o.pdf}" target="_blank" rel="noopener">LF Øving ${o.n}</a>`).join('')}</div><p class="small muted" style="margin:8px 0 0">Oppgavetekstene til øvingene er ikke med i Canvas-eksporten.</p></details>
+  <details class="card fold"><summary><strong>Hjelpemidler</strong> <span class="small muted">· formelark, oppgavesamling, diagramregler</span></summary><div class="row" style="margin-top:10px"><a class="btn small" href="${BM.res.formelark}" target="_blank" rel="noopener">Formelark</a><a class="btn small" href="${BM.res.oppgavesamling}" target="_blank" rel="noopener">Oppgavesamling</a><a class="btn small" href="${BM.res.examprep}" target="_blank" rel="noopener">ExamPrep H24</a><a class="btn small" href="${BM.res.skjaer_torsjon}" target="_blank" rel="noopener">Skjær og torsjon</a></div></details>`:''}
+  ${f==='fem'?`<details class="card fold" style="margin-top:14px"><summary><strong>Kilder</strong> <span class="small muted">· forelesninger og dokumenter</span></summary><div class="row" style="margin-top:10px">${(BF.res||[]).map(r=>`<a class="btn small ghost" href="${r.pdf}" target="_blank" rel="noopener">${esc(r.t.split(' (')[0])}</a>`).join('')}</div>
+    <p class="small muted" style="margin:10px 0 0">Mangler (bare SharePoint-lenker i Canvas): ${(BF.missing||[]).map(esc).join('; ')}.</p></details>`:''}
+  <div class="grid g2" style="align-items:start;margin-top:14px">
+    <div class="card"><h2>Neste i planen</h2>${nx?`<div class="todo">${actItemHtml(nx.p.a,{noFag:true, rem:nx.p.rem})}</div><p class="small muted" style="margin:6px 0 0">${nx.d===todayStr()?'I dag':fmtD(nx.d)} · <a href="#gjoremal">hele planen</a></p>`:'<p class="muted">Alt i planen er gjort.</p>'}</div>
+    <div class="card"><h2>Repetisjon</h2>${due.length?`<div class="qlist">${due.slice(0,8).map(d=>`<a href="#q-${d.q.id}"><span class="n">${esc(ovShort(d.q.oving))}.${esc(d.q.nr)}</span><span class="t">${mdInline(d.q.title)}</span><span class="pill warn">${esc(d.why)}</span></a>`).join('')}</div>`:'<p class="muted small">Oppgaver du bommer på dukker opp her.</p>'}</div>
   </div>
-  <div class="grid g2" style="align-items:start">
-    <div class="card"><h2>Neste planlagte aktivitet</h2>${nx?`<p class="small muted" style="margin:0 0 6px">${nx.d===todayStr()?'I dag':fmtD(nx.d)}</p><div class="todo">${actItemHtml(nx.p.a,{noFag:true, rem:nx.p.rem})}</div>`:'<p class="muted">Alt i planen er gjort.</p>'}
-      ${upcoming.length>1?`<h3 style="margin-top:14px">Deretter</h3><ul class="plain small">${upcoming.slice(1).map(x=>`<li><span class="muted">${fmtD(x.d)}:</span> ${mdInline(x.p.a.t)}</li>`).join('')}</ul>`:''}
-      <div class="row" style="margin-top:10px"><a class="btn small" href="#gjoremal">Hele planen</a></div></div>
-    <div class="card"><h2>Repetisjon</h2><p class="small muted">Feil, «fasit vist» og spørsmål som har forfalt til ny repetisjon (1, 3, 7, 14, 30 dager).</p>
-      ${due.length?`<div class="qlist">${due.slice(0,10).map(d=>`<a href="#q-${d.q.id}"><span class="n">${esc(ovShort(d.q.oving))}.${esc(d.q.nr)}</span><span class="t">${mdInline(d.q.title)}</span><span class="pill warn">${esc(d.why)}</span></a>`).join('')}</div>`:'<p class="muted">Ingenting å repetere ennå.</p>'}</div>
-  </div>
-  <div class="card" style="margin-top:16px"><h2>${f==='mek'?'Eksamenssett med retting':'Spørsmålssett'}</h2>
-    <p class="small muted">${f==='mek'?'Originale oppgaver fra Inspera-utskriftene, med figurene og oppgavenummer som i originalen. Svarene rettes mot den offisielle fasiten, og løsningsforslaget vises side for side.':'Egenlagde treningsspørsmål, merket med kilde (forelesning og lysbilde eller side). Flashcards, flervalg, korte forklaringer, figurspørsmål og små beregninger.'}</p>
-    <div class="stack">${sets.map(([k,s])=>{ const sq = qs.filter(q=>q.oving===k); const sc = sq.map(questionScore); const dn = sc.filter(x=>x!=null).length; const avg = dn? sc.filter(x=>x!=null).reduce((a,b)=>a+b,0)/dn : null; const open = Object.values(STATE.sessions).find(x=>x.oving===k && !x.done);
-      return `<div class="setrow"><div><strong>${esc(s.navn)}</strong> <span class="small muted">· ${esc(s.info)}</span><div class="small muted">${sq.length} ${f==='mek'?'deloppgaver':'spørsmål'} · ${dn} forsøkt · mestring ${pct(avg)}${open?' · <span class="pill warn">forsøk pågår</span>':''}</div></div>
-        <div class="row">${s.pdf?`<a class="btn small" href="${s.pdf}" target="_blank" rel="noopener">Oppgavesett (PDF)</a><a class="btn small" href="${s.lf}" target="_blank" rel="noopener">LF (PDF)</a>`:''}${open?`<a class="btn small" href="#forsok-${open.id}">Fortsett</a>`:''}<a class="btn small primary" href="#oving-${k}">Åpne</a></div></div>`; }).join('')}</div></div>
-  ${f==='mek'?mekExamsHtml():''}
-  <div class="card" style="margin-top:16px"><h2>Temaer</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Tema</th><th>Oppgaver</th><th>Mestring</th><th>${f==='mek'?'Lysark og oppgavesamling':'Kilder'}</th></tr></thead><tbody>
+  <details class="card fold" style="margin-top:14px"><summary><strong>Temaer</strong> <span class="small muted">· mestring og ${f==='mek'?'lysark':'kilder'}</span></summary><div class="tblwrap"><table class="tbl"><thead><tr><th>Tema</th><th>Oppg.</th><th>Mestring</th><th>${f==='mek'?'Lysark':''}</th></tr></thead><tbody>
     ${topics.map(([k,t])=>{ const tq = qs.filter(q=>q.topic===k); const sc = tq.map(questionScore).filter(x=>x!=null); const m = sc.length? sc.reduce((a,b)=>a+b,0)/sc.length : null;
-      return `<tr><td>${esc(t.navn)}${f==='mek'?` <span class="small muted">· ${Math.round(t.vekt*100)} % av poengene (H25)</span>`:''}</td><td class="num">${tq.length}</td><td class="num"><span class="pill ${m==null?'mute':m>=0.8?'good':m>=0.5?'warn':'bad'}">${pct(m)}</span></td>
-        <td class="small">${(t.lysark||[]).map(l=>`<a href="${l.pdf}" target="_blank" rel="noopener">${esc(l.t.replace(/^\d+\.?\s*/,''))}</a>`).join(' · ')}${t.samling&&t.samling.length?` · Oppgavesamling nr. ${t.samling[0]}–${t.samling[t.samling.length-1]} (<a href="mek/pdf/oppgavesamling.pdf#page=${(BM.res.samling_oppg||{})[t.samling[0]]||1}" target="_blank" rel="noopener">s. ${(BM.res.samling_oppg||{})[t.samling[0]]||1}</a>)`:''}</td></tr>`; }).join('')}</tbody></table></div></div>
-  ${f==='mek'?`<div class="card" style="margin-top:16px"><h2>Ressurser</h2><div class="row"><a class="btn small" href="${BM.res.formelark}" target="_blank" rel="noopener">Formelark</a><a class="btn small" href="${BM.res.oppgavesamling}" target="_blank" rel="noopener">Oppgavesamling med løsninger</a><a class="btn small" href="${BM.res.examprep}" target="_blank" rel="noopener">ExamPrep H24 (diagramregler)</a><a class="btn small" href="${BM.res.skjaer_torsjon}" target="_blank" rel="noopener">Skjær og torsjon (gamle oppgaver)</a></div>
-    <p class="small muted" style="margin:10px 0 4px">Løsningsforslag til regneøvingene (oppgavetekstene til øvingene er ikke med i Canvas-eksporten):</p><div class="row">${(BM.res.lfov||[]).map(o=>`<a class="btn small ghost" href="${o.pdf}" target="_blank" rel="noopener">LF Øving ${o.n}</a>`).join('')}</div></div>`:''}
-  ${f==='fem'?`<div class="card" style="margin-top:16px"><h2>Kilder og materiale som mangler</h2><div class="row">${(BF.res||[]).map(r=>`<a class="btn small ghost" href="${r.pdf}" target="_blank" rel="noopener">${esc(r.t.split(' (')[0])}</a>`).join('')}</div>
-    <p class="warnnote" style="margin:12px 0 0">Disse forelesningene ligger bare som SharePoint-lenker i Canvas og er ikke med i eksporten, så det finnes ingen spørsmål fra dem ennå: ${(BF.missing||[]).map(esc).join('; ')}.</p></div>`:''}`;
+      return `<tr><td>${esc(t.navn)}</td><td class="num">${tq.length}</td><td class="num"><span class="pill ${m==null?'mute':m>=0.8?'good':m>=0.5?'warn':'bad'}">${pct(m)}</span></td>
+        <td class="small">${(t.lysark||[]).map(l=>`<a href="${l.pdf}" target="_blank" rel="noopener">${esc(l.t.replace(/^\d+\.?\s*/,''))}</a>`).join(' · ')}</td></tr>`; }).join('')}</tbody></table></div></details>`;
   bindActs(main);
   main.querySelectorAll('.mexlog').forEach(inp=>inp.onchange = async ()=>{ const k = inp.dataset.k; const v = inp.value.trim(); if(v===''){ await deleteDoc('exams','mek-'+k); } else await saveDoc('exams','mek-'+k, {set:k, fag:'mek', score:+v, max:100, ts:Date.now()}); PLAN_CACHE=null; toast('Lagret'); });
 }
 function mekExamsHtml(){
-  return `<div class="card" style="margin-top:16px"><h2>Tidligere eksamener (hele sett)</h2><p class="small muted">Løs settet på papir på tid, rett med løsningsforslaget (og sensurveiledningen for V26), og før inn poengsummen. Den inngår i planen.</p>
-  <div class="tblwrap"><table class="tbl"><thead><tr><th>Sett</th><th>Filer</th><th>Dine poeng</th></tr></thead><tbody>${(BM.exams||[]).map(e=>{ const r = STATE.exams['mek-'+e.key];
-    return `<tr><td><strong>${esc(e.navn)}</strong> <span class="small muted">${esc(e.dato)}</span>${e.note?`<div class="small muted">${esc(e.note)}</div>`:''}</td><td class="small"><a href="${e.pdf}" target="_blank" rel="noopener">Oppgaver</a> · <a href="${e.lf}" target="_blank" rel="noopener">Løsning</a>${e.sensur?` · <a href="${e.sensur}" target="_blank" rel="noopener">Sensurveiledning</a>`:''}</td>
-      <td class="num"><input type="number" class="mexlog" data-k="${e.key}" min="0" max="${e.max}" value="${r?r.score:''}" style="width:70px"> / ${e.max}</td></tr>`; }).join('')}</tbody></table></div></div>`;
+  return `<div class="tblwrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Sett</th><th>Filer</th><th>Poeng</th></tr></thead><tbody>${(BM.exams||[]).map(e=>{ const r = STATE.exams['mek-'+e.key];
+    return `<tr><td><strong>${esc(e.navn.split(' (')[0])}</strong></td><td class="small"><a href="${e.pdf}" target="_blank" rel="noopener">Oppgaver</a> · <a href="${e.lf}" target="_blank" rel="noopener">Løsning</a>${e.sensur?` · <a href="${e.sensur}" target="_blank" rel="noopener">Sensur</a>`:''}</td>
+      <td class="num"><input type="number" class="mexlog" data-k="${e.key}" min="0" max="${e.max}" value="${r?r.score:''}" style="width:64px"> / ${e.max}</td></tr>`; }).join('')}</tbody></table></div>`;
 }
 
 // ---------- Visning av mek/fem-oppgaver ----------
@@ -1646,6 +1662,10 @@ function newFieldHtml(q, f, mode){
   const id = `fld_${q.id}_${f.i}`, multi = q.fields.length>1;
   const tag = multi ? `<span class="tag">${f.i}</span>` : '';
   const chk = mode==='ov' ? `<button class="btn small chk" data-q="${q.id}" data-i="${f.i}">Sjekk</button>` : '';
+  if(f.kind==='expr' && f.tex){
+    const u = f.unitTex ? (/\\/.test(f.unitTex) ? `$${f.unitTex}$` : esc(f.unitTex)) : '';
+    return `<div class="fblock"><span class="fld exf" data-q="${q.id}" data-i="${f.i}"><span class="flab">$${f.tex} =$</span><input type="text" id="${id}" autocomplete="off" spellcheck="false" inputmode="decimal"><span class="funit">${u}</span>${chk}<span class="st"></span></span>${f.desc?`<div class="fdesc">${esc(f.desc)}</div>`:''}</div>`;
+  }
   if(f.kind==='expr'){
     const lab = f.img ? `<div class="segimg fieldimg">${zimg(f.img,'Svarfelt '+f.i)}</div>` : '';
     return `<div class="fblock">${lab}<span class="fld" data-q="${q.id}" data-i="${f.i}">${tag}${f.label?`<span class="flab">${mdInline(f.label)} =</span>`:f.img?'<span class="flab small muted">Svar:</span>':''}<input type="text" id="${id}" autocomplete="off" spellcheck="false" inputmode="decimal">${f.unit?`<span class="small">${esc(f.unit)}</span>`:''}${chk}<span class="st"></span></span></div>`;
@@ -1676,6 +1696,7 @@ function gradeField(f, val){
 function optHtml(f, k){ if(k==null) return '–'; if(f.kind==='mc') return mdInline(f.opts[k]); const lab = (f.labels||[])[k]; return (lab? mdInline(lab)+' ' : '') + (f.opts&&f.opts[k]? zimg(f.opts[k], lab||'Alternativ', 'optimg') : ''); }
 function newAnsHtml(f){
   if(f.kind==='pick' || f.kind==='mc') return optHtml(f, f.ans) + ((f.alt||[]).filter(x=>x!==f.ans).length ? `<div class="small">Godtas også: ${(f.alt||[]).filter(x=>x!==f.ans).map(x=>optHtml(f,x)).join(' ')}</div>` : '');
+  if(f.kind==='expr' && f.tex) return `$${f.tex} = ${String(f.ans).replace('.',',')}\\ ${f.unitTex? (/\\/.test(f.unitTex)? f.unitTex : '\\text{'+f.unitTex+'}') : ''}$${f.tol?` <span class="small muted">(godtas ± ${String(f.tol).replace('.',',')})</span>`:''}`;
   if(f.kind==='expr') return `<code>${esc(f.ans)}</code>${f.unit?' '+esc(f.unit):''}${f.tol?` <span class="small muted">(godtas ± ${String(f.tol).replace('.',',')})</span>`:''}`;
   if(f.kind==='card') return mdBlock(f.ans);
   return f.ref ? mdBlock(f.ref) : '<span class="muted">Se løsningsforslaget under.</span>';
