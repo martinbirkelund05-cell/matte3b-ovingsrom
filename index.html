@@ -362,6 +362,37 @@ details.fold summary{cursor:pointer}
 .fld.exf input[type=text]{width:130px;flex:none}
 .fld.exf .flab{font-size:17px}
 .fdesc{font-size:12.5px;color:var(--muted);margin:0 0 4px 2px}
+
+.pensum{margin:6px 0 16px}
+.plegend{display:flex;gap:14px;color:var(--muted)}
+.plegend i,.pbar i{display:inline-block}
+.plegend i{width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.pm{background:var(--fc)}
+.pt{background:color-mix(in srgb,var(--fc) 38%,var(--surface))}
+.pr{background:var(--line)}
+.phero{display:flex;align-items:baseline;gap:10px;margin:8px 0 6px}
+.pnum{font-size:30px;font-weight:700;letter-spacing:-.02em}
+.pbar{display:flex;gap:2px;height:10px;border-radius:4px;overflow:hidden;background:var(--surface)}
+.pbar.big{height:18px}
+.pbar i{height:100%}
+.ptopics{margin-top:10px}
+.ptopics summary{cursor:pointer;color:var(--muted)}
+.prows{display:grid;gap:6px;margin-top:8px}
+.prow{display:grid;grid-template-columns:minmax(120px,220px) 1fr 52px;gap:10px;align-items:center}
+.prow .pl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .pv{text-align:right;font-variant-numeric:tabular-nums}
+details.fsec{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-top:12px}
+details.fsec>summary{cursor:pointer;padding:12px 16px;display:flex;gap:10px;align-items:baseline;list-style:none}
+details.fsec>summary::-webkit-details-marker{display:none}
+details.fsec>summary::before{content:'▸';color:var(--muted);transition:transform .15s;display:inline-block}
+details.fsec[open]>summary::before{transform:rotate(90deg)}
+.fs-t{font-weight:600;font-size:16px}
+.fs-s{font-size:13px;color:var(--muted)}
+.fs-b{padding:0 16px 16px}
+.setkort{display:flex;flex-direction:column;gap:4px;min-height:112px}
+.sk-i{font-size:13px;color:var(--muted)}
+.sk-l{margin-top:auto}
+.sk-score input{width:58px;margin-left:4px}
 </style>
 
 <header class="topbar">
@@ -477,7 +508,7 @@ const FILE = {
   markDirty(){ if(!this.handle) return; this.dirty = true; this.render(); clearTimeout(this.timer); this.timer = setTimeout(()=>this.save(), 1500); },
   async save(){ if(!this.handle) return false; try{ const w = await this.handle.createWritable(); await w.write(JSON.stringify(STATE, null, 1)); await w.close(); this.dirty=false; this.savedAt=new Date(); this.render(); return true; }catch(e){ console.warn(e); toast('Kunne ikke lagre til fila – bruk «Lagre som»'); return false; } },
   async open(){ try{ const [h] = await showOpenFilePicker({types:[{description:'Historikk (JSON)',accept:{'application/json':['.json']}}], multiple:false}); await this.use(h, true); }catch(e){ if(e.name!=='AbortError') toast('Kunne ikke åpne fila'); } },
-  async create(){ try{ const h = await showSaveFilePicker({suggestedName:'matte3b_historikk.json', types:[{description:'Historikk (JSON)',accept:{'application/json':['.json']}}]}); this.handle = h; await this.idbSet(h); this.dirty=true; await this.save(); toast('Historikken lagres nå i ' + h.name); }catch(e){ if(e.name!=='AbortError') toast('Kunne ikke lage fila'); } },
+  async create(){ try{ const h = await showSaveFilePicker({suggestedName:'Studieplattform_historikk.json', types:[{description:'Historikk (JSON)',accept:{'application/json':['.json']}}]}); this.handle = h; await this.idbSet(h); this.dirty=true; await this.save(); toast('Historikken lagres nå i ' + h.name); }catch(e){ if(e.name!=='AbortError') toast('Kunne ikke lage fila'); } },
   async use(h, load){ if((await h.requestPermission({mode:'readwrite'}))!=='granted'){ toast('Fikk ikke tilgang til fila'); return; }
     this.handle = h; await this.idbSet(h);
     if(load){ try{ const txt = await (await h.getFile()).text(); const d = txt.trim() ? JSON.parse(txt) : {}; const n = COLLS.reduce((a,c)=>a+Object.keys(d[c]||{}).length,0); const cur = COLLS.reduce((a,c)=>a+Object.keys(STATE[c]||{}).length,0);
@@ -1188,7 +1219,7 @@ function renderOm(main){
   <p><strong>Gjøremål.</strong> Planen fram til eksamen er delt i gjøremål per uke. Øvings-, prøve- og eksamensgjøremål hukes av automatisk ut fra historikken; lesing og innlevering huker du av selv. Statusen øverst sier om du ligger foran, i rute eller bak.</p>
   <p class="small muted">${store?'Historikken lagres i sidens database og følger deg mellom enheter.':FILE.supported()?'<strong>Historikkfil.</strong> Øverst på siden kan du velge «Lagre som …» for å opprette en historikkfil (JSON) på PC-en, eller «Åpne historikk» for å fortsette fra en fil. Når en fil er åpen, lagres hvert svar automatisk til fila (status øverst), og neste gang du åpner øvingsrommet kan du trykke «Fortsett». Hver person bruker sin egen fil – så flere kan dele samme mappe/repo uten å blande historikk. Uten fil ligger historikken bare i denne nettleseren.':'Historikken lagres lokalt i denne nettleseren (localStorage). Ta en sikkerhetskopi med knappen under før du bytter maskin eller nettleser.'}</p>
   <div class="row">${window.claude?'':'<button class="btn" id="exp">Last ned historikk (JSON)</button>'}<label class="btn">Importer historikk <input type="file" id="imp" accept="application/json" hidden></label><button class="btn" id="nuke" style="color:var(--bad)">Slett all historikk</button></div></div>`;
-  if($('#exp')) $('#exp').onclick = ()=>{ const blob = new Blob([JSON.stringify(STATE)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='matte3b_historikk_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); };
+  if($('#exp')) $('#exp').onclick = ()=>{ const blob = new Blob([JSON.stringify(STATE)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Studieplattform_historikk_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); };
   $('#imp').onchange = async e=>{ const f=e.target.files[0]; if(!f) return; try{ const d = JSON.parse(await f.text()); let n=0; for(const c of COLLS) for(const [k,v] of Object.entries(d[c]||{})){ await saveDoc(c,k,v); n++; } toast('Importerte '+n+' poster'); route(); }catch(err){ toast('Kunne ikke lese fila'); } };
   $('#nuke').onclick = async ()=>{ if(!confirm('Slette all historikk? Dette kan ikke angres.')) return; if(store){ for(const c of COLLS) for(const k of Object.keys(STATE[c])){ try{ await store.collection(c).doc(k).delete(); }catch(e){} } } STATE={attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{}}; lsSave(); toast('Historikken er slettet'); route(); };
 }
@@ -1584,41 +1615,85 @@ function renderKalender(main, sel){
 const stripMd = s => String(s).replace(/\$[^$]*\$/g, m=>m.slice(1,-1).replace(/\\[a-z]+/gi,'').replace(/[{}_^]/g,'')).replace(/\*\*/g,'');
 
 // ---------- Fagoversikt (Mekanikk / Elementmetoden) ----------
+// ---------- Pensumdiagram ----------
+function topicProgress(qs){
+  let m=0, t=0, n=0;
+  qs.forEach(q=>q.fields.forEach(f=>{ n++; const a = STATE.attempts[fieldKey(q.id,f.i)]; if(!a||!a.hist||!a.hist.length) return;
+    if(a.hist.some(r=>r[1]===1 && !r[4])) m++; else t++; }));
+  return {m, t, n};
+}
+function pensumHtml(f){
+  const F = FAG[f]; const qs = QF(f);
+  const topics = Object.entries(TOPICS).filter(([k,t])=>(t.fag||'matte')===f).map(([k,t])=>({k, t, p:topicProgress(qs.filter(q=>q.topic===k))})).filter(x=>x.p.n);
+  const W = topics.reduce((s,x)=>s+(x.t.vekt||1),0) || 1;
+  const tot = topics.reduce((o,x)=>{ const w=(x.t.vekt||1)/W; o.m += w*x.p.m/x.p.n; o.t += w*x.p.t/x.p.n; return o; }, {m:0,t:0});
+  const bar = (m, t, big, label) => { const pm = Math.round(m*100), pt = Math.round(t*100), pr = Math.max(0, 100-pm-pt);
+    return `<div class="pbar ${big?'big':''}" style="--fc:${F.farge}" title="${esc(label)}: ${pm} % mestret, ${pt} % forsøkt, ${pr} % igjen">
+      ${pm?`<i class="pm" style="width:${pm}%"></i>`:''}${pt?`<i class="pt" style="width:${pt}%"></i>`:''}${pr?`<i class="pr" style="width:${pr}%"></i>`:''}</div>`; };
+  const pm = Math.round(tot.m*100), pt = Math.round(tot.t*100);
+  return `<div class="card pensum" style="--fc:${F.farge}">
+    <div class="row between" style="align-items:baseline"><h2 style="margin:0">Pensum</h2>
+      <div class="plegend small"><span><i class="pm"></i>Mestret</span><span><i class="pt"></i>Forsøkt</span><span><i class="pr"></i>Igjen</span></div></div>
+    <div class="phero"><span class="pnum">${pm} %</span><span class="muted small">mestret · ${pt} % forsøkt · <strong>${100-pm-pt} % igjen</strong></span></div>
+    ${bar(tot.m, tot.t, true, 'Hele pensum')}
+    <details class="ptopics" ${foldOpen('pt-'+f, false)?'open':''} data-fold="pt-${f}"><summary class="small">Per tema</summary>
+    <div class="prows">${topics.map(x=>`<div class="prow"><span class="pl small" title="${esc(x.t.navn)}">${esc(shortTopic(x.t.navn))}</span>${bar(x.p.m/x.p.n, x.p.t/x.p.n, false, x.t.navn)}<span class="pv small muted">${x.p.m}/${x.p.n}</span></div>`).join('')}</div></details>
+    <p class="small muted" style="margin:8px 0 0">Vektet etter temaenes andel av pensum. «Mestret» = riktig minst én gang uten at fasit var vist.</p></div>`;
+}
+
+// ---------- Sammenleggbare seksjoner ----------
+function foldOpen(id, def){ try{ const v = JSON.parse(localStorage.getItem('sp_fold')||'{}')[id]; return v==null ? def : v; }catch(e){ return def; } }
+function bindFolds(root){ root.querySelectorAll('details[data-fold]').forEach(d=>d.addEventListener('toggle', ()=>{ try{ const o = JSON.parse(localStorage.getItem('sp_fold')||'{}'); o[d.dataset.fold] = d.open; localStorage.setItem('sp_fold', JSON.stringify(o)); }catch(e){} })); }
+function foldSec(id, title, sub, body, def){
+  return `<details class="fsec" data-fold="${id}" ${foldOpen(id, def)?'open':''}><summary><span class="fs-t">${title}</span>${sub?`<span class="fs-s">${sub}</span>`:''}</summary><div class="fs-b">${body}</div></details>`;
+}
+const cardGrid = items => `<div class="setgrid">${items.join('')}</div>`;
+function setCardHtml(k, s, f){
+  const F = FAG[f]; const sq = Q.filter(q=>q.oving===k); const tried = sq.filter(q=>questionScore(q)!=null).length;
+  return `<a class="setkort" href="#oving-${k}" style="--fc:${F.farge}"><div class="sk-n">${esc(s.navn)}</div><div class="sk-i">${esc(s.info||'')}</div>
+    <div class="prog" style="margin-top:auto"><i style="width:${sq.length?Math.round(tried/sq.length*100):0}%;background:${F.farge}"></i></div><div class="small muted" style="margin-top:4px">${tried}/${sq.length} forsøkt</div></a>`;
+}
+function docCardHtml(f, title, info, links, extra){
+  return `<div class="setkort" style="--fc:${FAG[f].farge}"><div class="sk-n">${esc(title)}</div><div class="sk-i">${esc(info||'')}</div>
+    <div class="sk-l small">${links.map(([t,h,ext])=>`<a href="${h}" ${ext!==false?'target="_blank" rel="noopener"':''}>${esc(t)}</a>`).join(' · ')}</div>${extra||''}</div>`;
+}
+
+// ---------- Fagoversikt (alle tre fag) ----------
 function renderFag(main, f){
-  const F = FAG[f]; const pr = fagProgress(f), ms = fagMastery(f); const nx = nextActFor(f);
-  const topics = Object.entries(TOPICS).filter(([k,t])=>(t.fag||'matte')===f);
-  const qs = QF(f); const sets = f==='matte' ? OVS.concat(REPS).map(n=>[n,{navn:ovName(n), info:OVINFO[n]||''}]) : Object.entries(SETS).filter(([k,s])=>s.fag===f);
-  const due = dueFields(f);
-  const setCard = ([k,s]) => { const sq = qs.filter(q=>q.oving===k); const tried = sq.filter(q=>questionScore(q)!=null).length;
-    return `<a class="setkort" href="#oving-${k}" style="--fc:${F.farge}"><div class="sk-n">${esc(s.navn)}</div><div class="small muted">${f==='matte'?esc(s.info)+' · ':''}${sq.length} ${f==='mek'?'deloppgaver':f==='matte'?'oppgaver':'spørsmål'}</div>
-      <div class="prog" style="margin-top:8px"><i style="width:${sq.length?Math.round(tried/sq.length*100):0}%;background:${F.farge}"></i></div><div class="small muted" style="margin-top:4px">${tried}/${sq.length} forsøkt</div></a>`; };
+  const F = FAG[f]; const nx = nextActFor(f); const due = dueFields(f);
+  const qs = QF(f);
+  const secs = [];
+  if(f==='mek'){
+    const inter = Object.entries(SETS).filter(([k,s])=>s.fag==='mek').map(([k,s])=>setCardHtml(k, {navn:s.navn, info:'Interaktiv: svar rettes mot fasit, LF side for side'}, f));
+    const pdfs = (BM.exams||[]).map(e=>{ const r = STATE.exams['mek-'+e.key];
+      return docCardHtml(f, e.navn.split(' (')[0], e.dato+' · PDF', [['Oppgaver',e.pdf],['Løsning',e.lf]].concat(e.sensur?[['Sensur',e.sensur]]:[]),
+        `<label class="sk-score small">Poeng <input type="number" class="mexlog" data-k="${e.key}" min="0" max="${e.max}" value="${r?r.score:''}"> / ${e.max}</label>`); });
+    secs.push(foldSec('mek-eks','Eksamener', `${inter.length} interaktive · ${pdfs.length} som PDF`, cardGrid(inter.concat(pdfs)), true));
+    secs.push(foldSec('mek-ov','Øvinger', 'løsningsforslag til regneøvingene', cardGrid((BM.res.lfov||[]).map(o=>docCardHtml(f, 'Øving '+o.n, 'Oppgaveteksten mangler i eksporten', [['Løsningsforslag', o.pdf]]))), true));
+    secs.push(foldSec('mek-hj','Hjelpemidler', 'formelark, oppgavesamling, diagramregler', cardGrid([
+      docCardHtml(f,'Formelark','Tillatt på eksamen',[['Åpne',BM.res.formelark]]), docCardHtml(f,'Oppgavesamling','Med løsninger',[['Åpne',BM.res.oppgavesamling]]),
+      docCardHtml(f,'ExamPrep H24','Regler for N-, V- og M-diagram',[['Åpne',BM.res.examprep]]), docCardHtml(f,'Skjær og torsjon','Gamle eksamensoppgaver',[['Åpne',BM.res.skjaer_torsjon]])]), false));
+  } else if(f==='fem'){
+    secs.push(foldSec('fem-sett','Spørsmålssett', 'egenlagde, med kilde', cardGrid(Object.entries(SETS).filter(([k,s])=>s.fag==='fem').map(([k,s])=>setCardHtml(k, s, f))), true));
+    secs.push(foldSec('fem-kilder','Kilder', 'forelesninger og dokumenter', cardGrid((BF.res||[]).map(r=>{ const [t, i] = r.t.split(' ('); return docCardHtml(f, t, i?i.replace(/\)$/,''):'', [['Åpne', r.pdf]]); }))
+      + `<p class="small muted" style="margin:10px 0 0">Mangler (bare SharePoint-lenker i Canvas): ${(BF.missing||[]).map(esc).join('; ')}.</p>`, false));
+  } else {
+    secs.push(foldSec('m-ov','Øvinger', 'Øving 1–7', cardGrid(OVS.map(n=>setCardHtml(n, {navn:ovName(n), info:OVINFO[n]}, f))), true));
+    secs.push(foldSec('m-rep','Repetisjonsøvinger', 'varianter av øving 1–5', cardGrid(REPS.map(n=>setCardHtml(n, {navn:ovName(n), info:OVINFO[n]}, f))), true));
+    secs.push(foldSec('m-eks','Eksamener', `${EXAMS.length} sett med løsningsforslag`, cardGrid(EXAMS.map(e=>{ const done = Object.keys(STATE.exams).filter(k=>k.startsWith(e.key+'_')||k===e.key).length;
+      return docCardHtml(f, e.navn, e.dato, [['Oppgaver',e.pdf],['Løsning',e.lf],['Logg resultater','#eksamen',false]]); })), true));
+    secs.push(foldSec('m-komp','Kompendium', 'forelesningsnotatene side for side', cardGrid((window.BANK.sections||[]).filter(x=>x.lvl===1).map(x=>`<a class="setkort" href="#komp-${x.key}" style="--fc:${F.farge}"><div class="sk-n">§${esc(x.key)} ${esc(x.title)}</div><div class="sk-i">s. ${x.start}–${x.end}</div></a>`)), false));
+    secs.push(foldSec('m-uke','Ukeplan', 'den opprinnelige matteplanen', cardGrid([`<a class="setkort" href="#gjoremal-matte" style="--fc:${F.farge}"><div class="sk-n">Ukeplan uke 46–51</div><div class="sk-i">Samme gjøremål som i den felles planen</div></a>`]), false));
+  }
   main.innerHTML = `<div class="row between"><h1>${esc(F.navn)}</h1><span class="pill" style="background:${F.farge}22;color:${F.farge}">${f==='fem'?'Muntlig':'Eksamen'} ${fmtD(F.exam)} · ${daysTo(F.exam)} dager</span></div>
-  <div class="kpiline small muted">${Math.round(pr.pct*100)} % av planen · ${ms.tried}/${ms.n} ${f==='mek'?'deloppgaver':f==='matte'?'oppgaver':'spørsmål'} forsøkt · mestring ${pct(ms.m)}</div>
-  <h2 style="margin-top:18px">${f==='mek'?'Eksamenssett (øv med fasit)':f==='matte'?'Øvinger':'Spørsmålssett'}</h2>
-  <div class="setgrid">${sets.map(setCard).join('')}</div>
-  ${f==='mek'?`<details class="card fold" style="margin-top:14px"><summary><strong>Tidligere eksamener (PDF)</strong> <span class="small muted">· V26 til H18, logg poengsummen</span></summary>${mekExamsHtml()}</details>
-  <details class="card fold"><summary><strong>Regneøvinger</strong> <span class="small muted">· løsningsforslag 1–14</span></summary><div class="row" style="margin-top:10px">${(BM.res.lfov||[]).map(o=>`<a class="btn small ghost" href="${o.pdf}" target="_blank" rel="noopener">LF Øving ${o.n}</a>`).join('')}</div><p class="small muted" style="margin:8px 0 0">Oppgavetekstene til øvingene er ikke med i Canvas-eksporten.</p></details>
-  <details class="card fold"><summary><strong>Hjelpemidler</strong> <span class="small muted">· formelark, oppgavesamling, diagramregler</span></summary><div class="row" style="margin-top:10px"><a class="btn small" href="${BM.res.formelark}" target="_blank" rel="noopener">Formelark</a><a class="btn small" href="${BM.res.oppgavesamling}" target="_blank" rel="noopener">Oppgavesamling</a><a class="btn small" href="${BM.res.examprep}" target="_blank" rel="noopener">ExamPrep H24</a><a class="btn small" href="${BM.res.skjaer_torsjon}" target="_blank" rel="noopener">Skjær og torsjon</a></div></details>`:''}
-  ${f==='matte'?`<details class="card fold" style="margin-top:14px"><summary><strong>Eksamenssett</strong> <span class="small muted">· ${EXAMS.length} sett med løsningsforslag, logg per oppgave</span></summary><div class="tblwrap" style="margin-top:10px"><table class="tbl"><tbody>${EXAMS.map(e=>`<tr><td><strong>${esc(e.navn)}</strong> <span class="small muted">${esc(e.dato)}</span></td><td class="small"><a href="${e.pdf}" target="_blank" rel="noopener">Oppgaver</a> · <a href="${e.lf}" target="_blank" rel="noopener">Løsning</a></td></tr>`).join('')}</tbody></table></div><a class="btn small" href="#eksamen" style="margin-top:10px">Logg resultater per oppgave →</a></details>
-  <details class="card fold"><summary><strong>Kompendium</strong> <span class="small muted">· forelesningsnotatene side for side</span></summary><div class="row" style="margin-top:10px">${(window.BANK.sections||[]).filter(x=>x.lvl===1).map(x=>`<a class="btn small ghost" href="#komp-${x.key}">§${esc(x.key)} ${esc(x.title)}</a>`).join('')}</div></details>
-  <details class="card fold"><summary><strong>Ukeplan</strong> <span class="small muted">· den opprinnelige matteplanen uke for uke</span></summary><a class="btn small" href="#gjoremal-matte" style="margin-top:10px">Åpne ukeplanen</a></details>`:''}
-  ${f==='fem'?`<details class="card fold" style="margin-top:14px"><summary><strong>Kilder</strong> <span class="small muted">· forelesninger og dokumenter</span></summary><div class="row" style="margin-top:10px">${(BF.res||[]).map(r=>`<a class="btn small ghost" href="${r.pdf}" target="_blank" rel="noopener">${esc(r.t.split(' (')[0])}</a>`).join('')}</div>
-    <p class="small muted" style="margin:10px 0 0">Mangler (bare SharePoint-lenker i Canvas): ${(BF.missing||[]).map(esc).join('; ')}.</p></details>`:''}
+  ${pensumHtml(f)}
+  ${secs.join('')}
   <div class="grid g2" style="align-items:start;margin-top:14px">
     <div class="card"><h2>Neste i planen</h2>${nx?`<div class="todo">${actItemHtml(nx.p.a,{noFag:true, rem:nx.p.rem})}</div><p class="small muted" style="margin:6px 0 0">${nx.d===todayStr()?'I dag':fmtD(nx.d)} · <a href="#gjoremal">hele planen</a></p>`:'<p class="muted">Alt i planen er gjort.</p>'}</div>
     <div class="card"><h2>Repetisjon</h2>${due.length?`<div class="qlist">${due.slice(0,8).map(d=>`<a href="#q-${d.q.id}"><span class="n">${esc(ovShort(d.q.oving))}.${esc(d.q.nr)}</span><span class="t">${mdInline(d.q.title)}</span><span class="pill warn">${esc(d.why)}</span></a>`).join('')}</div>`:'<p class="muted small">Oppgaver du bommer på dukker opp her.</p>'}</div>
-  </div>
-  <details class="card fold" style="margin-top:14px"><summary><strong>Temaer</strong> <span class="small muted">· mestring og ${f==='mek'?'lysark':'kilder'}</span></summary><div class="tblwrap"><table class="tbl"><thead><tr><th>Tema</th><th>Oppg.</th><th>Mestring</th><th>${f==='mek'?'Lysark':f==='matte'?'Kompendiet':''}</th></tr></thead><tbody>
-    ${topics.map(([k,t])=>{ const tq = qs.filter(q=>q.topic===k); const sc = tq.map(questionScore).filter(x=>x!=null); const m = sc.length? sc.reduce((a,b)=>a+b,0)/sc.length : null;
-      return `<tr><td>${esc(t.navn)}</td><td class="num">${tq.length}</td><td class="num"><span class="pill ${m==null?'mute':m>=0.8?'good':m>=0.5?'warn':'bad'}">${pct(m)}</span></td>
-        <td class="small">${f==='matte'&&t.pages?t.pages.map(p=>`<a href="#komp-${p.key}">§${esc(p.key)} ${esc(p.title)}</a>`).join(' · '):''}${(t.lysark||[]).map(l=>`<a href="${l.pdf}" target="_blank" rel="noopener">${esc(l.t.replace(/^\d+\.?\s*/,''))}</a>`).join(' · ')}</td></tr>`; }).join('')}</tbody></table></div></details>`;
-  bindActs(main);
+  </div>`;
+  bindActs(main); bindFolds(main);
   main.querySelectorAll('.mexlog').forEach(inp=>inp.onchange = async ()=>{ const k = inp.dataset.k; const v = inp.value.trim(); if(v===''){ await deleteDoc('exams','mek-'+k); } else await saveDoc('exams','mek-'+k, {set:k, fag:'mek', score:+v, max:100, ts:Date.now()}); PLAN_CACHE=null; toast('Lagret'); });
-}
-function mekExamsHtml(){
-  return `<div class="tblwrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Sett</th><th>Filer</th><th>Poeng</th></tr></thead><tbody>${(BM.exams||[]).map(e=>{ const r = STATE.exams['mek-'+e.key];
-    return `<tr><td><strong>${esc(e.navn.split(' (')[0])}</strong></td><td class="small"><a href="${e.pdf}" target="_blank" rel="noopener">Oppgaver</a> · <a href="${e.lf}" target="_blank" rel="noopener">Løsning</a>${e.sensur?` · <a href="${e.sensur}" target="_blank" rel="noopener">Sensur</a>`:''}</td>
-      <td class="num"><input type="number" class="mexlog" data-k="${e.key}" min="0" max="${e.max}" value="${r?r.score:''}" style="width:64px"> / ${e.max}</td></tr>`; }).join('')}</tbody></table></div>`;
 }
 
 // ---------- Visning av mek/fem-oppgaver ----------
