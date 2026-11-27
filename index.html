@@ -403,10 +403,11 @@ details.fsec[open]>summary::before{transform:rotate(90deg)}
 .rsel input{width:16px;height:16px;margin:0;cursor:pointer}
 .rbar{position:sticky;top:64px;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--bad);border-radius:var(--r);padding:8px 14px;margin:10px 0;box-shadow:0 4px 14px rgba(0,0,0,.12)}
 .btn.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
-.fld.haspv{position:relative}
-.mprev{position:absolute;left:0;top:calc(100% + 4px);z-index:6;display:none;align-items:center;gap:8px;white-space:nowrap;background:var(--surface);border:1px solid var(--cq-line,var(--line));border-radius:6px;padding:4px 10px;box-shadow:0 3px 10px rgba(0,0,0,.12);font-size:15px}
-.fld.haspv:focus-within .mprev:not([hidden]),.fld.haspv:hover .mprev:not([hidden]){display:inline-flex}
-.mprev .pl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.fld.haspv{flex-wrap:wrap}
+.mprev{display:block;flex-basis:100%;box-sizing:border-box;width:min(100%,640px);margin:8px 0 6px;padding:12px 18px 14px;background:var(--surface);color:var(--fg);font-size:15px}
+.mprev[hidden]{display:none}
+.mprev .pl{display:block;margin-bottom:8px}
+.mprev .mx{display:block;text-align:center;font-size:17px;overflow-x:auto}
 .mprev .err{font-size:13px;color:var(--bad)}
 </style>
 
@@ -1150,8 +1151,8 @@ function updPrev(inp){
   box.hidden = false;
   let tex = null;
   try{ tex = math.parse(normalize(v)).toTex({parenthesis:'keep', implicit:'show'}).replace(/\\mathrm\{eps0\}/g,'\\varepsilon_0').replace(/(\d)\.(\d)/g,'$1{,}$2'); }catch(e){}
-  if(tex==null){ box.innerHTML = `<span class="pl">Tolkes som</span><span class="err">kan ikke tolke uttrykket ennå</span>`; return; }
-  box.innerHTML = `<span class="pl">Tolkes som</span><span class="mx"></span>`;
+  if(tex==null){ box.innerHTML = `<span class="pl">Svaret ditt tolkes som</span><span class="err">kan ikke tolke uttrykket ennå</span>`; return; }
+  box.innerHTML = `<span class="pl">Svaret ditt tolkes som</span><span class="mx"></span>`;
   try{ if(window.MathJax && MathJax.tex2svg){ box.querySelector('.mx').appendChild(MathJax.tex2svg(tex, {display:false})); } else box.querySelector('.mx').textContent = tex; }
   catch(e){ box.querySelector('.mx').textContent = v; }
 }
@@ -1356,7 +1357,7 @@ document.addEventListener('click', e=>{
 // =====================================================================
 // ---------- Studieplattform: fag, aktiviteter, plan og kalender ----------
 // =====================================================================
-const APP_VER = '27.11 kl. 11.45';
+const APP_VER = '27.11 kl. 12.10';
 const FAG = {
   mek:  { key:'mek',  kode:'MEKA1101', navn:'Mekanikk 1',        kort:'Mekanikk',       canvas:'MEKA1101-26H :: Mekanikk 1',      sem:'MEKA1101-26H', exam:'2026-12-04', tid:'kl. 09:00–13:00 (4 t), oppmøte 30 min før', form:'Skriftlig, Inspera + håndberegninger på ark. Hjelpemiddel D: enkel kalkulator og vedlagt formelark.', farge:'#7b3f98' },
   fem:  { key:'fem',  kode:'MEPA2314', navn:'Elementmetoden',    kort:'Elementmetoden', canvas:'MEPA2314-26H :: Elementmetoden',   sem:'MEPA2314-26H', exam:'2026-12-11', tid:'tidspunkt ikke oppgitt i Canvas', form:'Muntlig eksamen (teller 40 %). Prosjektmappen teller 60 %.', farge:'#1f6f78' },
