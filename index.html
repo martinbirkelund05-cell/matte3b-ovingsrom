@@ -393,6 +393,11 @@ details.fsec[open]>summary::before{transform:rotate(90deg)}
 .sk-i{font-size:13px;color:var(--muted)}
 .sk-l{margin-top:auto}
 .sk-score input{width:58px;margin-left:4px}
+.gsum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:6px 0 4px}
+.gsum>div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;display:flex;flex-direction:column}
+.gn{font-size:24px;font-weight:700}
+@media(max-width:700px){.gsum{grid-template-columns:repeat(2,1fr)}}
+.fs-b .weekhd{margin-top:10px}
 </style>
 
 <header class="topbar">
@@ -1584,15 +1589,30 @@ function shortEvent(e){
 function renderGjoremal(main){
   const P = buildPlan(); const t = todayStr();
   const days = Object.keys(P.plan).filter(d=>P.plan[d].length);
-  const doneAll = ACTS.map(a=>({a, st:actStatus(a)})).filter(x=>x.st.done).sort((x,y)=>(y.st.ts||0)-(x.st.ts||0));
+  const all = ACTS.map(a=>({a, st:actStatus(a)}));
+  const doneAll = all.filter(x=>x.st.done).sort((x,y)=>(y.st.ts||0)-(x.st.ts||0));
+  const started = all.filter(x=>!x.st.done && (x.st.prog||0)>0).sort((x,y)=>(y.st.prog||0)-(x.st.prog||0));
+  const remMin = P.overflow.concat(P.excluded).concat(Object.values(P.plan).flat()).reduce((s,p)=>s+p.rem,0);
+  const doneMin = doneAll.reduce((s,x)=>s+x.a.min,0);
+  // fullført gruppert per dag
+  const byDay = {}; doneAll.forEach(x=>{ const d = x.st.ts ? iso(new Date(x.st.ts)) : 'ukjent'; (byDay[d]=byDay[d]||[]).push(x); });
+  const doneHtml = Object.keys(byDay).sort().reverse().map(d=>`<div class="weekhd"><h3 style="margin:0">${d==='ukjent'?'Uten dato':d===t?'I dag · '+fmtD(d):fmtD(d)}</h3><span class="small muted">${byDay[d].length} · ${fmtMin(byDay[d].reduce((s,x)=>s+x.a.min,0))}</span></div><div class="todo">${byDay[d].map(x=>actItemHtml(x.a)).join('')}</div>`).join('');
+  const planHtml = days.map(d=>{ const ps2 = P.plan[d]; const m = ps2.reduce((s,p)=>s+p.rem,0);
+    return `<div class="weekhd"><h3 style="margin:0">${d===t?'I dag · ':''}${fmtD(d)}</h3><span class="small muted">${fmtMin(m)}</span></div>
+    <div class="todo">${ps2.map(p=>actItemHtml(p.a,{rem:p.rem, from: d===t && p.a.due<t ? p.a.due : null, late: p.a.due<d && p.a.due>=t})).join('')}</div>`; }).join('');
   main.innerHTML = `<div class="row between"><h1>Gjøremål</h1><a class="btn small" href="#kalender">Vis i kalender</a></div>
-  <div class="row between" style="margin-bottom:6px">${capControlHtml(t)}<span class="small muted">Ugjort flyttes til neste ledige dag</span></div>${overflowHtml(P)}
-  ${days.map(d=>{ const ps2 = P.plan[d]; const m = ps2.reduce((s,p)=>s+p.rem,0); const extra = d===t ? doneOn(t) : [];
-    return `<div class="weekhd"><h2>${d===t?'I dag · ':''}${fmtD(d)}</h2><span class="small muted">${fmtMin(m)}</span></div>
-    <div class="todo">${extra.map(x=>actItemHtml(x.a)).join('')}${ps2.map(p=>actItemHtml(p.a,{rem:p.rem, from: d===t && p.a.due<t ? p.a.due : null, late: p.a.due<d && p.a.due>=t})).join('')}</div>`; }).join('')}
-  ${P.excluded.length?`<h2 style="margin-top:18px">Nedprioritert (får ikke plass)</h2><div class="todo">${P.excluded.map(p=>actItemHtml(p.a,{rem:p.rem})).join('')}</div>`:''}
-  ${doneAll.length?`<details style="margin-top:18px"><summary class="small" style="cursor:pointer">Fullført (${doneAll.length})</summary><div class="todo" style="margin-top:8px">${doneAll.map(x=>actItemHtml(x.a)).join('')}</div></details>`:''}`;
-  bindActs(main); bindCap(main);
+  <div class="gsum">
+    <div><span class="gn">${doneAll.length}</span><span class="small muted">fullført · ${fmtMin(doneMin)}</span></div>
+    <div><span class="gn">${started.length}</span><span class="small muted">påbegynt</span></div>
+    <div><span class="gn">${all.length-doneAll.length-started.length}</span><span class="small muted">ikke startet</span></div>
+    <div><span class="gn">${fmtMin(remMin)}</span><span class="small muted">arbeid igjen</span></div>
+  </div>
+  <div class="row between" style="margin:10px 0 6px">${capControlHtml(t)}<span class="small muted">Ugjort flyttes til neste ledige dag</span></div>${overflowHtml(P)}
+  ${foldSec('g-start', `Påbegynt (${started.length})`, 'startet, men ikke ferdig', started.length?`<div class="todo">${started.map(x=>actItemHtml(x.a,{rem:Math.max(10,Math.round(x.a.min*(1-x.st.prog)/5)*5)})).join('')}</div>`:'<p class="muted small" style="margin:0">Ingenting påbegynt.</p>', true)}
+  ${foldSec('g-done', `Fullført (${doneAll.length})`, 'alt du har gjort, nyest først', doneHtml || '<p class="muted small" style="margin:0">Ingenting fullført ennå.</p>', true)}
+  ${foldSec('g-plan', 'Plan', `${days.length} dager fram til siste eksamen`, planHtml || '<p class="muted small" style="margin:0">Ingenting igjen i planen.</p>', true)}
+  ${P.excluded.length?foldSec('g-ned', `Nedprioritert (${P.excluded.length})`, 'får ikke plass med dagens studietid', `<div class="todo">${P.excluded.map(p=>actItemHtml(p.a,{rem:p.rem})).join('')}</div>`, false):''}`;
+  bindActs(main); bindCap(main); bindFolds(main);
 }
 
 // ---------- Kalender ----------
