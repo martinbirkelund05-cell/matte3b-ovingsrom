@@ -519,8 +519,18 @@ const FILE = {
   async resume(){ const h = await this.idbGet(); if(h) await this.use(h, true); },
   async close(){ if(this.dirty) await this.save(); this.handle=null; await this.idbSet(null); this.render(); toast('Historikkfila er koblet fra – historikken ligger fortsatt i nettleseren'); },
   pending:null,
-  async init(){ const bar = $('#filebar'); if(!this.supported()) return; bar.hidden=false; this.pending = await this.idbGet(); this.render(); },
-  render(){ const bar = $('#filebar'); if(!bar || !this.supported()) return;
+  async init(){ const bar = $('#filebar'); if(!bar || window.claude) return; bar.hidden=false; if(this.supported()) this.pending = await this.idbGet(); this.render(); },
+  // Safari, Firefox og Brave mangler File System Access API: last inn og last ned fila manuelt
+  fallback(bar){
+    bar.innerHTML = `<button class="btn small" id="fb-load" title="Last inn en historikkfil (JSON)">Åpne historikk</button><button class="btn small" id="fb-dl" title="Last ned historikken som fil. Denne nettleseren kan ikke lagre automatisk til fila; bruk Chrome eller Edge for det.">Lagre som …</button><input type="file" id="fb-file" accept=".json,application/json" hidden>`;
+    const inp = $('#fb-file');
+    $('#fb-load').onclick = ()=>inp.click();
+    inp.onchange = async ()=>{ const f = inp.files[0]; if(!f) return; try{ const d = JSON.parse((await f.text())||'{}'); const n = COLLS.reduce((a,c)=>a+Object.keys(d[c]||{}).length,0); const cur = COLLS.reduce((a,c)=>a+Object.keys(STATE[c]||{}).length,0);
+      if(cur && !confirm(`Fila «${f.name}» har ${n} poster. Historikken i denne nettleseren (${cur} poster) erstattes. Fortsette?`)) return;
+      STATE = Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{}}, d); try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} toast('Lastet inn ' + f.name); route(); }catch(e){ toast('Kunne ikke lese fila'); } inp.value=''; };
+    $('#fb-dl').onclick = ()=>{ const blob = new Blob([JSON.stringify(STATE, null, 1)],{type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Studieplattform_historikk.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Lastet ned. Historikken lagres også i nettleseren.'); };
+  },
+  render(){ const bar = $('#filebar'); if(!bar) return; if(!this.supported()){ if(!window.claude) this.fallback(bar); return; }
     if(this.handle){ bar.innerHTML = `<span class="fn ${this.dirty?'dirty':''}" title="${esc(this.handle.name)}">${this.dirty?'Lagrer … ':'Lagret '}${esc(this.handle.name)}</span><button class="btn small" id="fb-save" title="Lagre nå">Lagre</button><button class="btn small ghost" id="fb-close" title="Koble fra fila">Lukk fil</button>`;
       $('#fb-save').onclick=()=>this.save().then(ok=>ok&&toast('Lagret')); $('#fb-close').onclick=()=>this.close(); }
     else { bar.innerHTML = `${this.pending?`<button class="btn small primary" id="fb-resume" title="Fortsett med ${esc(this.pending.name)}">Fortsett: ${esc(this.pending.name)}</button>`:''}<button class="btn small" id="fb-open">Åpne historikk</button><button class="btn small" id="fb-new">Lagre som …</button>`;
