@@ -363,6 +363,13 @@ details.fold summary{cursor:pointer}
 .fld.exf .flab{font-size:17px}
 .fdesc{font-size:12.5px;color:var(--muted);margin:0 0 4px 2px}
 
+.okt-hero h1{font-size:24px}.okt-hero .big{font-size:16px;padding:10px 26px}
+.okt-ctl{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:14px;align-items:center;color:var(--muted)}.okt-ctl select{max-width:100%}
+.okt-line{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;justify-content:space-between;margin:14px 0}.okt-big{font-size:26px;font-weight:600}.okt-big .muted{font-size:14px;font-weight:400;margin-left:2px}
+.okt-m{height:8px;border-radius:4px;background:var(--grey-soft);overflow:hidden;min-width:80px}.okt-m i{display:block;height:100%;background:var(--good)}
+.mtab tr.on td{background:var(--accent-soft)}
+.okt-sliter{background:var(--warn-soft);color:var(--fg);border-radius:var(--r);padding:10px 12px;margin:0 0 12px;font-size:14px}
+.okt-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--accent-soft);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:14px}
 .mx-scroll{overflow-x:auto}.mx-scroll .mtab{min-width:720px}
 .mtab{width:100%;border-collapse:collapse;font-size:14px}
 .mtab th{font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -825,6 +832,7 @@ function route(){
   const setKey = x => /^\d+$/.test(x) ? +x : x;
   if(h==='hjem') renderHjem(main);
   else if(h==='kalender') renderKalender(main);
+  else if(h==='okt') renderOkt(main);
   else if(h==='python') renderPython(main);
   else if(h==='python-oppg') renderPoOversikt(main);
   else if(/^python-oppg-[\w-]+$/.test(h)) renderPoOppg(main, h.slice(12));
@@ -851,7 +859,7 @@ function ctxFag(h){
   if(h.startsWith('oving-')){ const k = h.slice(6); return (window.__SETS||{})[k] ? window.__SETS[k].fag : 'matte'; }
   if(h.startsWith('q-')){ const q = QBY[h.slice(2)]; return q ? (q.fag||'matte') : null; }
   if(h.startsWith('forsok-')){ const ss = STATE.sessions[h.slice(7)]; if(!ss) return null; return (window.__SETS||{})[ss.oving] ? window.__SETS[ss.oving].fag : 'matte'; }
-  if(['oversikt','fag-matte','ovinger','eksamen','komp','gjoremal-matte','python'].includes(h) || h.startsWith('komp-') || h.startsWith('python-')) return 'matte';
+  if(['oversikt','fag-matte','ovinger','eksamen','komp','gjoremal-matte','python','okt'].includes(h) || h.startsWith('komp-') || h.startsWith('python-')) return 'matte';
   return null;
 }
 function renderSide(h){
@@ -1243,7 +1251,7 @@ function renderFree(main, qid){
   const qs = Q.filter(x=>x.oving===q.oving); const idx = qs.indexOf(q); const prev = qs[idx-1], next = qs[idx+1];
   const ctx = {mode:'fri', hints:0, usedHint:false, answered:new Set(), seen:new Set(), res:{}};
   const hist = x => { const sc = questionScore(x); return sc==null ? '' : sc>=0.8 ? 'ok' : sc>=0.5 ? 'part' : 'bad'; };
-  main.innerHTML = `<div class="cq"><div class="cq-main">
+  main.innerHTML = `<div class="cq"><div class="cq-main">${oktBarHtml(qid)}
     <div class="cq-head"><div class="row small muted"><a href="#oving-${q.oving}">${ovName(q.oving)}</a> › Fri øving</div><span class="small muted">Svarene lagres i historikken</span></div>
     ${queHtml(q, 'ov', stateOf(q, {}))}
     <div class="cq-foot">${prev?`<a class="btn sec" href="#q-${prev.id}">Forrige side</a>`:'<span></span>'}${next?`<a class="btn primary" href="#q-${next.id}">Neste side</a>`:`<a class="btn primary" href="#oving-${q.oving}">Tilbake til ${ovName(q.oving).toLowerCase()}</a>`}</div>
@@ -1251,6 +1259,7 @@ function renderFree(main, qid){
   bindAnswers(main, null);
   attachHelp(main, q, ctx);
   main.querySelectorAll('.qnbutton').forEach(a=>a.onclick=e=>{ e.preventDefault(); location.hash = '#q-' + a.dataset.q; });
+  oktBindBar(main, q);
 }
 
 // ---------- Forsøk (økt) ----------
@@ -1421,7 +1430,7 @@ function titleFor(h){
   h = h.replace(/^#/,'');
   if(h==='hjem'||h==='') return 'Hjem'; if(h==='kalender') return 'Kalender'; if(h==='gjoremal-matte') return 'Ukeplan (matte)';
   if(h==='fag-mek') return 'Mekanikk 1'; if(h==='fag-fem') return 'Elementmetoden';
-  if(h==='oversikt') return 'Matte 3B'; if(h==='gjoremal') return 'Gjøremål'; if(h==='ovinger') return 'Øvinger'; if(h==='eksamen') return 'Eksamenssett'; if(h==='om') return 'Om'; if(h==='notater') return 'Notater'; if(h==='komp') return 'Kompendium';
+  if(h==='oversikt') return 'Matte 3B'; if(h==='okt') return 'Økt'; if(h==='gjoremal') return 'Gjøremål'; if(h==='ovinger') return 'Øvinger'; if(h==='eksamen') return 'Eksamenssett'; if(h==='om') return 'Om'; if(h==='notater') return 'Notater'; if(h==='komp') return 'Kompendium';
   if(h.startsWith('komp-')) { const sec=(window.BANK.sections||[]).find(x=>x.key===h.slice(5)); return 'Komp. §'+h.slice(5)+(sec?' '+sec.title.split(' ').slice(0,3).join(' '):''); }
   if(h.startsWith('oving-')) { const k = h.slice(6); return ovName(/^\d+$/.test(k) ? +k : k); }
   if(h.startsWith('q-')) { const q=QBY[h.slice(2)]; return q? ovShort(q.oving)+'.'+q.nr+' '+stripMd(q.title) : 'Oppgave'; }
@@ -1926,6 +1935,160 @@ function monsterHtml(){
   </div>
   <p class="small muted" style="margin:10px 0 0">Grunnlag: ordinær eksamen 2025, prøveeksamen 2025, kontinuasjon februar og mai 2026 med løsningsforslag, sammenlignet med øving 1–7. Mai26 oppg. 10 står uten tekst i PDF-en og er ikke med.</p>`;
   return foldSec('m-monster', 'Dette går igjen på eksamen', '15 oppgavetyper i 4 sett', body, true);
+}
+
+// ---------- Øktmotor: velger neste oppgave etter eksamensverdi per minutt ----------
+// Typer = oppgavetyper fra eksamensmønsteret. k = antall av 4 eksamenssett typen kom i. p = poeng (4 del 1, 9 del 2).
+const OKT_TYPER = [
+  {id:'pyint',   navn:'Sympy, dblquad og tplquad',     k:3, p:9, pre:['dobbel'],          rx:/dblquad|tplquad|sympy/i, ikke:['flate']},
+  {id:'delaunay',navn:'Delaunay-kode',                 k:3, p:9, pre:[],                  rx:/delaunay|triangul/i, ikke:['flate']},
+  {id:'nytt',    navn:'Nytt i år: leapfrog, 2D, strømfunksjon', k:0, p:9, pre:['kode'], ids:['o6q3','o6q5','o6q6','o6q7','o6q8','o7q3'], pOverride:0.33},
+  {id:'kode',    navn:'Kode: varmelikning eller EVM',  k:3, p:9, pre:[],                  topics:['tidpde','evm','differ']},
+  {id:'pde',     navn:'PDE-løsning ved innsetting',    k:4, p:4, pre:[],                  topics:['pde']},
+  {id:'fluks',   navn:'Fluks og Gauss',                k:4, p:9, pre:['felt','flate'],    topics:['fluks','gauss']},
+  {id:'felt',    navn:'Div, curl og identiteter',      k:3, p:4, pre:[],                  topics:['felt']},
+  {id:'flate',   navn:'Parametrisk flate, N og areal', k:3, p:9, pre:['kurve'],           topics:['flate']},
+  {id:'utled',   navn:'Utledning av varmelikningen',   k:3, p:9, pre:[],                  topics:['bevaring']},
+  {id:'stokes',  navn:'Stokes og Green',               k:3, p:4, pre:['arbeid','felt'],   topics:['green','stokes']},
+  {id:'arbeid',  navn:'Linjeintegral og arbeid',       k:3, p:4, pre:['kurve'],           topics:['arbeid']},
+  {id:'polar',   navn:'Polarkoordinater',              k:3, p:4, pre:['dobbel'],          topics:['polar']},
+  {id:'trippel', navn:'Trippel, sylinder og kule',     k:3, p:4, pre:['dobbel','polar'],  topics:['trippel','sylkule']},
+  {id:'dobbel',  navn:'Dobbeltintegral og tyngdepunkt',k:3, p:4, pre:[],                  topics:['dobbel']},
+  {id:'potens',  navn:'Potensial, konservativt felt',  k:2, p:4, pre:['felt'],            topics:['konserv']},
+  {id:'kurve',   navn:'Kurve og buelengde',            k:2, p:4, pre:[],                  topics:['kurve']},
+  {id:'annet',   navn:'Grunnlag og annen numerikk',    k:0, p:4, pre:[],                  topics:['rep','numint']},
+];
+const OKT_MAL = 0.8, OKT_START_MIN = 25, OKT_EKSAMEN = '2026-12-16';
+OKT_TYPER.forEach(t=>{ t.P = t.pOverride!=null ? t.pOverride : (t.k+1)/(4+2); t.V = t.P*t.p; });
+const OKT_BY = {}; OKT_TYPER.forEach(t=>OKT_BY[t.id]=t);
+let OKT_QTYPE = null;
+function oktTypeOf(q){
+  if(!OKT_QTYPE){ OKT_QTYPE = {};
+    Q.filter(x=>(x.fag||'matte')==='matte' && x.maxp!=null).forEach(x=>{
+      const t = OKT_TYPER.find(t=>t.ids && t.ids.includes(x.id)) || OKT_TYPER.find(t=>t.rx && t.rx.test(x.title||'') && !(t.ikke||[]).includes(x.topic)) || OKT_TYPER.find(t=>t.topics && t.topics.includes(x.topic));
+      if(t) OKT_QTYPE[x.id] = t.id; }); }
+  return OKT_QTYPE[q.id] || null;
+}
+const oktQs = tid => Q.filter(q=>oktTypeOf(q)===tid).sort((a,b)=>((a.oving>10)-(b.oving>10)) || (a.oving-b.oving) || (a.nr-b.nr));
+function oktState(){ const s = (STATE.settings||{}).okt || {}; return Object.assign({fokus:'auto', bland:true, minDag:180, log:[], cur:null, autoFokus:null}, s); }
+async function oktSave(s){ s.log = (s.log||[]).slice(-400); await saveDoc('settings','okt', s); }
+// Mestring per oppgave: score (siste svar, hint teller 70 %) × hvor godt det huskes nå (0.9^(dager siden / intervall)).
+function oktQM(q){
+  const sc = questionScore(q); if(sc==null) return 0;
+  let last = 0, streak = Infinity;
+  q.fields.forEach(f=>{ const a = STATE.attempts[fieldKey(q.id,f.i)]; if(a && a.hist && a.hist.length){ last = Math.max(last, a.hist[a.hist.length-1][0]); streak = Math.min(streak, Math.max(1, a.streak||1)); } });
+  if(!isFinite(streak)) streak = 1;
+  const dager = (Date.now()-last)/864e5, intervall = [1,3,7,14,30][Math.min(streak-1,4)];
+  return sc * Math.pow(0.9, Math.max(0, dager)/intervall);
+}
+function oktTempo(tid, s){
+  const d = l => l.filter(x=>x.min>0.5 && x.min<120).map(x=>x.min).sort((a,b)=>a-b);
+  const med = a => a.length ? a[Math.floor(a.length/2)] : null;
+  const alle = d(s.log), egen = d(s.log.filter(x=>x.type===tid));
+  return egen.length>=2 ? med(egen) : alle.length>=3 ? med(alle) : OKT_START_MIN;
+}
+function oktStats(s){
+  s = s || oktState();
+  return OKT_TYPER.map(t=>{ const qs = oktQs(t.id).filter(q=>q.oving<=10); const ms = qs.map(oktQM);
+    const m = ms.length ? ms.reduce((a,b)=>a+b,0)/ms.length : 0;
+    const igjen = qs.filter((q,i)=>ms[i]<OKT_MAL).length, tempo = oktTempo(t.id, s);
+    const preOk = t.pre.every(p=>{ const pq = oktQs(p).filter(q=>q.oving<=10); return !pq.length || pq.map(oktQM).reduce((a,b)=>a+b,0)/pq.length >= 0.5; });
+    const restMin = igjen*tempo, gevinst = t.V*Math.max(0, OKT_MAL-m);
+    return {t, n:qs.length, m, igjen, tempo, restMin, preOk, perMin: restMin ? gevinst/restMin : 0};
+  }).filter(x=>x.n);
+}
+function oktVelgFokus(st){
+  const kand = st.filter(x=>x.igjen>0).sort((a,b)=>b.perMin-a.perMin);
+  const best = kand[0]; if(!best) return null;
+  if(!best.preOk){ const svak = best.t.pre.map(p=>st.find(x=>x.t.id===p)).filter(x=>x && x.m<0.5 && x.igjen>0).sort((a,b)=>b.perMin-a.perMin)[0]; if(svak) return svak.t.id; }
+  return best.t.id;
+}
+function oktFokus(s, st){
+  if(s.fokus!=='auto') return s.fokus;
+  const cur = s.autoFokus && st.find(x=>x.t.id===s.autoFokus);
+  if(cur && cur.igjen>0 && cur.m<OKT_MAL) return cur.t.id;
+  return oktVelgFokus(st);
+}
+// Neste oppgave: hver 5. fra repetisjonslista (andre typer) hvis «bland inn» er på, ellers neste umestrede i fokustypen.
+function oktNeste(s, st){
+  let fokus = oktFokus(s, st); const sist = (s.log||[]).slice(-2).map(x=>x.q);
+  const iOkt = (s.log||[]).filter(x=>x.okt===s.oktId).length;
+  if(s.bland && iOkt>0 && iOkt%5===4){
+    const rep = dueFields('matte').map(d=>d.q).find(q=>{ const t = oktTypeOf(q); return t && t!==fokus && !sist.includes(q.id) && (st.find(x=>x.t.id===t)||{}).m>=0.3; });
+    if(rep) return {q:rep, fokus, hvorfor:'Repetisjon fra ' + OKT_BY[oktTypeOf(rep)].navn + ' (blandes inn for å holde det ved like)'};
+  }
+  // Bli i samme tema: originaløvinger først, så repetisjonsøvingene (samme oppgave, nye tall). Først når temaet er tomt, byttes tema.
+  const finn = tid => { const qs = oktQs(tid).filter(q=>!sist.includes(q.id)); const orig = qs.filter(q=>q.oving<=10);
+    return orig.find(q=>oktQM(q)<OKT_MAL) || qs.find(q=>oktQM(q)<OKT_MAL) || (s.fokus===tid ? qs[0] : null); };
+  let q = fokus && finn(fokus);
+  if(!q){ for(const y of st.filter(y=>y.t.id!==fokus && y.igjen>0).sort((a,b)=>b.perMin-a.perMin)){ q = finn(y.t.id); if(q){ fokus = y.t.id; break; } } }
+  if(!q) return null;
+  const x = st.find(y=>y.t.id===fokus);
+  return {q, fokus, hvorfor:`${x.t.navn} · kom i ${x.t.k} av 4 eksamenssett · ${x.t.p} p · gir mest eksamensgevinst per minutt akkurat nå`};
+}
+function oktSliter(s, fokus){ const l = (s.log||[]).filter(x=>x.type===fokus).slice(-2); return l.length===2 && l.every(x=>!x.ok); }
+function oktPrognose(st, s){
+  const VV = st.reduce((a,x)=>a+x.t.V,0) || 1;
+  const naa = 72*st.reduce((a,x)=>a+x.t.V*x.m,0)/VV;
+  const dager = Math.max(0, Math.ceil((new Date(OKT_EKSAMEN+'T23:59') - new Date())/864e5));
+  const tilgj = dager*s.minDag, trengs = st.reduce((a,x)=>a+x.restMin,0);
+  let rest = tilgj; const rekker = [], kuttes = []; let slutt = naa*VV/72;
+  st.filter(x=>x.igjen>0).sort((a,b)=>b.perMin-a.perMin).forEach(x=>{ if(x.restMin<=rest){ rest -= x.restMin; slutt += x.t.V*Math.max(0,OKT_MAL-x.m); rekker.push(x); } else kuttes.push(x); });
+  return {naa:Math.round(naa), slutt:Math.round(72*slutt/VV), dager, tilgj, trengs, kuttes, perDag: dager ? Math.ceil(trengs/dager) : trengs};
+}
+const fmtT = m => { m = Math.round(m); return m>=60 ? `${Math.floor(m/60)} t${m%60?` ${m%60} min`:''}` : `${m} min`; };
+function renderOkt(main){
+  const s = oktState(), st = oktStats(s), nx = oktNeste(s, st), pg = oktPrognose(st, s);
+  const fokus = nx ? nx.fokus : null, fx = st.find(x=>x.t.id===fokus);
+  const status = pg.trengs<=pg.tilgj ? `<span class="pill good">I rute</span> Du trenger ca. ${fmtT(pg.perDag)} matte per dag, og har satt av ${fmtT(s.minDag)}.`
+    : `<span class="pill warn">For lite tid</span> Alt krever ca. ${fmtT(pg.perDag)} per dag. Med ${fmtT(s.minDag)} per dag kuttes: ${pg.kuttes.map(x=>esc(x.t.navn)).join(', ')}.`;
+  const sisteL = (s.log||[]).slice(-1)[0], slT = !s.cur && sisteL && oktSliter(s, sisteL.type) ? sisteL.type : null, slQ = slT ? QBY[sisteL.q] : null, slX = slT ? st.find(x=>x.t.id===slT) : null;
+  const opts = `<option value="auto" ${s.fokus==='auto'?'selected':''}>Auto (anbefalt${fokus&&s.fokus==='auto'?': '+esc(OKT_BY[fokus].navn):''})</option>` + st.slice().sort((a,b)=>b.t.V-a.t.V).map(x=>`<option value="${x.t.id}" ${s.fokus===x.t.id?'selected':''}>${esc(x.t.navn)} · ${Math.round(x.m*100)} %</option>`).join('');
+  const rows = st.slice().sort((a,b)=>b.perMin-a.perMin).map(x=>`<tr class="${x.t.id===fokus?'on':''}"><td>${esc(x.t.navn)}</td><td class="c">${Math.round(x.t.P*100)} % · ${x.t.p} p</td><td><div class="okt-m"><i style="width:${Math.round(x.m*100)}%"></i></div></td><td class="c">${x.igjen}/${x.n}</td><td class="c">${Math.round(x.tempo)} min</td><td class="c">${fmtT(x.restMin)}</td></tr>`).join('');
+  main.innerHTML = `${pyTabs('okt')}
+  <div class="card okt-hero">
+    ${nx ? `<div class="small muted">Neste oppgave</div><h1 style="margin:2px 0 6px">${esc(ovShort(nx.q.oving))}.${esc(nx.q.nr)} ${mdInline(nx.q.title)}</h1>
+    <p class="muted" style="margin:0 0 12px">${esc(nx.hvorfor)} · ca. ${Math.round(oktTempo(oktTypeOf(nx.q), s))} min</p>
+    ${slT?`<div class="okt-sliter">To bom på rad i ${esc(OKT_BY[slT].navn)}. Før du går videre: les det løste eksempelet${slQ&&slQ.refs&&slQ.refs[0]?` i <a href="#komp-${esc(slQ.refs[0].key)}">kompendiet §${esc(slQ.refs[0].key)}</a>`:''}, og gå gjennom «Steg for steg» på <a href="#q-${esc(sisteL.q)}">oppgaven du bommet på</a>.${slX&&slX.t.pre.length?` Sitter ikke grunnlaget, bytt tema til forkunnskapen: ${slX.t.pre.map(p=>`<button class="btn small sec" data-fokus="${p}">${esc(OKT_BY[p].navn)}</button>`).join(' ')}`:''}</div>`:''}
+    <button class="btn primary big" id="okt-start">${s.cur?'Fortsett økten':'Start'}</button>` : '<h1>Alt er mestret</h1><p class="muted">Bruk tiden på hele eksamenssett på tid.</p>'}
+    <div class="okt-ctl small"><label>Tema <select id="okt-fokus">${opts}</select></label><label><input type="checkbox" id="okt-bland" ${s.bland?'checked':''}> Bland inn repetisjon (1 av 5)</label></div>
+  </div>
+  <div class="okt-line"><div><span class="small muted">Forventet eksamensscore</span><div class="okt-big">${pg.naa}<span class="muted">/72 nå</span> → ${pg.slutt}<span class="muted">/72 17.12</span></div></div><div class="small">${status}</div></div>
+  <details class="fsec" data-fold="okt-det" ${foldOpen('okt-det', false)?'open':''}><summary><span class="fs-t">Detaljer</span><span class="fs-s">hvordan neste oppgave velges</span></summary><div class="fs-b">
+    <p class="small" style="margin:0 0 8px">Hver oppgavetype har en eksamensverdi = sannsynlighet × poeng. Sannsynligheten er (antall sett + 1)/(4 + 2). Mestring er siste svar (hint teller 70 %) ganget med hvor godt det huskes nå. Neste tema er det som gir mest verdi per minutt, med forkunnskaper først. Tempoet er målt fra øktene dine (startverdi ${OKT_START_MIN} min per oppgave).</p>
+    <div class="mx-scroll"><table class="mtab"><thead><tr><th>Type</th><th class="c">Sannsynlighet · poeng</th><th>Mestring</th><th class="c">Igjen</th><th class="c">Tempo</th><th class="c">Tid igjen</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <label class="small" style="display:inline-flex;gap:8px;align-items:center;margin-top:10px">Minutter matte per dag <input type="number" id="okt-min" min="0" step="15" value="${s.minDag}" style="width:90px"></label>
+    <span class="small muted"> · ${pg.dager} dager igjen · ${fmtT(pg.trengs)} arbeid igjen</span>
+  </div></details>`;
+  bindFolds(main);
+  const go = async ()=>{ const s2 = oktState(); if(!s2.cur){ s2.oktId = Date.now(); } if(s.fokus==='auto') s2.autoFokus = fokus;
+    s2.cur = {q:nx.q.id, type:oktTypeOf(nx.q), start:Date.now()}; await oktSave(s2); location.hash = '#q-'+nx.q.id; };
+  const b = $('#okt-start'); if(b) b.onclick = ()=>{ const s2 = oktState(); if(s2.cur && QBY[s2.cur.q]){ location.hash = '#q-'+s2.cur.q; } else go(); };
+  $('#okt-fokus').onchange = async e=>{ const s2 = oktState(); s2.fokus = e.target.value; s2.cur = null; await oktSave(s2); route(); };
+  main.querySelectorAll('[data-fokus]').forEach(x=>x.onclick = async ()=>{ const s2 = oktState(); s2.fokus = x.dataset.fokus; s2.cur = null; await oktSave(s2); route(); });
+  $('#okt-bland').onchange = async e=>{ const s2 = oktState(); s2.bland = e.target.checked; await oktSave(s2); };
+  const mi = $('#okt-min'); if(mi) mi.onchange = async ()=>{ const s2 = oktState(); s2.minDag = Math.max(0, +mi.value||0); await oktSave(s2); route(); };
+}
+// Kalles fra oppgavesiden når oppgaven er en del av en økt
+function oktBarHtml(qid){
+  const s = oktState(); if(!s.cur || s.cur.q!==qid) return '';
+  const n = (s.log||[]).filter(x=>x.okt===s.oktId).length + 1;
+  return `<div class="okt-bar"><span><strong>Økt</strong> · oppgave ${n} · ${esc((OKT_BY[s.cur.type]||{}).navn||'')}</span><span class="row"><a class="btn small ghost" href="#okt" id="okt-pause">Pause</a><button class="btn small primary" id="okt-neste">Neste i økten →</button></span></div>`;
+}
+function oktBindBar(main, q){
+  const b = main.querySelector('#okt-neste'); if(!b) return;
+  const foot = main.querySelector('.cq-foot'); if(foot){ foot.innerHTML = `<a class="btn sec" href="#okt">Pause økten</a><button class="btn primary" id="okt-neste2">Neste i økten →</button>`; }
+  const neste = async ()=>{ const s = oktState(); if(!s.cur) return;
+    const min = Math.min(120, (Date.now()-s.cur.start)/60000); const sc = questionScore(q);
+    s.log = (s.log||[]).concat([{q:q.id, type:s.cur.type, okt:s.oktId, start:s.cur.start, min, ok: sc!=null && sc>=OKT_MAL ? 1 : 0}]);
+    const gjort = s.cur.type; s.cur = null; await oktSave(s);
+    if(oktSliter(s, gjort)){ toast('To bom på rad: se det løste eksempelet før du går videre'); location.hash = '#okt'; return; }
+    const st = oktStats(s), nx = oktNeste(s, st);
+    if(!nx){ location.hash = '#okt'; return; }
+    if(s.fokus==='auto') s.autoFokus = nx.fokus;
+    s.cur = {q:nx.q.id, type:oktTypeOf(nx.q), start:Date.now()}; await oktSave(s);
+    location.hash = '#q-'+nx.q.id; };
+  b.onclick = neste; const b2 = main.querySelector('#okt-neste2'); if(b2) b2.onclick = neste;
 }
 
 function renderFag(main, f){
@@ -2441,7 +2604,7 @@ function pyStreak(){ const D = PYS.D; let n = 0; const d = new Date();
   return n; }
 
 // ---- Visning: oversiktssiden ----
-function pyTabs(active){ return `<div class="subtabs" role="tablist"><a href="#oversikt" class="${active==='ov'?'on':''}">Oversikt</a><a href="#python" class="${active==='py'?'on':''}">Python-pugging</a></div>`; }
+function pyTabs(active){ return `<div class="subtabs" role="tablist"><a href="#oversikt" class="${active==='ov'?'on':''}">Oversikt</a><a href="#okt" class="${active==='okt'?'on':''}">Økt</a><a href="#python" class="${active==='py'?'on':''}">Python-pugging</a></div>`; }
 function pyDeckSummary(S){ const D = (STATE.pugg||{})[S.id]; if(!D || !D.c) return {n:S.deck.length, sit:0, rev:0, due:0}; const now = Date.now();
   let sit=0, rev=0, due=0; S.deck.forEach(c=>{ const st = D.c[c.id]; if(!st) return; if(st.s==='review'){ rev++; if(st.ivl>=4*PY_DAY) sit++; } if(st.s!=='new' && st.due<=now) due++; });
   return {n:S.deck.length, sit, rev, due}; }
