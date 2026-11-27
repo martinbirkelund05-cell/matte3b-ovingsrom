@@ -460,6 +460,19 @@ pre.pycode{margin:0;background:var(--bg);border:1px solid var(--line);border-rad
 @media(max-width:600px){.pykpis{grid-template-columns:repeat(3,1fr)}.py-math{font-size:18px;padding:12px}.py-hint{margin-left:0;width:100%}.pycard{padding:14px}}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 @media(max-width:600px){.topbar{flex-wrap:wrap;row-gap:6px}.topbar nav{order:3;flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;min-width:0;scrollbar-width:none}.topbar nav a{white-space:nowrap}}
+
+.pokort{display:flex;justify-content:space-between;align-items:center;gap:14px;text-decoration:none;color:var(--fg);background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--r);padding:14px 16px;margin-bottom:4px}
+.pokort:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.pocard{margin-bottom:12px}
+.posteps{margin:0 0 6px;padding-left:20px}.posteps li{margin:4px 0}
+.postep{margin-top:12px}.postep h2{font-size:16px;margin:0 0 10px}
+.poopts{display:grid;gap:6px}
+.poopt{display:flex;gap:10px;align-items:center;min-height:44px;padding:6px 12px;border:1px solid var(--line);border-radius:var(--r);cursor:pointer;background:var(--surface)}
+.poopt:hover{border-color:var(--accent)}.poopt input{margin:0;width:18px;height:18px;flex:none}
+.poopt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.poopt:has(input:disabled){cursor:default;opacity:.75}
+#po-mal pre.pycode{max-height:260px;overflow:auto}
+.fs-b .qlist .n{min-width:92px;white-space:nowrap}
 </style>
 
 <header class="topbar">
@@ -803,6 +816,8 @@ function route(){
   if(h==='hjem') renderHjem(main);
   else if(h==='kalender') renderKalender(main);
   else if(h==='python') renderPython(main);
+  else if(h==='python-oppg') renderPoOversikt(main);
+  else if(/^python-oppg-[\w-]+$/.test(h)) renderPoOppg(main, h.slice(12));
   else if(/^python-[\w-]+$/.test(h)) renderPugg(main, h.slice(7));
   else if(h==='oversikt' || h==='fag-matte') renderFag(main, 'matte');
   else if(h==='gjoremal') renderGjoremal(main);
@@ -1390,6 +1405,8 @@ const TABS = {
 };
 function titleFor(h){
   if(h==='python') return 'Python-pugging';
+  if(h==='python-oppg') return 'Fra oppgave til kode';
+  if(h.startsWith('python-oppg-')) return 'Oppgave til kode: '+h.slice(12);
   if(h.startsWith('python-')){ const sn = (window.__py&&window.__py.PY_BY[h.slice(7)]); return sn ? 'Pugg: '+sn.t : 'Python-pugging'; }
   h = h.replace(/^#/,'');
   if(h==='hjem'||h==='') return 'Hjem'; if(h==='kalender') return 'Kalender'; if(h==='gjoremal-matte') return 'Ukeplan (matte)';
@@ -1412,7 +1429,7 @@ document.addEventListener('click', e=>{
 // =====================================================================
 // ---------- Studieplattform: fag, aktiviteter, plan og kalender ----------
 // =====================================================================
-const APP_VER = '27.11 kl. 14.30';
+const APP_VER = '27.11 kl. 16.00';
 const FAG = {
   mek:  { key:'mek',  kode:'MEKA1101', navn:'Mekanikk 1',        kort:'Mekanikk',       canvas:'MEKA1101-26H :: Mekanikk 1',      sem:'MEKA1101-26H', exam:'2026-12-04', tid:'kl. 09:00–13:00 (4 t), oppmøte 30 min før', form:'Skriftlig, Inspera + håndberegninger på ark. Hjelpemiddel D: enkel kalkulator og vedlagt formelark.', farge:'#7b3f98' },
   fem:  { key:'fem',  kode:'MEPA2314', navn:'Elementmetoden',    kort:'Elementmetoden', canvas:'MEPA2314-26H :: Elementmetoden',   sem:'MEPA2314-26H', exam:'2026-12-11', tid:'tidspunkt ikke oppgitt i Canvas', form:'Muntlig eksamen (teller 40 %). Prosjektmappen teller 60 %.', farge:'#1f6f78' },
@@ -2233,8 +2250,9 @@ const PY_SNAR = [
  {n:11, id:'kurve', t:'Kurvelengde', A:13, P:85, i:'Ord25 1', msg:'Lengden av r′(t), integrert. Testet på Ord25 oppg. 1.', deck:DECK_KURVE, lv:['','Kurvelengde']},
  {n:12, id:'evm', t:'EVM-systemet med np.linalg.solve', A:16, P:55, i:'Mai26 13 (Feb26 5 er bare kodelesing)', msg:'Når matrisen og høyresiden er satt opp, løser én linje systemet. Hovedjobben er å sette opp a_P, a_W og a_E, så snarveien sparer lite.', deck:DECK_EVM, lv:['','Løs systemet']},
 ];
-const PY_V = [95,68,62,58,47,47,43,40,34,13,11,9]; // pugge-verdiene slik spesifikasjonen oppgir dem
-PY_SNAR.forEach((s,k)=>{ s.code = PY_CODE[k]; s.v = PY_V[k]; s.col = s.v>=60?'good':s.v>=40?'warn':'bad'; });
+const PY_V = [95,68,62,58,47,47,43,40,34,13,11,9];
+const PY_FA = [[1,'sp.integrate og nøstede dobbelt-/trippelintegraler står der. Pugg sp.pi, sp.Rational, sp.N og Jacobi.'],[2,'sp.diff og sp.simplify står der. Bare ideen må huskes.'],[0,'Bare regneregler i PDF-en. Definisjonene og sp.Matrix må pugges.'],[1,'dS = ‖r_u × r_v‖ står i PDF-en. sp.Matrix, .cross og .norm må pugges.'],[1,'Parametriseringene står i PDF-en. sp.Matrix og .dot må pugges.'],[2,'Hele malen for dblquad og tplquad står der.'],[1,'.subs og koordinatbyttene står der.'],[1,'sp.integrate og dblquad står der. sp.N må pugges.'],[1,'Koden gis på eksamen. De fire endringene må huskes.'],[0,'Ikke på arket.'],[0,'Bare tangentvektoren i PDF-en. sp.Matrix og .norm må pugges.'],[1,'EVM-koeffisientene står i PDF-en. np.linalg.solve må pugges.']]; // pugge-verdiene slik spesifikasjonen oppgir dem
+PY_SNAR.forEach((s,k)=>{ s.code = PY_CODE[k]; s.v = PY_V[k]; s.fa = PY_FA[k]; s.col = s.v>=60?'good':s.v>=40?'warn':'bad'; });
 const PY_BY = {}; PY_SNAR.forEach(s=>PY_BY[s.id]=s);
 
 // ---- Syntaksfarger for kodebildet (enkel Python-lekser) ----
@@ -2346,13 +2364,14 @@ function renderPython(main){
   main.innerHTML = `<div class="row small muted" style="margin-bottom:6px"><a href="#oversikt">Matte 3B</a> › Python-pugging</div>
   <div class="row between"><h1>Python-pugging</h1><span class="pill" style="background:${FAG.matte.farge}22;color:${FAG.matte.farge}">Eksamen ${fmtD(FAG.matte.exam)} · ${daysTo(FAG.matte.exam)} dager</span></div>
   ${pyTabs('py')}
-  <p class="small muted" style="margin:6px 0 14px">12 snarveier sortert etter pugge-verdi. Python er tilgjengelig i Inspera på eksamen. Trykk på et kort for å øve.</p>
+  <a class="pokort" href="#python-oppg"><div><strong>Fra oppgave til kode</strong><div class="small muted">Lær å kjenne igjen hva en eksamensoppgave spør om, finn malen på formelarket og sett opp koden. ${PO_OPPG.length} ekte oppgaver.</div></div><span class="btn primary">Øv</span></a>
+  <p class="small muted" style="margin:14px 0 14px">12 snarveier sortert etter pugge-verdi. Merkelappen under hvert kort viser hvor mye av koden som står på formelarket du får på eksamen. Trykk på et kort for å pugge.</p>
   <div class="pygrid">${cards.map(s=>{ const sm = pyDeckSummary(s);
     return `<a class="pykort" href="#python-${s.id}">
       <div class="pk-h"><span class="pk-n">${s.n}</span><span class="pk-t">${mdCode(s.t)}</span><span class="pill pv-${s.col}">${s.v} %</span></div>
       <p class="pk-m">${esc(s.msg)}</p>
       <pre class="pycode" aria-label="Kode">${pyHi(s.code)}</pre>
-      <div class="pk-f small"><span><strong>Brukt i:</strong> ${esc(s.i)}</span><span class="muted">A ${s.A} · P ${s.P} · ${s.deck.length} kort${sm.rev?` · ${sm.rev} i repetisjon`:''}${sm.due?` · <strong>${sm.due} forfaller</strong>`:''}</span></div></a>`; }).join('')}</div>
+      <div class="pk-f small"><span><span class="pill ${['bad','warn','good'][s.fa[0]]}">${['Ikke på formelarket','Delvis på formelarket','Står på formelarket'][s.fa[0]]}</span> ${esc(s.fa[1])}</span><span><strong>Brukt i:</strong> ${esc(s.i)}</span><span class="muted">A ${s.A} · P ${s.P} · ${s.deck.length} kort${sm.rev?` · ${sm.rev} i repetisjon`:''}${sm.due?` · <strong>${sm.due} forfaller</strong>`:''}</span></div></a>`; }).join('')}</div>
   <details class="fsec" data-fold="py-grunnlag" ${foldOpen('py-grunnlag', false)?'open':''}><summary><span class="fs-t">Slik regnes pugge-verdien</span><span class="fs-s">grunnlag og tabell</span></summary><div class="fs-b">
     <p class="small" style="margin-top:0">Grunnlag: ordinær eksamen 2025, prøveeksamen 2025, kontinuasjon februar 2026 og kontinuasjon mai 2026, med løsningsforslag, samt fremdriftsplanen. Hver snarvei er testet i Python på en ekte eksamensoppgave og gir samme svar som løsningsforslaget.</p>
     <ul class="small"><li><strong>Anvendbarhet (A):</strong> poengene snarveien gir per eksamen i snitt (flervalg 4 p, en deloppgave i langsvar ca. 2 p). Oppgaver som krever en bestemt Python-funksjon, teller dobbelt. 8 p per eksamen eller mer = 100 %.</li>
@@ -2479,8 +2498,318 @@ function pyUi(){
     const stx = lock ? (l<=(D.mx||1) ? 'På pause' : 'Låst') : weak ? 'Må repeteres' : Math.round(pyScore(l)*100)+' % i repetisjon';
     return `<div class="pylvl${lock?' lock':''}${weak?' weak':''}"><div class="hd"><span>Nivå ${l}: ${esc(n)}</span><em>${stx}</em></div><div class="pybar" role="img" aria-label="${cnt[3]} sitter, ${cnt[2]} kan, ${cnt[1]} lærer, ${cnt[0]} nye">${[3,2,1,0].map(k=>cnt[k]?`<i style="width:${100*cnt[k]/tot}%;background:var(--py-s${k})" title="${['Ny','Lærer','Kan','Sitter'][k]}: ${cnt[k]}"></i>`:'').join('')}</div></div>`; }).join('');
 }
+const PY_FORMELARK = "#\n# Formelark\n#\n\n#\n# Oprettelse av numpy-matriser\n#\nimport numpy as np\n\nL = np.zeros((3,4)) # 3 rader, 4 kolonner\nL = np.eye(3)       # 3x3 identitetsmatrise\n\n#\n# x = [0, 0.25, 0.5, 0.75]\n#\nx = np.linspace(0, 0.75, 4) \nx = np.linspace(0, 1, 4, endpoint=False)\nx = np.arange(0, 1, 0.25)\n\n\n#\n# opprettelse av numerisk funksjon f = np.sin(x*y)\n#\nx = np.linspace(0,1,10)\ny = np.linspace(0,1,10)\nx,y = np.meshgrid(x,y)\n\nf = np.sin(x*y) \n\n#\n# integrasjon og derivasjon scipy\n#\nfrom scipy.integrate import tplquad, dblquad, quad\n\n# integrasjon og derivasjon scipy\n#\nfrom scipy.integrate import tplquad, dblquad, quad\n\n# Integral av x**2 for x = a..b\n#\nf = lambda x : x*2\na = 0\nb = 1\nI = quad(f, a, b)\n\n# Dobbeltintegral av x*y for x = a..b og y = g(x)..h(x)\n#\nf = lambda y,x : x*y\na = 0\nb = 1\ng = lambda x : 0\nh = lambda x : x\nI = dblquad(f, a, b, g, h)\n\n# Trippelinteral av x*y*z fro x = a..b, y = g(x)..h(x), z = q(x,y)..r(x,y)\n#\nf = lambda z,y,x : x*y*z\na = 0\nb = 1\ng = lambda x : 0\nh = lambda x : x\nq = lambda x,y : 0\nr = lambda x,y : x+y\nI = tplquad(f, a, b, g, h, q, r)\n\n\n#\n# Integrasjon og derivasjon med sympy\n#\nimport sympy as sp\nx,y,z = sp.symbols(\"x,y,z\")\n\n# bestemt og ubestemt integral av x**2\nf = x*x\nI = sp.integrate(f,x)        # ubestemt integral\nI = sp.integrate(f, (x,0,1)) # bestemt integral\n\n# dobbeltintegral\nf = x*y\nI = sp.integrate(f, (y, 0, x))\nI = sp.integrate(I, (x, 0, 1))\n\n# trippelintegral\nf = x*y*z\nI = sp.integrate(f, (z, 0, x+y))\nI = sp.integrate(I, (y, 0, x))\nI = sp.integrate(I, (x, 0, 1))\n\n# derivasjon\nf = x*y\nfx = sp.diff(f, x)\nfxy = sp.diff(fx, y)\n\n# forenkling\nf = sp.cos(x)**2 + sp.sin(y)**2\ng = sp.simplify(f) # 1\n\n# innsetting av verdier\nf = x*y\nf21 = f.subs(x, 2).subs(y,1) # f(2,1) = 2\n\n#\n# Plotting\n#\n# Last inn siden p\u00e5 nytt for hvert plott.\n#\nimport matplotlib.pyplot as plt\n\nx = np.linspace(0, 2*np.pi, 20)\nf = np.sin(x)\nplt.plot(x,f)\nplt.show()\n\n\nx = np.linspace(0, 1, 20)\ny = np.linspace(0,1, 20)\nx,y = np.meshgrid(x,y)\nf = x*y\nplt.imshow(f, cmap=\"hot\")\nplt.show()\n\nx = np.linspace(0, 1, 20)\ny = np.linspace(0,1, 20)\nx,y = np.meshgrid(x,y)\nf = x**3*y**3\nplt.axes(projection=\"3d\").plot_surface(x,y,f)\nplt.show()\n\n\n\n\n";
+// =====================================================================
+// ---------- Fra oppgave til kode (Python-pugging, Matte 3B) ----------
+// Fire steg per eksamensoppgave: 1 hva spør oppgaven om, 2 hvilken mal på formelarket,
+// 3 hva skal inn i malen, 4 skriv koden (rettes). Kode skrevet slik formelarket gjør det
+// (navngitte lambdaer, nøstede integrate-kall) godtas.
+// =====================================================================
+const PO_TYPER = {
+  gitt:  {t:'Regn ut et integral med gitte grenser', k:'«Regn ut», «Bestem integralet», integraltegn med alle grenser skrevet ut.'},
+  omr:   {t:'Sett opp grenser for et område (areal, volum, tyngdepunkt)', k:'Området er beskrevet med kurver, hjørner eller ulikheter. Ord som «avgrenset av», «tyngdepunkt», «areal av».'},
+  koord: {t:'Bytt til polar-, sylinder- eller kulekoordinater', k:'Disk, halvdisk, sirkel, sylinder, kjegle, kule, √(x² + y²) eller x² + y² i integranden.'},
+  velg:  {t:'Velg riktig integral blant alternativer', k:'«Hvilket integral regner ut …», flere integraler som svaralternativer, og du vet svaret (arealet) fra før.'},
+  linje: {t:'Linjeintegral eller arbeid langs en kurve', k:'∫ F · dr, «arbeid», «langs kurven C». Lukket kurve i planet: tenk Greens teorem.'},
+  flate: {t:'Flateintegral: areal, fluks eller tyngdepunkt på en flate', k:'r(u, v), «overflaten S», dS, ‖r_u × r_v‖, «fluks gjennom».'},
+  pde:   {t:'Sjekk om en funksjon løser en PDE, eller finn f i Poisson', k:'u_t, u_xx, u_tt, «hvilken funksjon er en løsning», «velg inhomogeniteten f».'},
+  felt:  {t:'Vektorfelt: divergens, curl eller potensial', k:'∇ · F, ∇ × F, «konservativt», «har feltet et potensial».'},
+  scipy: {t:'Numerisk med scipy (dblquad/tplquad kreves ved navn)', k:'«Du skal regne med scipy.dblquad/tplquad», «bruk like mange desimaler som Python gir».'},
+  evm:   {t:'Endelig volum-metode: sett opp og løs systemet', k:'a_W, a_E, a_P, S_u, kontrollvolum, «lag et lineært system MT = b».'},
+  teori: {t:'Teori eller identitet: løses uten kode', k:'Utsagn om div, curl og grad, «hvilket utsagn er sant», omskriving med formelarkets identiteter.'},
+};
+const PO_MAL = {
+  int1:  {t:'sympy: integral (bestemt/ubestemt)', a:'# bestemt og ubestemt integral av x**2', b:'# dobbeltintegral'},
+  intn:  {t:'sympy: dobbelt- og trippelintegral (nøstet)', a:'# dobbeltintegral', b:'# derivasjon'},
+  diff:  {t:'sympy: derivasjon (diff) og forenkling (simplify)', a:'# derivasjon', b:'# innsetting av verdier'},
+  subs:  {t:'sympy: innsetting (subs)', a:'# innsetting av verdier', b:'#\n# Plotting'},
+  quad:  {t:'scipy: quad (enkeltintegral)', a:'# Integral av x**2 for x = a..b', b:'# Dobbeltintegral av x*y'},
+  dbl:   {t:'scipy: dblquad', a:'# Dobbeltintegral av x*y', b:'# Trippelinteral'},
+  tpl:   {t:'scipy: tplquad', a:'# Trippelinteral', b:'#\n# Integrasjon og derivasjon med sympy'},
+  matrix:{t:'Ikke på arket: sp.Matrix, .diff, .dot, .cross (må pugges)', code:'import sympy as sp\nt, u, v = sp.symbols("t u v")\nr = sp.Matrix([sp.cos(t), sp.sin(t)])     # kurve eller flate\nF = sp.Matrix([r[1], -r[0]])             # F med x, y byttet ut\nW = sp.integrate(F.dot(r.diff(t)), (t, 0, 2*sp.pi))\nN = r.diff(u).cross(r.diff(v))           # flate: normalvektor'},
+  ingen: {t:'Ingen kode: formelarket (PDF) eller hoderegning', code:'# Ingen Python. Bruk formelarket (PDF):\n# A.3 koordinatbytter, A.4 parametriseringer, A.5 dS,\n# A.6 identiteter for div, curl og grad, A.7 Gauss/Stokes/Green,\n# A.8 EVM-koeffisienter.'},
+};
+function poMalCode(k){ const m = PO_MAL[k]; if(m.code) return m.code; const s = PY_FORMELARK; const i = s.indexOf(m.a); if(i<0) return ''; const j = s.indexOf(m.b, i+1); return s.slice(i, j<0 ? undefined : j).replace(/\n+$/,''); }
+const PO_SETS = {ord2025:'Ord25', prove2025:'Prøve25', kontfeb2026:'Feb26', kontmai2026:'Mai26'};
+// kind: sp (sympy-integral, rettes tallmessig), sci (scipy dbl/tpl, rettes tallmessig), lines (kodelinjer), none (ingen kode)
+const PO_OPPG = [
+ {id:'o25-5', ex:'ord2025', nr:'5', ty:'gitt', td:['koord','velg','scipy'], mal:['intn'], md:['int1','tpl','matrix'], kind:'sp',
+  t:'Regn ut trippelintegralet.', m:()=>PS('0','2')+PS('0','x')+PS('0','x+y')+' 8e<sup>x+y+z</sup> dz dy dx',
+  ans:'sp.integrate(8*sp.exp(x + y + z), (z, 0, x + y), (y, 0, x), (x, 0, 2))',
+  fyll:['Integrand: 8*sp.exp(x + y + z) (sp.exp, ikke e**)','Tre integrate-kall: z innerst (0 til x + y), så y (0 til x), så x (0 til 2)'],
+  lf:'e⁸ − 6e⁴ + 8e² − 3 ≈ 2709,5 (alternativ f)'},
+ {id:'p25-3a', ex:'prove2025', nr:'3a', ty:'gitt', td:['scipy','omr','velg'], mal:['intn'], md:['dbl','int1','subs'], kind:'sp',
+  t:'Regn ut med sympy.integrate.', m:()=>PS('0','1')+PS('y','y²+1')+' xy<sup>2</sup> dx dy',
+  ans:'sp.integrate(x*y**2, (x, y, y**2 + 1), (y, 0, 1))',
+  fyll:['Integrand: x*y**2','Innerst x fra y til y**2 + 1, ytterst y fra 0 til 1'],
+  lf:'71/210 ≈ 0,33810. Løsningsforslaget skriver 72/210, men desimaltallet de oppgir, 0,338095…, er 71/210.'},
+ {id:'f26-2', ex:'kontfeb2026', nr:'2', ty:'gitt', td:['omr','koord','velg'], mal:['intn'], md:['int1','dbl','diff'], kind:'sp',
+  t:'Bestem integralet.', m:()=>PS('0','1')+PS('x','x³')+' <sup>1</sup>⁄<sub>x</sub> dy dx',
+  ans:'sp.integrate(1/x, (y, x, x**3), (x, 0, 1))',
+  fyll:['Integrand: 1/x','Innerst y fra x til x**3, ytterst x fra 0 til 1'],
+  lf:'−2/3 (alternativ a)'},
+ {id:'o25-2', ex:'ord2025', nr:'2', ty:'velg', td:['koord','gitt','omr'], mal:['intn','dbl'], md:['int1','subs','ingen'], kind:'sp',
+  t:'Trekanten med hjørner (0, 0), (−1, 1) og (1, 1) har areal 1. Test alternativ (e): gir det arealet?', m:()=>PS('π/4','3π/4')+PS('0','1/sin θ')+' r dr dθ',
+  ans:'sp.integrate(r, (r, 0, 1/sp.sin(theta)), (theta, sp.pi/4, 3*sp.pi/4))',
+  fyll:['Symboler: r, theta = sp.symbols("r theta")','Integrand: r (Jacobi står allerede i alternativet)','Innerst r fra 0 til 1/sp.sin(theta), ytterst theta fra sp.pi/4 til 3*sp.pi/4'],
+  lf:'1 = arealet, så alternativ (e) er riktig.'},
+ {id:'f26-3', ex:'kontfeb2026', nr:'3', ty:'velg', td:['koord','omr','gitt'], mal:['intn','dbl'], md:['int1','diff','ingen'], kind:'sp',
+  t:'Trekanten med hjørner (0, 0), (5, 0) og (5, 12) har areal 30. Sjekk at venstresiden i likningen gir arealet, før du tester alternativene.', m:()=>PS('0','arctan 2,4')+PS('0','5/cos φ')+' r dr dφ',
+  ans:'sp.integrate(r, (r, 0, 5/sp.cos(theta)), (theta, 0, sp.atan(sp.Rational(12, 5))))',
+  fyll:['Symboler: r, theta (bruk theta for φ)','Innerst r fra 0 til 5/sp.cos(theta)','Ytterst theta fra 0 til sp.atan(2.4)'],
+  lf:'30, altså arealet. Riktig alternativ er (a): r₀ = 13, α(r) = arccos(5/r).'},
+ {id:'m26-1', ex:'kontmai2026', nr:'1', ty:'koord', td:['gitt','omr','flate'], mal:['intn'], md:['int1','dbl','subs'], kind:'sp',
+  t:'D er halvdisken x² + y² ≤ 4, y ≥ 0. Regn ut integralet.', m:()=>'∬<sub>D</sub> y√(x² + y²) dA',
+  ans:'sp.integrate(r**3*sp.sin(theta), (r, 0, 2), (theta, 0, sp.pi))', alt:['sp.integrate(y*sp.sqrt(x**2 + y**2), (y, 0, sp.sqrt(4 - x**2)), (x, -2, 2))','sp.integrate(r*sp.sin(theta)*r*r, (r, 0, 2), (theta, 0, sp.pi))'],
+  fyll:['Polar: y = r sin θ og √(x² + y²) = r (formelarket A.3)','Jacobi: gang med r. Den står IKKE på formelarket','Grenser: r fra 0 til 2, theta fra 0 til sp.pi'],
+  lf:'8 (alternativ d)'},
+ {id:'f26-12a', ex:'kontfeb2026', nr:'12a', ty:'koord', td:['gitt','flate','omr'], mal:['intn'], md:['tpl','int1','matrix'], kind:'sp',
+  t:'V er kjeglen x² + y² ≤ z², 0 ≤ z ≤ 2. Regn ut volumet i sylinderkoordinater.', m:()=>'V = ∭<sub>V</sub> dV',
+  ans:'sp.integrate(r, (z, r, 2), (theta, 0, 2*sp.pi), (r, 0, 2))', alt:['sp.integrate(r, (z, r, 2), (r, 0, 2), (theta, 0, 2*sp.pi))'],
+  fyll:['Integrand: r (Jacobi for sylinderkoordinater)','z fra r til 2 (fra kjeglen opp til lokket)','r fra 0 til 2, theta fra 0 til 2*sp.pi'],
+  lf:'8π/3'},
+ {id:'o25-13', ex:'ord2025', nr:'13d', ty:'koord', td:['flate','omr','gitt'], mal:['intn'], md:['tpl','int1','ingen'], kind:'sp',
+  t:'T er legemet under paraboloiden z = 3 − r² og over xy-planet. Regn ut volumet V (du trenger det i Gauss).', m:()=>'V = ∭<sub>T</sub> dV',
+  ans:'sp.integrate(r, (z, 0, 3 - r**2), (r, 0, sp.sqrt(3)), (theta, 0, 2*sp.pi))', alt:['sp.integrate(r, (z, 0, 3 - r**2), (theta, 0, 2*sp.pi), (r, 0, sp.sqrt(3)))'],
+  fyll:['Integrand: r (Jacobi)','z fra 0 til 3 - r**2','r fra 0 til sp.sqrt(3) (der paraboloiden treffer z = 0), theta fra 0 til 2*sp.pi'],
+  lf:'9π/2. Med div F = 6 og Φ₁ = −π(9 + 3e) gir Gauss Φ₂ = 6V − Φ₁ = (36 + 3e)π.'},
+ {id:'m26-2', ex:'kontmai2026', nr:'2', ty:'omr', td:['koord','gitt','velg'], mal:['intn'], md:['int1','dbl','subs'], kind:'sp',
+  t:'Området er begrenset av x = y² og y = x². Arealet er A = 1/3. Skriv integralet ∬ x dA; da er x̄ = 3 · svaret.', m:()=>PT('Mellom parablene x = y² og y = x²'),
+  ans:'sp.integrate(x, (y, x**2, sp.sqrt(x)), (x, 0, 1))', alt:['sp.integrate(x, (x, y**2, sp.sqrt(y)), (y, 0, 1))'],
+  fyll:['Skjæringspunkter: (0, 0) og (1, 1)','For fast x går y fra x**2 (nederst) til sp.sqrt(x) (øverst)','Integrand: x'],
+  lf:'3/20, så x̄ = 9/20. Bare alternativ (f) har 9/20 først.'},
+ {id:'m26-6', ex:'kontmai2026', nr:'6', ty:'linje', td:['flate','gitt','felt'], mal:['intn'], md:['matrix','int1','dbl'], kind:'sp',
+  t:'F = (x² − y², x² + y²) og K er kvadratet [−1, 1]², orientert mot klokka. Regn ut ∮ F · dr med Greens teorem: integrer Q_x − P_y over kvadratet.', m:()=>'∮<sub>∂K</sub> F · dr = ∬<sub>K</sub> (Q<sub>x</sub> − P<sub>y</sub>) dA',
+  ans:'sp.integrate(2*x + 2*y, (x, -1, 1), (y, -1, 1))', alt:['sp.integrate(2*x + 2*y, (y, -1, 1), (x, -1, 1))'],
+  fyll:['Lukket kurve i planet: Greens teorem (formelarket A.7)','Q_x − P_y = 2x − (−2y) = 2x + 2y','Grenser: x og y fra −1 til 1'],
+  lf:'0 (alternativ a)'},
+ {id:'o25-8', ex:'ord2025', nr:'8', ty:'linje', td:['flate','felt','gitt'], mal:['matrix'], md:['intn','diff','dbl'], kind:'lines',
+  t:'F = y i − x j og C er sirkelen x² + y² = 4, mot klokka. Skriv r(t) og arbeidet W. F langs kurven er gitt.', m:()=>'∮<sub>C</sub> F · dr',
+  given:'t = sp.symbols("t")', ans:[['r = sp.Matrix([2*sp.cos(t), 2*sp.sin(t)])','r = sp.Matrix([sp.cos(t)*2, sp.sin(t)*2])'],['F = sp.Matrix([r[1], -r[0]])'],['W = sp.integrate(F.dot(r.diff(t)), (t, 0, 2*sp.pi))','W = sp.integrate(F.dot(sp.diff(r, t)), (t, 0, 2*sp.pi))']],
+  fyll:['r: sirkelen med radius 2 fra formelarket A.4, som sp.Matrix','F: bytt x og y med r[0] og r[1]','W: integrer F.dot(r.diff(t)) fra 0 til 2*sp.pi'],
+  lf:'−8π'},
+ {id:'f26-6', ex:'kontfeb2026', nr:'6', ty:'linje', td:['gitt','flate','omr'], mal:['matrix'], md:['intn','int1','dbl'], kind:'lines',
+  t:'F = (2x, −1) og C er grafen y = x², −1 ≤ x ≤ 1, med økende x. Skriv r(t), F langs kurven og linjeintegralet.', m:()=>'∫<sub>C</sub> F · dr',
+  given:'t = sp.symbols("t")', ans:[['r = sp.Matrix([t, t**2])'],['F = sp.Matrix([2*r[0], -1])','F = sp.Matrix([2*t, -1])'],['W = sp.integrate(F.dot(r.diff(t)), (t, -1, 1))','W = sp.integrate(F.dot(sp.diff(r, t)), (t, -1, 1))']],
+  fyll:['Graf y = f(x): x = t, y = f(t) (formelarket A.4)','F: 2x blir 2*r[0], −1 står som det er','Grenser for t: −1 til 1'],
+  lf:'0 (alternativ a)'},
+ {id:'o25-9', ex:'ord2025', nr:'9', ty:'pde', td:['felt','gitt','teori'], mal:['diff'], md:['subs','int1','matrix'], kind:'lines',
+  t:'Test alternativ (a): løser u = e^(−36t) sin 3x likningen u_t = 4u_xx? Skriv linjen som blir 0 hvis den gjør det.', m:()=>'u<sub>t</sub> = 4u<sub>xx</sub>',
+  given:'t = sp.symbols("t")\nu = sp.exp(-36*t)*sp.sin(3*x)', ans:[['sp.simplify(sp.diff(u, t) - 4*sp.diff(u, x, 2))','sp.simplify(sp.diff(u, t) - 4*sp.diff(sp.diff(u, x), x))','sp.simplify(sp.diff(u, t) - 4*sp.diff(u, x, x))']],
+  fyll:['Andrederivert: sp.diff(u, x, 2), eller diff to ganger slik formelarket gjør','Flytt alt over på én side og forenkle med sp.simplify'],
+  lf:'0, så (a) er en løsning.'},
+ {id:'f26-9', ex:'kontfeb2026', nr:'9', ty:'pde', td:['felt','gitt','koord'], mal:['diff'], md:['subs','intn','matrix'], kind:'lines',
+  t:'u = e^(x² − 3y²) skal løse Poisson-likningen u_xx + u_yy = f. Regn ut f.', m:()=>'f = u<sub>xx</sub> + u<sub>yy</sub>',
+  given:'u = sp.exp(x**2 - 3*y**2)', ans:[['sp.simplify(sp.diff(u, x, 2) + sp.diff(u, y, 2))','sp.factor(sp.diff(u, x, 2) + sp.diff(u, y, 2))','sp.diff(u, x, 2) + sp.diff(u, y, 2)','sp.simplify(sp.diff(sp.diff(u, x), x) + sp.diff(sp.diff(u, y), y))']],
+  fyll:['Andrederivert i x og i y, og legg sammen','sp.factor gjør det lett å kjenne igjen svaralternativet'],
+  lf:'4(x² + 9y² − 1)e^(x² − 3y²) (alternativ a)'},
+ {id:'m26-8', ex:'kontmai2026', nr:'8', ty:'pde', td:['gitt','felt','teori'], mal:['diff'], md:['subs','int1','matrix'], kind:'lines',
+  t:'Test alternativ (a): løser u = sin(x/2)(t − sin t) likningen u_tt − 4u_xx = t sin(x/2)? Skriv linjen som blir 0 hvis den gjør det.', m:()=>'u<sub>tt</sub> − 4u<sub>xx</sub> = t sin(x/2)',
+  given:'t = sp.symbols("t")\nu = sp.sin(x/2)*(t - sp.sin(t))', ans:[['sp.simplify(sp.diff(u, t, 2) - 4*sp.diff(u, x, 2) - t*sp.sin(x/2))','sp.simplify(sp.diff(u, t, 2) - 4*sp.diff(u, x, 2) - sp.sin(x/2)*t)']],
+  fyll:['Venstresiden: sp.diff(u, t, 2) - 4*sp.diff(u, x, 2)','Trekk fra høyresiden t*sp.sin(x/2), og forenkle'],
+  lf:'0, så (a) løser likningen. Løsningsforslaget sier at (b) også gjør det.'},
+ {id:'f26-8', ex:'kontfeb2026', nr:'8', ty:'felt', td:['pde','teori','linje'], mal:['matrix','diff'], md:['subs','int1','dbl'], kind:'lines',
+  t:'Er φ₁ = x sin(yz) + xy − z² − xz et potensial for F? F og phi er skrevet inn. Skriv gradienten og sjekken.', m:()=>'∇φ − F = 0 ?',
+  given:'F = sp.Matrix([sp.sin(y*z) + y - z, x*z*sp.cos(y*z) + x, x*y*sp.cos(y*z) - 2*z - x])\nphi = x*sp.sin(y*z) + x*y - z**2 - x*z', ans:[['grad = sp.Matrix([sp.diff(phi, x), sp.diff(phi, y), sp.diff(phi, z)])'],['sp.simplify(grad - F)','sp.simplify(F - grad)','grad - F']],
+  fyll:['grad: sp.Matrix med de tre deriverte av phi','Sjekk: sp.simplify(grad - F) skal bli nullvektoren'],
+  lf:'Nullvektoren, så φ₁ er et potensial (alternativ c).'},
+ {id:'o25-11b', ex:'ord2025', nr:'11b', ty:'flate', td:['gitt','koord','scipy'], mal:['intn'], md:['dbl','matrix','int1'], kind:'sp',
+  t:'Fra a) er ‖N‖ = v√(v² + 1). Regn ut arealet av flaten for 0 ≤ u ≤ π og √3 ≤ v ≤ 2√2 med sympy.', m:()=>'A = ∬<sub>D</sub> ‖N‖ du dv',
+  ans:'sp.integrate(v*sp.sqrt(v**2 + 1), (v, sp.sqrt(3), 2*sp.sqrt(2)), (u, 0, sp.pi))', alt:['sp.integrate(v*sp.sqrt(v**2 + 1), (u, 0, sp.pi), (v, sp.sqrt(3), 2*sp.sqrt(2)))'],
+  fyll:['Symboler: u, v = sp.symbols("u v")','Integrand: ‖N‖ = v*sp.sqrt(v**2 + 1) (dS fra formelarket A.5)','Grenser: v fra sp.sqrt(3) til 2*sp.sqrt(2), u fra 0 til sp.pi'],
+  lf:'19π/3 ≈ 19,897'},
+ {id:'o25-11c', ex:'ord2025', nr:'11c', ty:'scipy', td:['flate','gitt','koord'], mal:['dbl'], md:['intn','tpl','quad'], kind:'sci', dim:2,
+  t:'Regn ut z̄ = (1/A) ∬ z dS med scipy.dblquad. A = 19π/3, z = v²/2 og dS = v√(v² + 1) du dv, for 0 ≤ u ≤ π og √3 ≤ v ≤ 2√2.', m:()=>'z̄ = <sup>3</sup>⁄<sub>19π</sub> ∬ <sup>v²</sup>⁄<sub>2</sub> · v√(v² + 1) dv du',
+  exp:[{f:'3*y**3*sp.sqrt(1 + y**2)/(38*sp.pi)', L:[['0','sp.pi'],['sp.sqrt(3)','2*sp.sqrt(2)']]}],
+  ans:'dblquad(lambda v, u: 3*v**3*np.sqrt(1 + v**2)/(38*np.pi), 0, np.pi, np.sqrt(3), 2*np.sqrt(2))',
+  fyll:['f = lambda v, u: … (innerste variabel først)','Integrand: (1/A) · z · ‖N‖ = 3*v**3*np.sqrt(1 + v**2)/(38*np.pi)','a, b = 0, np.pi (u ytterst), g, h = np.sqrt(3), 2*np.sqrt(2) (kan være tall eller lambda u: …)'],
+  lf:'≈ 2,832'},
+ {id:'o25-11d', ex:'ord2025', nr:'11d', ty:'scipy', td:['koord','flate','omr'], mal:['tpl'], md:['intn','dbl','int1'], kind:'sci', dim:3,
+  t:'Volumet under flaten z = r²/2 over området √3 ≤ r ≤ 2√2, 0 ≤ θ ≤ π, i sylinderkoordinater. Regn ut med scipy.tplquad. Husk Jacobi.', m:()=>'V = ∫∫∫ r dz dθ dr',
+  exp:[{f:'x', L:[['sp.sqrt(3)','2*sp.sqrt(2)'],['0','sp.pi'],['0','x**2/2']]},{f:'y', L:[['0','sp.pi'],['sp.sqrt(3)','2*sp.sqrt(2)'],['0','y**2/2']]}],
+  ans:'tplquad(lambda z, t, r: r, np.sqrt(3), 2*np.sqrt(2), 0, np.pi, 0, lambda r, t: r**2/2)',
+  fyll:['f = lambda z, t, r: r (innerste z først, Jacobi r som integrand)','r ytterst: np.sqrt(3) til 2*np.sqrt(2); theta: 0 til np.pi','z: 0 til lambda r, t: r**2/2'],
+  lf:'≈ 21,598'},
+ {id:'p25-3b', ex:'prove2025', nr:'3b', ty:'scipy', td:['gitt','velg','koord'], mal:['dbl'], md:['intn','tpl','quad'], kind:'sci', dim:2,
+  t:'Regn ut med scipy.dblquad.', m:()=>PS('0','1')+PS('−1','1')+' sin<sup>4</sup>(x + y<sup>2</sup>) dy dx',
+  exp:[{f:'sp.sin(x + y**2)**4', L:[['0','1'],['-1','1']]}],
+  ans:'dblquad(lambda y, x: np.sin(x + y**2)**4, 0, 1, -1, 1)',
+  fyll:['f = lambda y, x: np.sin(x + y**2)**4 (y innerst, så y først)','a, b = 0, 1 (x)','g, h = -1, 1 (y; tall eller lambda x: -1)'],
+  lf:'≈ 0,74717'},
+ {id:'p25-3c', ex:'prove2025', nr:'3c', ty:'scipy', td:['koord','gitt','flate'], mal:['tpl'], md:['intn','dbl','int1'], kind:'sci', dim:3,
+  t:'Regn ut med scipy.tplquad.', m:()=>PS('0','1')+PS('0','π')+PS('0','2cos θ')+' (sin θ + r<sup>2</sup>) dr dθ dz',
+  exp:[{f:'sp.sin(y) + z**2', L:[['0','1'],['0','sp.pi'],['0','2*sp.cos(y)']]}],
+  ans:'tplquad(lambda r, theta, z: np.sin(theta) + r**2, 0, 1, lambda z: 0, lambda z: np.pi, lambda z, theta: 0, lambda z, theta: 2*np.cos(theta))',
+  fyll:['f = lambda r, theta, z: … (innerst r, så theta, så z)','z ytterst: 0 til 1; theta: 0 til np.pi','r: 0 til lambda z, theta: 2*np.cos(theta)'],
+  lf:'≈ 0 (Python gir 1,0e−16)'},
+ {id:'m26-13', ex:'kontmai2026', nr:'13', ty:'evm', td:['pde','scipy','teori'], mal:['ingen','matrix'], md:['dbl','intn','subs'], kind:'lines',
+  t:'M (5 × 5) og b er satt opp fra a_W, a_E, a_P og S_u. Løs systemet MT = b.', m:()=>'M T = b',
+  given:'import numpy as np', ans:[['T = np.linalg.solve(M, b)']],
+  fyll:['Koeffisientene står på formelarket (PDF A.8), men np.linalg.solve gjør det ikke','Én linje: T = np.linalg.solve(M, b)'],
+  lf:'Temperaturene i de fem nodene.', ns:'np'},
+ {id:'f26-4', ex:'kontfeb2026', nr:'4', ty:'teori', td:['felt','pde','gitt'], mal:['ingen'], md:['diff','matrix','subs'], kind:'none',
+  t:'v = i + 42j − 3k og F = ∇(xyz). Hva er ∇ · (v × F)?', m:()=>'∇ · (v × F)',
+  fyll:['Formelarket A.6: div(v × w) = w · curl v − v · curl w','curl v = 0 (konstant) og curl(grad f) = 0'],
+  lf:'0 (alternativ a). Raskest med identitetene, uten kode.'},
+ {id:'o25-6', ex:'ord2025', nr:'6', ty:'teori', td:['felt','pde','koord'], mal:['ingen'], md:['diff','matrix','int1'], kind:'none',
+  t:'Hvilket utsagn om F er sant? (a) ∇ · (∇ × F) = 0, (b) ∇ · (∇ · F) = 0 når F er konservativt, …', m:()=>'∇ · (∇ × F) = 0 ?',
+  fyll:['Formelarket A.6: div(curl v) = 0','Divergens av en divergens gir ikke mening'],
+  lf:'(a). Står direkte på formelarket.'},
+ {id:'o25-3', ex:'ord2025', nr:'3', ty:'felt', td:['teori','pde','gitt'], mal:['ingen','matrix'], md:['diff','subs','int1'], kind:'none',
+  t:'F = (x², y², z²). Hva er ∇ · F?', m:()=>'∇ · F',
+  fyll:['Hoderegning: ∂(x²)/∂x + ∂(y²)/∂y + ∂(z²)/∂z','Python tar lengre tid enn å regne det i hodet'],
+  lf:'2x + 2y + 2z (alternativ e)'},
+];
+const PO_BY = {}; PO_OPPG.forEach(o=>PO_BY[o.id]=o);
+
+// ---- Kode skrevet som på formelarket: samle linjene til ett uttrykk ----
+function poNpToSp(s){ return s.replace(/\b(np|math)\.(sin|cos|tan|exp|sqrt|log)\(/g,'sp.$2(').replace(/\b(np|math)\.(arctan|atan)\(/g,'sp.atan(').replace(/\b(np|math)\.pi\b/g,'sp.pi'); }
+function poResolve(raw){
+  const env = {}; let last = null;
+  const raw0 = raw.split('\n').map(l=>l.replace(/#.*$/,'').replace(/\s+/g,'').replace(/'/g,'"')).filter(Boolean);
+  const lines = []; for(const l of raw0){ if(lines.length && !pyBalanced(lines[lines.length-1])) lines[lines.length-1] += l; else lines.push(l); }
+  const sub = s => { const ks = Object.keys(env).sort((a,b)=>b.length-a.length); if(!ks.length) return s;
+    return s.replace(new RegExp('(?<![\\w.])('+ks.join('|')+')(?![\\w(])','g'), k=>{ const v = env[k]; return /^lambda/.test(v) || /^[\w.]+$/.test(v) ? v : '('+v+')'; }); };
+  for(let ln of lines){
+    if(/^(import|from)\b/.test(ln)) continue;
+    if(/=sp\.symbols\(/.test(ln)) continue;
+    const pm = ln.match(/^print\((.*)\)$/); if(pm){ if(!last) last = sub(pm[1].replace(/^float\((.*)\)$/,'$1')); continue; }
+    const m = ln.match(/^([A-Za-z_]\w*)(?:,[A-Za-z_]\w*)*=(?!=)(.*)$/);
+    if(m && (!PY_VARS.includes(m[1]) || /^(lambda|[\d.]+$)/.test(m[2]))){ const v = sub(m[2]); env[m[1]] = v; if(/integrate\(|quad\(|solve\(|diff\(/.test(v)) last = v; continue; }
+    last = sub(ln);
+  }
+  return last; }
+function poFlatInt(s){
+  const m = s.match(/^sp\.integrate\((.*)\)$/); if(!m || !pyBalanced(m[1])) return s;
+  const a = pySplitTop(m[1]); let f = a[0];
+  while(/^\(.*\)$/.test(f) && pyBalanced(f.slice(1,-1))) f = f.slice(1,-1);
+  if(/^sp\.integrate\(/.test(f)){ const inner = poFlatInt(f).match(/^sp\.integrate\((.*)\)$/); if(inner) return 'sp.integrate('+pySplitTop(inner[1]).concat(a.slice(1)).join(',')+')'; }
+  return 'sp.integrate('+[f].concat(a.slice(1)).join(',')+')'; }
+function poCheckSci(o, raw){
+  let s = poResolve(raw); if(!s) return 'Skriv koden først.';
+  s = s.replace(/^(scipy\.integrate\.|integrate\.)?(dblquad|tplquad|quad)\(/,'$2(');
+  const want = o.dim===3 ? 'tplquad' : 'dblquad';
+  if(!s.startsWith(want+'(')) return `Oppgaven skal løses med ${want}. Start fra den malen på formelarket.`;
+  if(!s.endsWith(')') || !pyBalanced(s)) throw new Error('syntaks');
+  const a = pySplitTop(s.slice(want.length+1, -1)).reduce((acc,x)=>{ if(acc.length && /^lambda[\w,]+$/.test(acc[acc.length-1])) acc[acc.length-1] += ','+x; else acc.push(x); return acc; }, []);
+  const n = 1+2*o.dim; if(a.length !== n) return `${want} trenger ${n} argumenter: f og så grensene ytterst først${o.dim===3?' (a, b, g, h, q, r)':' (a, b, g, h)'}.`;
+  const lm = a[0].match(/^lambda([\w,]+):(.*)$/); if(!lm) return 'Første argument er funksjonen: lambda med innerste variabel først.';
+  const ps = lm[1].split(','); if(ps.length !== o.dim) return `Funksjonen skal ta ${o.dim} variabler.`;
+  const canon = o.dim===3 ? ['z','y','x'] : ['y','x'];
+  const ren = e => { let t = e; ps.forEach((p,i)=>{ t = t.replace(new RegExp('(?<![\\w.])'+p+'(?![\\w(])','g'), '§'+i); }); ps.forEach((p,i)=>{ t = t.split('§'+i).join(canon[i]); }); return poNpToSp(t); };
+  const bound = (e, k) => { const m2 = e.match(/^lambda([\w,]+):(.*)$/); if(!m2) return ren(e); const bp = m2[1].split(','); const outer = ps.slice().reverse();
+    if(bp.length !== k || bp.some((p,i)=>p!==outer[i])) throw new Error('lam:'+outer.slice(0,k).join(', ')); return ren(m2[2]); };
+  let fu, L;
+  try{ fu = ren(lm[2]); L = [[ren(a[1]), ren(a[2])], [bound(a[3],1), bound(a[4],1)]]; if(o.dim===3) L.push([bound(a[5],2), bound(a[6],2)]); }
+  catch(e){ if(/^lam:/.test(e.message)) return `Grensene må være funksjoner av de ytre variablene i riktig rekkefølge: lambda ${e.message.slice(4)}: …`; throw e; }
+  let best = null;
+  for(const E of o.exp){
+    if(!pySame(fu, E.f)){ best = best || (ps.join()===[...ps].reverse().join() ? null : 'Integranden stemmer ikke. Husk: lambda tar innerste variabel først.'); continue; }
+    let bad = null; for(let i=0;i<o.dim && !bad;i++){ const nm = ['ytterste','midterste','innerste'][o.dim===3?i:(i?2:0)]; if(!pySame(L[i][0], E.L[i][0])) bad = `Nedre grense for den ${nm} variabelen stemmer ikke.`; else if(!pySame(L[i][1], E.L[i][1])) bad = `Øvre grense for den ${nm} variabelen stemmer ikke.`; }
+    if(!bad) return null; best = bad; }
+  return best || 'Integranden stemmer ikke. Husk: lambda tar innerste variabel først.'; }
+function poCheckSp(o, raw){
+  let s = poResolve(raw); if(!s) return 'Skriv koden først.';
+  s = s.replace(/^float\((.*)\)$/,'$1').replace(/^sp\.N\((.*)\)$/,'$1').replace(/^(.*)\.evalf\(\)$/,'$1');
+  s = poFlatInt(s);
+  if(/^(dblquad|tplquad|quad)\(/.test(s)) return 'Her holder sympy: oppgaven ber om et eksakt svar. scipy gir bare et desimaltall.';
+  const run = ans => pyCheckSp({ans, fh:o.fh}, s);
+  let e = run(o.ans); if(e && o.alt && o.alt.some(a=>{ try{ return run(a)===null; }catch(x){ return false; } })) e = null;
+  return e; }
+function poCheckLines(o, raw){
+  const ul = pyNorm(raw).split('\n').filter(l=>!/^(import|from)\b/.test(l) && !/=sp\.symbols\(/.test(l));
+  const giv = (o.given||'').split('\n').map(pyNorm).filter(Boolean);
+  const rest = ul.filter(l=>!giv.includes(l));
+  if(/\^/.test(rest.join(''))) throw new Error('pow');
+  if(!pyBalanced(rest.join(''))) throw new Error('syntaks');
+  if(o.ns!=='np' && /(^|[^.\w])(sin|cos|exp|sqrt|pi)\b/.test(rest.join('\n'))) throw new Error('nosp');
+  if(rest.length < o.ans.length) return `Det mangler linjer: skriv ${o.ans.length} linje${o.ans.length>1?'r':''} (${o.ans.map(a=>pyLhs(pyNorm(a[0]))[0]||'uttrykket').join(', ')}).`;
+  const use = rest.slice(-o.ans.length);
+  for(let i=0;i<o.ans.length;i++){ const ok = o.ans[i].map(pyNorm).some(a=>pyLineEq(use[i], a)); if(!ok){ const want = pyLhs(pyNorm(o.ans[i][0]))[0]; return `Linje ${i+1}${want?' ('+want+')':''} stemmer ikke. ${o.fyll[Math.min(i, o.fyll.length-1)]}.`; } }
+  return null; }
+
+// ---- Tilstand ----
+function poState(){ STATE.pugg = STATE.pugg || {}; const D = STATE.pugg.oppg ? JSON.parse(JSON.stringify(STATE.pugg.oppg)) : {r:{}}; D.r = D.r||{}; return D; }
+function poSave(D){ saveDoc('pugg', 'oppg', D); }
+function poStatus(r){ if(!r) return ['mute','Ikke prøvd']; if(r.ok && r.s1 && r.s2 && !r.fasit) return ['good','Kan']; if(r.ok && r.fasit) return ['warn','Løst med fasit']; if(r.ok) return ['warn','Riktig kode, bom på gjenkjenning']; return ['bad','Øv mer']; }
+function poNext(D, skip){ const order = PO_OPPG.filter(o=>o.id!==skip); const score = o=>{ const r = D.r[o.id]; if(!r) return 0; if(r.ok && r.s1 && r.s2 && !r.fasit) return 3 + (r.ts||0)/1e13; if(r.ok) return 2; return 1; };
+  const lo = Math.min(...order.map(score)); const cand = order.filter(o=>score(o)===lo); return cand[Math.floor(Math.random()*cand.length)]; }
+
+// ---- Visning ----
+function poGuideHtml(){
+  const rows = Object.entries(PO_TYPER).map(([k,T])=>{ const ex = PO_OPPG.filter(o=>o.ty===k); const mals = [...new Set(ex.flatMap(o=>o.mal))];
+    return `<tr><td><strong>${esc(T.t)}</strong></td><td class="small">${esc(T.k)}</td><td class="small">${mals.map(m=>esc(PO_MAL[m].t)).join('<br>')||'–'}</td><td class="small">${ex.map(o=>`<a href="#python-oppg-${o.id}">${esc(PO_SETS[o.ex])} ${esc(o.nr)}</a>`).join(', ')}</td></tr>`; }).join('');
+  return `<div class="tblwrap"><table class="tbl"><thead><tr><th>Oppgaven spør om</th><th>Kjennetegn</th><th>Mal på formelarket</th><th>Øv på</th></tr></thead><tbody>${rows}</tbody></table></div>`; }
+function renderPoOversikt(main){
+  const D = poState();
+  const n = PO_OPPG.length, kan = PO_OPPG.filter(o=>poStatus(D.r[o.id])[1]==='Kan').length;
+  main.innerHTML = `<div class="row small muted" style="margin-bottom:6px"><a href="#oversikt">Matte 3B</a> › <a href="#python">Python-pugging</a> › Fra oppgave til kode</div>
+  <div class="row between" style="align-items:baseline"><h1>Fra oppgave til kode</h1><span class="small muted">${kan} av ${n} oppgaver sitter</span></div>
+  ${pyTabs('py')}
+  <div class="card pocard"><h2 style="margin-top:0">Fire steg på hver oppgave</h2>
+    <ol class="posteps"><li><strong>Hva spør oppgaven om?</strong> Se etter kjennetegnene i tabellen under.</li><li><strong>Hvilken mal på formelarket?</strong> Finn blokken i <code>formelarkpython.py</code>, eller se at det trengs noe som ikke står der.</li><li><strong>Hva skal inn i malen?</strong> Integrand, grenser i riktig rekkefølge, Jacobi, <code>sp.</code>-navn.</li><li><strong>Skriv koden.</strong> Start fra malen og endre den. Den rettes tallmessig, så rekkefølge på ledd og mellomrom spiller ingen rolle.</li></ol>
+    <div class="py-row"><a class="btn primary" href="#python-oppg-${poNext(D).id}">Start øvingen</a><span class="small muted">${n} ekte eksamensoppgaver fra Ord25, Prøve25, Feb26 og Mai26</span></div></div>
+  <details class="fsec" data-fold="po-guide" ${foldOpen('po-guide', true)?'open':''}><summary><span class="fs-t">Gjenkjenning: oppgavetype → mal</span><span class="fs-s">kjennetegn og formelarket</span></summary><div class="fs-b">${poGuideHtml()}</div></details>
+  <details class="fsec" data-fold="po-liste" ${foldOpen('po-liste', true)?'open':''}><summary><span class="fs-t">Oppgavene</span><span class="fs-s">${kan} av ${n} sitter</span></summary><div class="fs-b"><div class="qlist">${PO_OPPG.map(o=>{ const [c,t] = poStatus(D.r[o.id]); return `<a href="#python-oppg-${o.id}"><span class="n">${esc(PO_SETS[o.ex])} ${esc(o.nr)}</span><span class="t">${esc(o.t.split('.')[0])}</span><span class="pill ${c}">${esc(t)}</span></a>`; }).join('')}</div></div></details>
+  <details class="fsec" data-fold="po-ark" ${foldOpen('po-ark', false)?'open':''}><summary><span class="fs-t">Formelarket (Python)</span><span class="fs-s">formelarkpython.py, slik du får det på eksamen</span></summary><div class="fs-b"><pre class="pycode">${pyHi(PY_FORMELARK)}</pre><p class="small muted" style="margin:8px 0 0">Matematikkdelen: <a href="eksamen/formelark_matte3.pdf" target="_blank" rel="noopener">Formelark_Matte3.pdf</a> (koordinatbytter, parametriseringer, dS, identiteter, Gauss/Stokes/Green, EVM). Merk: i quad-eksempelet står <code>x*2</code>, men kommentaren sier x**2.</p></div></details>`;
+  bindFolds(main); }
+function renderPoOppg(main, id){
+  const o = PO_BY[id]; if(!o){ renderPoOversikt(main); return; }
+  const D = poState(); const R = {s1:null, s2:null, hint:false, wrong:0, ok:false};
+  const opts = (arr, name, lab) => arr.map(k=>`<label class="poopt"><input type="radio" name="${name}" value="${k}"><span>${esc(lab(k))}</span></label>`).join('');
+  const shuffle = a => a.map(v=>[Math.random(), v]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+  const tyOpts = shuffle([o.ty].concat(o.td)), malOpts = shuffle([...new Set(o.mal.concat(o.md))]);
+  const [c, t] = poStatus(D.r[o.id]);
+  main.innerHTML = `<div class="row small muted" style="margin-bottom:6px"><a href="#oversikt">Matte 3B</a> › <a href="#python">Python-pugging</a> › <a href="#python-oppg">Fra oppgave til kode</a> › ${esc(PO_SETS[o.ex])} oppg. ${esc(o.nr)}</div>
+  <div class="row between" style="align-items:baseline"><h1>${esc(PO_SETS[o.ex])} oppgave ${esc(o.nr)}</h1><span class="pill ${c}">${esc(t)}</span></div>
+  ${pyTabs('py')}
+  <section class="card pycard">
+    <p class="py-task">${esc(o.t)}</p><div class="py-math">${o.m()}</div>
+    <p class="small muted" style="margin:-4px 0 0">Kilde: <a href="eksamen/${o.ex}.pdf" target="_blank" rel="noopener">oppgavesettet</a> · <a href="eksamen/${o.ex}_lf.pdf" target="_blank" rel="noopener">løsningsforslaget</a></p>
+  </section>
+  <section class="card pycard postep" id="po-s1"><h2>1. Hva spør oppgaven om?</h2><div class="poopts">${opts(tyOpts,'po1',k=>PO_TYPER[k].t)}</div><div class="py-fb" id="po-f1" role="status"></div></section>
+  <section class="card pycard postep" id="po-s2" hidden><h2>2. Hvilken mal på formelarket?</h2><div class="poopts">${opts(malOpts,'po2',k=>PO_MAL[k].t)}</div><div class="py-fb" id="po-f2" role="status"></div><div id="po-mal"></div></section>
+  <section class="card pycard postep" id="po-s3" hidden><h2>3. Hva skal inn i malen?</h2><p class="small muted" style="margin:0 0 8px">Tenk gjennom det selv først. Åpne listen hvis du står fast.</p><details id="po-fyll"><summary class="small" style="cursor:pointer">Vis hva som skal inn</summary><ul class="small" style="margin:8px 0 0;padding-left:18px">${o.fyll.map(f=>`<li>${mdCode(f)}</li>`).join('')}</ul></details></section>
+  <section class="card pycard postep" id="po-s4" hidden><h2>4. ${o.kind==='none'?'Svar uten kode':'Skriv koden'}</h2>
+    ${o.kind==='none' ? `<p style="margin:0 0 8px">Denne løses raskest uten Python.</p><button class="btn primary" id="po-done">Vis løsningen</button>` : `
+    ${o.given?`<p class="small muted" style="margin:0 0 4px">Allerede skrevet:</p><pre class="pycode" style="margin-bottom:8px">${pyHi(o.given)}</pre>`:''}
+    <textarea id="po-inp" class="py-inp" rows="6" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Koden din"></textarea>
+    <div class="py-row"><button class="btn primary" id="po-check">Sjekk</button><button class="btn" id="po-mal-inn">Lim inn malen</button><button class="btn" id="po-show">Vis fasit</button><span class="small muted py-hint">Ctrl/⌘+Enter sjekker</span></div>`}
+    <div class="py-fb" id="po-f4" role="status" aria-live="polite"></div></section>
+  <div class="py-row" id="po-nav" hidden><a class="btn primary" id="po-next" href="#python-oppg-${poNext(D, o.id).id}">Neste oppgave</a><a class="btn" href="#python-oppg">Alle oppgavene</a></div>`;
+  const $o = s => main.querySelector('#'+s);
+  const fb = (id, cls, html) => { const f = $o(id); f.className = 'py-fb '+cls; f.innerHTML = html; };
+  const showMal = () => { const ks = o.mal; $o('po-mal').innerHTML = ks.map(k=>`<p class="small" style="margin:10px 0 4px"><strong>${esc(PO_MAL[k].t)}</strong>${PO_MAL[k].code?'':' · fra formelarkpython.py'}</p><pre class="pycode">${pyHi(poMalCode(k))}</pre>`).join(''); };
+  main.querySelectorAll('input[name=po1]').forEach(r=>r.onchange = ()=>{
+    const k = r.value, ok = k===o.ty; if(R.s1===null) R.s1 = ok;
+    fb('po-f1', ok?'ok':'bad', ok ? `<strong>Riktig.</strong> Kjennetegn: ${esc(PO_TYPER[o.ty].k)}` : `<strong>Ikke denne.</strong> «${esc(PO_TYPER[k].t)}» kjennes på: ${esc(PO_TYPER[k].k)} Prøv igjen.`);
+    if(ok){ main.querySelectorAll('input[name=po1]').forEach(x=>x.disabled = true); $o('po-s2').hidden = false; main.querySelector('input[name=po2]').focus(); } });
+  main.querySelectorAll('input[name=po2]').forEach(r=>r.onchange = ()=>{
+    const k = r.value, ok = o.mal.includes(k); if(R.s2===null) R.s2 = ok;
+    fb('po-f2', ok?'ok':'bad', ok ? `<strong>Riktig.</strong>${o.mal.length>1?' Også godt: '+o.mal.filter(x=>x!==k).map(x=>esc(PO_MAL[x].t)).join(', ')+'.':''}` : `<strong>Ikke denne.</strong> ${k==='ingen'?'Her lønner det seg å bruke Python.':k==='matrix'?'Denne trenger ikke vektorer.':/dbl|tpl|quad/.test(k)&&o.kind==='sp'?'Oppgaven vil ha et eksakt svar, og scipy gir bare desimaltall.':'Se på hva oppgaven ber om, og hvilken blokk på arket som gjør akkurat det.'} Prøv igjen.`);
+    if(ok){ main.querySelectorAll('input[name=po2]').forEach(x=>x.disabled = true); showMal(); $o('po-s3').hidden = false; $o('po-s4').hidden = false; const i = $o('po-inp'); if(i) i.focus(); } });
+  $o('po-fyll').addEventListener('toggle', ()=>{ if($o('po-fyll').open) R.hint = true; });
+  const finish = (ok) => { R.ok = ok; const prev = D.r[o.id]||{};
+    D.r[o.id] = {s1:!!R.s1, s2:!!R.s2, ok, fasit:!!R.fasit, hint:R.hint, wrong:R.wrong, ts:Date.now(), n:(prev.n||0)+1}; poSave(D); $o('po-nav').hidden = false; $o('po-next').focus(); };
+  const lfHtml = () => `<br><span class="small">Løsningsforslaget: <strong>${esc(o.lf)}</strong></span>`;
+  if(o.kind==='none'){ $o('po-done').onclick = ()=>{ fb('po-f4','ok', `<strong>Løsning:</strong> ${esc(o.lf)}<ul class="small" style="margin:6px 0 0;padding-left:18px">${o.fyll.map(f=>`<li>${esc(f)}</li>`).join('')}</ul>`); finish(true); }; return; }
+  const inp = $o('po-inp');
+  inp.placeholder = o.kind==='sci' ? (o.dim===3?'tplquad(…)':'dblquad(…)') : o.kind==='lines' ? 'Skriv linjene …' : 'I = sp.integrate(…)';
+  $o('po-mal-inn').onclick = ()=>{ const k = o.mal.find(m=>PO_MAL[m] && !['ingen'].includes(m)) || o.mal[0]; inp.value = (o.given ? o.given+'\n' : '') + poMalCode(k); inp.focus(); };
+  inp.addEventListener('input', ()=>{ if(!R.ok && $o('po-f4').classList.contains('bad')) $o('po-f4').className = 'py-fb'; });
+  inp.addEventListener('keydown', ev=>{ if(ev.key==='Enter' && (ev.ctrlKey||ev.metaKey)){ ev.preventDefault(); if(R.ok) location.hash = $o('po-next').getAttribute('href'); else $o('po-check').click(); } });
+  $o('po-check').onclick = ()=>{
+    if(R.ok) return; const v = inp.value; if(!v.trim()){ fb('po-f4','bad','Skriv koden først.'); return; }
+    let e; try{ e = o.kind==='sp' ? poCheckSp(o, v) : o.kind==='sci' ? poCheckSci(o, v) : poCheckLines(o, v); }
+    catch(x){ e = PY_ERR[x.message] || 'Python ville ikke kunnet lese dette. Sjekk parenteser og kommaer.'; }
+    if(e){ R.wrong++; fb('po-f4','bad', esc(e)); return; }
+    fb('po-f4','ok', `<strong>Riktig kode.</strong>${R.wrong?` (${R.wrong} feil underveis)`:''}${lfHtml()}`); finish(true); };
+  $o('po-show').onclick = ()=>{ if(R.ok) return; const a = o.kind==='lines' ? (o.given?o.given+'\n':'')+o.ans.map(x=>x[0]).join('\n') : o.ans;
+    fb('po-f4','show', `Fasit:<pre class="pycode">${pyHi(a)}</pre>Skriv den inn selv og trykk Sjekk. Oppgaven regnes som ikke sittende til du klarer den uten fasit.${lfHtml()}`); R.fasit = true; };
+}
+
 // for automatiske tester
-window.__py = { PY_SNAR, PY_BY, DECK_INT, pyCheckSp, pyCheckLine, pyCheckSci, pyCheckTpl, pyCheckTpl3, pyCheckVec, PY_ERR, pySchedule, pyNewState, PYS, pyFrontier, pyChoose, pyLoad };
+window.__py = { PO_OPPG, PO_BY, poCheckSp, poCheckSci, poCheckLines, poResolve, poFlatInt, PY_SNAR, PY_BY, DECK_INT, pyCheckSp, pyCheckLine, pyCheckSci, pyCheckTpl, pyCheckTpl3, pyCheckVec, PY_ERR, pySchedule, pyNewState, PYS, pyFrontier, pyChoose, pyLoad };
 
 // Krok for automatiske tester (lesetilgang)
 window.__app = { get Q(){return Q;}, get STATE(){return STATE;}, QBY, ACTBY, ACTS, actStatus, planFor, buildPlan, todayStr, dueFields, fieldKey, planSettings };
