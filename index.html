@@ -432,7 +432,7 @@ const EXAM_DATE = new Date('2026-12-17T09:00:00+01:00');
 const $ = (s, el=document) => el.querySelector(s);
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let Q = [], QBY = {}, TOPICS = {};
-let STATE = { attempts: {}, exams: {}, sessions: {}, todos: {}, notes: {}, settings: {} };
+let STATE = { attempts: {}, exams: {}, sessions: {}, todos: {}, notes: {}, settings: {}, svar: {} };
 let store = null;
 const LS_KEY = 'm3b_state_v2';
 const OVINFO = {11:'Python og Matte 1/2-repetisjon (variant av øving 1)',12:'Dobbeltintegral og polar (variant av øving 2)',13:'Trippelintegral, sylinder og kule (variant av øving 3)',14:'Kurver, flater, vektorfelt (variant av øving 4)',15:'Green, Gauss, Stokes (variant av øving 5)',1:'Repetisjon og Python-oppsett',2:'Dobbeltintegral og polarkoordinater',3:'Trippelintegral, sylinder- og kulekoordinater',4:'Kurver, flater, vektorfelt og fluks',5:'Konservative felt, Green, Gauss, Stokes',6:'PDE: løsninger, differanser og leapfrog · frist 29. nov',7:'Endelig volum-metode · frist 29. nov'};
@@ -523,7 +523,7 @@ const FILE = {
     this.handle = h; await this.idbSet(h);
     if(load){ try{ const txt = await (await h.getFile()).text(); const d = txt.trim() ? JSON.parse(txt) : {}; const n = COLLS.reduce((a,c)=>a+Object.keys(d[c]||{}).length,0); const cur = COLLS.reduce((a,c)=>a+Object.keys(STATE[c]||{}).length,0);
       if(cur && n && !confirm(`Fila «${h.name}» har ${n} poster. Historikken i denne nettleseren (${cur} poster) erstattes med innholdet i fila. Fortsette?`)){ this.handle=null; await this.idbSet(null); this.render(); return; }
-      if(n || !cur){ STATE = Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{}}, d); try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
+      if(n || !cur){ STATE = Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{},svar:{}}, d); try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
       this.dirty = !n && cur>0; }catch(e){ toast('Kunne ikke lese fila'); this.handle=null; await this.idbSet(null); this.render(); return; } }
     this.savedAt = this.dirty ? null : new Date(); this.render(); if(this.dirty) await this.save(); toast('Bruker historikkfila ' + h.name); route(); },
   async resume(){ const h = await this.idbGet(); if(h) await this.use(h, true); },
@@ -537,7 +537,7 @@ const FILE = {
     $('#fb-load').onclick = ()=>inp.click();
     inp.onchange = async ()=>{ const f = inp.files[0]; if(!f) return; try{ const d = JSON.parse((await f.text())||'{}'); const n = COLLS.reduce((a,c)=>a+Object.keys(d[c]||{}).length,0); const cur = COLLS.reduce((a,c)=>a+Object.keys(STATE[c]||{}).length,0);
       if(cur && !confirm(`Fila «${f.name}» har ${n} poster. Historikken i denne nettleseren (${cur} poster) erstattes. Fortsette?`)) return;
-      STATE = Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{}}, d); try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} toast('Lastet inn ' + f.name); route(); }catch(e){ toast('Kunne ikke lese fila'); } inp.value=''; };
+      STATE = Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{},svar:{}}, d); try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} toast('Lastet inn ' + f.name); route(); }catch(e){ toast('Kunne ikke lese fila'); } inp.value=''; };
     $('#fb-dl').onclick = ()=>{ const blob = new Blob([JSON.stringify(STATE, null, 1)],{type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Studieplattform_historikk.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Lastet ned. Historikken lagres også i nettleseren.'); };
   },
   render(){ const bar = $('#filebar'); if(!bar) return; if(!this.supported()){ if(!window.claude) this.fallback(bar); return; }
@@ -548,9 +548,9 @@ const FILE = {
   }
 };
 window.addEventListener('beforeunload', e=>{ if(FILE.handle && FILE.dirty){ FILE.save(); e.preventDefault(); e.returnValue=''; } });
-const COLLS = ['attempts','exams','sessions','todos','notes','settings'];
+const COLLS = ['attempts','exams','sessions','todos','notes','settings','svar'];
 async function initStore(){
-  const local = lsLoad(); if(local) STATE = Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{}}, local);
+  const local = lsLoad(); if(local) STATE = Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{},svar:{}}, local);
   try{
     if(window.claude && window.claude.use){
       const db = await window.claude.use('db');
@@ -559,7 +559,7 @@ async function initStore(){
         const snaps = await Promise.all(COLLS.map(c=>db.collection(c).get()));
         const any = snaps.some(s=>!s.empty);
         if(any){
-          STATE = {attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{}};
+          STATE = {attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{},svar:{}};
           snaps.forEach((s,k)=>s.docs.forEach(d=>STATE[COLLS[k]][d.id]=d.data()));
         } else if(local){
           for(const c of COLLS) for(const [k,v] of Object.entries(local[c]||{})) await db.collection(c).doc(k).set(v);
@@ -1114,6 +1114,24 @@ function attachHelp(root, q, ctx){
 async function sessField(s, k, data){ s.fields = s.fields||{}; const cur = s.fields[k]; if(cur && cur.r==='ok') return; if(cur && cur.r==='fasit' && data.r!=='fasit') return; s.fields[k] = Object.assign({ts:Date.now()}, data); await saveDoc('sessions', s.id, s); }
 const R2C = {ok:'ok', feil:'bad', fasit:'seen'};
 
+// ---------- Svarene du skriver, lagres og fylles inn igjen ----------
+// Nøkkel: per forsøk (s:<id>:<felt>) eller i fri øving (f:<felt>). Påvirker ikke rettingen.
+const SVAR_T = {};
+function bindAnswers(root, sid){
+  STATE.svar = STATE.svar || {};
+  root.querySelectorAll('.fld[data-q][data-i]').forEach(wrap=>{
+    const fk = fieldKey(wrap.dataset.q, wrap.dataset.i); const key = (sid ? 's:'+sid+':' : 'f:') + fk;
+    const saved = (STATE.svar[key]||{}).v;
+    const radios = wrap.querySelectorAll('input[type=radio]'); const inp = wrap.querySelector('input[type=text],textarea,select');
+    if(saved!=null && saved!==''){
+      if(radios.length){ const r = [...radios].find(x=>x.value===String(saved)); if(r) r.checked = true; }
+      else if(inp && !inp.value) inp.value = saved;
+    }
+    const store = v => { clearTimeout(SVAR_T[key]); SVAR_T[key] = setTimeout(()=>{ if(v==='' || v==null){ if(STATE.svar[key]) deleteDoc('svar', key); } else saveDoc('svar', key, {v, ts:Date.now()}); }, 350); };
+    radios.forEach(r=>r.addEventListener('change', ()=>store(r.value)));
+    if(inp){ inp.addEventListener('input', ()=>store(inp.value)); inp.addEventListener('change', ()=>store(inp.value)); }
+  });
+}
 function renderFree(main, qid){
   const q = QBY[qid]; if(!q){ main.innerHTML='<p>Fant ikke oppgaven.</p>'; return; }
   const qs = Q.filter(x=>x.oving===q.oving); const idx = qs.indexOf(q); const prev = qs[idx-1], next = qs[idx+1];
@@ -1124,6 +1142,7 @@ function renderFree(main, qid){
     ${queHtml(q, 'ov', stateOf(q, {}))}
     <div class="cq-foot">${prev?`<a class="btn sec" href="#q-${prev.id}">Forrige side</a>`:'<span></span>'}${next?`<a class="btn primary" href="#q-${next.id}">Neste side</a>`:`<a class="btn primary" href="#oving-${q.oving}">Tilbake til ${ovName(q.oving).toLowerCase()}</a>`}</div>
   </div>${navBlockHtml(qs, idx, hist, '', `<a class="fin" href="#oving-${q.oving}">Start et forsøk …</a><div class="small muted" style="margin-top:6px">Fargene viser historikken din.</div>`)}</div>`;
+  bindAnswers(main, null);
   attachHelp(main, q, ctx);
   main.querySelectorAll('.qnbutton').forEach(a=>a.onclick=e=>{ e.preventDefault(); location.hash = '#q-' + a.dataset.q; });
 }
@@ -1143,6 +1162,7 @@ function renderAttempt(main, sid){
     ${queHtml(q, 'ov', stateOf(q, ctx.res))}
     <div class="cq-foot">${idx>0?`<button class="btn sec" data-go="${idx-1}">Forrige side</button>`:'<span></span>'}${idx<qs.length-1?`<button class="btn primary" data-go="${idx+1}">Neste side</button>`:`<button class="btn primary" id="avslutt2">Fullfør forsøk …</button>`}</div>
   </div>${navBlockHtml(qs, idx, x=>stateOf(x, resOf(x)).cls, '', `<a class="fin" href="#" id="avslutt">Fullfør forsøk …</a>`)}</div>`;
+  bindAnswers(main, s.id);
   attachHelp(main, q, ctx);
   main.querySelectorAll('[data-go]').forEach(b=>b.onclick=async ()=>{ s.idx = +b.dataset.go; await saveDoc('sessions', s.id, s); route(); });
   main.querySelectorAll('.qnbutton').forEach(a=>a.onclick=async e=>{ e.preventDefault(); s.idx = +a.dataset.k; await saveDoc('sessions', s.id, s); route(); });
@@ -1175,6 +1195,7 @@ function renderProve(main, s){
     <div class="cq-foot"><a class="btn sec" href="#oving-${n}">Avbryt</a><button class="btn primary" id="lever">Fullfør forsøk …</button></div><div id="result"></div>
   </div>${navBlockHtml(qs, -1, ()=>'', `<span class="small muted">Tid brukt</span><span class="timer" id="timer">00:00</span>`, `<a class="fin" href="#" id="lever2">Fullfør forsøk …</a>`)}</div>`;
   main.querySelectorAll('.qnbutton').forEach(a=>a.onclick=e=>{ e.preventDefault(); const el = $('#pq_'+a.dataset.q); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); });
+  bindAnswers(main, s.id);
   const tm = setInterval(()=>{ const el=$('#timer'); if(!el){ clearInterval(tm); return; } const t=Math.floor((Date.now()-start)/1000); el.textContent = String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); },1000);
   let levert = false;
   const lever = async e=>{
@@ -1241,7 +1262,7 @@ function renderOm(main){
   <div class="row">${window.claude?'':'<button class="btn" id="exp">Last ned historikk (JSON)</button>'}<label class="btn">Importer historikk <input type="file" id="imp" accept="application/json" hidden></label><button class="btn" id="nuke" style="color:var(--bad)">Slett all historikk</button></div></div>`;
   if($('#exp')) $('#exp').onclick = ()=>{ const blob = new Blob([JSON.stringify(STATE)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Studieplattform_historikk_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); };
   $('#imp').onchange = async e=>{ const f=e.target.files[0]; if(!f) return; try{ const d = JSON.parse(await f.text()); let n=0; for(const c of COLLS) for(const [k,v] of Object.entries(d[c]||{})){ await saveDoc(c,k,v); n++; } toast('Importerte '+n+' poster'); route(); }catch(err){ toast('Kunne ikke lese fila'); } };
-  $('#nuke').onclick = async ()=>{ if(!confirm('Slette all historikk? Dette kan ikke angres.')) return; if(store){ for(const c of COLLS) for(const k of Object.keys(STATE[c])){ try{ await store.collection(c).doc(k).delete(); }catch(e){} } } STATE={attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{}}; lsSave(); toast('Historikken er slettet'); route(); };
+  $('#nuke').onclick = async ()=>{ if(!confirm('Slette all historikk? Dette kan ikke angres.')) return; if(store){ for(const c of COLLS) for(const k of Object.keys(STATE[c])){ try{ await store.collection(c).doc(k).delete(); }catch(e){} } } STATE={attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{},svar:{}}; lsSave(); toast('Historikken er slettet'); route(); };
 }
 
 // ---------- Notater ----------
@@ -1595,6 +1616,8 @@ async function resetAct(a){
   const del = async (c, id) => { if(STATE[c] && STATE[c][id]) await deleteDoc(c, id); };
   await del('todos', a.id);
   if(a.type==='qs' || a.type==='set') for(const q of qsOfAct(a)) for(const f of q.fields) await del('attempts', fieldKey(q.id, f.i));
+  const fks = new Set((a.type==='qs'||a.type==='set') ? qsOfAct(a).flatMap(q=>q.fields.map(f=>fieldKey(q.id,f.i))) : (a.item&&a.type==='oving') ? fieldsOf(a.item).map(({q,f})=>fieldKey(q.id,f.i)) : []);
+  for(const key of Object.keys(STATE.svar||{})) if(fks.has(key.split(':').pop())) await del('svar', key);
   if(a.type==='set') for(const [id, ss] of Object.entries(STATE.sessions)) if(ss.oving===a.set) await del('sessions', id);
   if(a.type==='examscore') await del('exams', 'mek-'+a.set);
   if(a.item && a.type==='oving') for(const {q,f} of fieldsOf(a.item)) await del('attempts', fieldKey(q.id, f.i));
