@@ -775,7 +775,7 @@ function renderSide(h){
   const a = (href, txt, on) => `<a href="${href}" class="${on?'active':''}">${txt}</a>`;
   s.innerHTML = a('#hjem','Hjem',h==='hjem') + a('#kalender','Kalender',h==='kalender') + a('#gjoremal','Gjøremål',h==='gjoremal')
     + `<div class="grp">Fag</div>` + a('#oversikt','Matte 3B',ctx==='matte') + a('#fag-mek','Mekanikk 1',ctx==='mek') + a('#fag-fem','Elementmetoden',ctx==='fem')
-    + `<div class="grp">Annet</div>` + a('#notater','Notater og feil',h==='notater') + a('#om','Om plattformen',h==='om');
+    + `<div class="grp">Annet</div>` + a('#notater','Notater og feil',h==='notater') + a('#om','Om plattformen',h==='om') + `<div class="small muted" style="padding:16px 10px 0">Versjon ${APP_VER}</div>`;
 }
 function daysLeft(){ return Math.max(0, Math.ceil((EXAM_DATE - Date.now())/86400000)); }
 function statusDot(q){ const s = questionScore(q); if(s==null) return '<span class="dot"></span>'; return `<span class="dot ${s>=0.8?'good':s>=0.5?'warn':'bad'}"></span>`; }
@@ -1127,11 +1127,15 @@ function bindAnswers(root, sid){
       if(radios.length){ const r = [...radios].find(x=>x.value===String(saved)); if(r) r.checked = true; }
       else if(inp && !inp.value) inp.value = saved;
     }
-    const store = v => { clearTimeout(SVAR_T[key]); SVAR_T[key] = setTimeout(()=>{ if(v==='' || v==null){ if(STATE.svar[key]) deleteDoc('svar', key); } else saveDoc('svar', key, {v, ts:Date.now()}); }, 350); };
+    // skriv til STATE med en gang (overlever navigering), lagre varig like etter
+    const store = v => { if(v==='' || v==null) delete STATE.svar[key]; else STATE.svar[key] = {v, ts:Date.now()};
+      clearTimeout(SVAR_T[key]); SVAR_T[key] = setTimeout(()=>{ delete SVAR_T[key]; if(STATE.svar[key]) saveDoc('svar', key, STATE.svar[key]); else deleteDoc('svar', key); }, 300); };
     radios.forEach(r=>r.addEventListener('change', ()=>store(r.value)));
     if(inp){ inp.addEventListener('input', ()=>store(inp.value)); inp.addEventListener('change', ()=>store(inp.value)); }
   });
 }
+function flushSvar(){ const ks = Object.keys(SVAR_T); if(!ks.length) return; ks.forEach(k=>clearTimeout(SVAR_T[k])); ks.forEach(k=>{ delete SVAR_T[k]; if(STATE.svar[k]) saveDoc('svar', k, STATE.svar[k]); else if(STATE.svar) deleteDoc('svar', k); }); }
+window.addEventListener('hashchange', flushSvar, true); window.addEventListener('pagehide', flushSvar);
 function renderFree(main, qid){
   const q = QBY[qid]; if(!q){ main.innerHTML='<p>Fant ikke oppgaven.</p>'; return; }
   const qs = Q.filter(x=>x.oving===q.oving); const idx = qs.indexOf(q); const prev = qs[idx-1], next = qs[idx+1];
@@ -1329,6 +1333,7 @@ document.addEventListener('click', e=>{
 // =====================================================================
 // ---------- Studieplattform: fag, aktiviteter, plan og kalender ----------
 // =====================================================================
+const APP_VER = '27.11 kl. 11.30';
 const FAG = {
   mek:  { key:'mek',  kode:'MEKA1101', navn:'Mekanikk 1',        kort:'Mekanikk',       canvas:'MEKA1101-26H :: Mekanikk 1',      sem:'MEKA1101-26H', exam:'2026-12-04', tid:'kl. 09:00–13:00 (4 t), oppmøte 30 min før', form:'Skriftlig, Inspera + håndberegninger på ark. Hjelpemiddel D: enkel kalkulator og vedlagt formelark.', farge:'#7b3f98' },
   fem:  { key:'fem',  kode:'MEPA2314', navn:'Elementmetoden',    kort:'Elementmetoden', canvas:'MEPA2314-26H :: Elementmetoden',   sem:'MEPA2314-26H', exam:'2026-12-11', tid:'tidspunkt ikke oppgitt i Canvas', form:'Muntlig eksamen (teller 40 %). Prosjektmappen teller 60 %.', farge:'#1f6f78' },
