@@ -398,6 +398,11 @@ details.fsec[open]>summary::before{transform:rotate(90deg)}
 .gn{font-size:24px;font-weight:700}
 @media(max-width:700px){.gsum{grid-template-columns:repeat(2,1fr)}}
 .fs-b .weekhd{margin-top:10px}
+.it.act{display:flex;gap:12px;align-items:center}
+.rsel{display:flex;align-items:center;padding:0 2px 0 0;cursor:pointer}
+.rsel input{width:16px;height:16px;margin:0;cursor:pointer}
+.rbar{position:sticky;top:64px;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--bad);border-radius:var(--r);padding:8px 14px;margin:10px 0;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.btn.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
 </style>
 
 <header class="topbar">
@@ -1515,7 +1520,7 @@ function actItemHtml(a, opts){
   const meta = [fmtMin(opts.rem && opts.rem!==a.min && !st.done ? opts.rem : a.min)];
   if((a.type==='qs'||a.type==='set') && !st.done && st.prog>0) meta.push(Math.round(st.prog*100)+' % besvart');
   if(st.manual) meta.push('merket som gjort');
-  return `<div class="it act ${st.done?'done':''}" data-act="${a.id}"><button class="chk ${st.done?'on':''}" data-act="${a.id}" title="${lock?'Fullført automatisk ut fra svarene dine':st.done?'Merk som ikke gjort':'Merk som gjort'}" ${lock?'disabled':''}>${st.done?'✓':''}</button>
+  return `<div class="it act ${st.done?'done':''}" data-act="${a.id}">${opts.sel?`<label class="rsel" title="Velg for nullstilling"><input type="checkbox" data-rsel="${a.id}"></label>`:''}<button class="chk ${st.done?'on':''}" data-act="${a.id}" title="${lock?'Fullført automatisk ut fra svarene dine':st.done?'Merk som ikke gjort':'Merk som gjort'}" ${lock?'disabled':''}>${st.done?'✓':''}</button>
     <a class="tx actlink" href="${esc(link)}" ${ext?'target="_blank" rel="noopener"':''} title="${esc(stripMd(a.g||''))}"><div class="at">${opts.noFag?'':fagDot(a.fag)}${mdInline(main)}</div>
     <div class="sub">${extra?`<span class="muted">${mdInline(extra)}</span> · `:''}${meta.join(' · ')}${opts.from?' · <span class="pill warn">flyttet</span>':''}${opts.late?' · <span class="pill bad">etter frist</span>':''}</div></a></div>`;
 }
@@ -1586,6 +1591,30 @@ function shortEvent(e){
 }
 
 // ---------- Gjøremål (alle fag) ----------
+async function resetAct(a){
+  const del = async (c, id) => { if(STATE[c] && STATE[c][id]) await deleteDoc(c, id); };
+  await del('todos', a.id);
+  if(a.type==='qs' || a.type==='set') for(const q of qsOfAct(a)) for(const f of q.fields) await del('attempts', fieldKey(q.id, f.i));
+  if(a.type==='set') for(const [id, ss] of Object.entries(STATE.sessions)) if(ss.oving===a.set) await del('sessions', id);
+  if(a.type==='examscore') await del('exams', 'mek-'+a.set);
+  if(a.item && a.type==='oving') for(const {q,f} of fieldsOf(a.item)) await del('attempts', fieldKey(q.id, f.i));
+  if(a.item && a.type==='prove') for(const [id, ss] of Object.entries(STATE.sessions)) if(ss.oving===a.item.oving && ss.mode==='prove') await del('sessions', id);
+  if(a.item && a.type==='exam'){ const tasks = a.item.set ? EXBY[a.item.set].tasks.map(t=>[a.item.set,t[0]]) : a.item.tasks; for(const [x,n] of tasks) await del('exams', x+'_'+n); }
+}
+function bindReset(root){
+  const bar = root.querySelector('#rbar'); if(!bar) return;
+  const boxes = () => [...root.querySelectorAll('input[data-rsel]')];
+  const upd = () => { const n = boxes().filter(b=>b.checked).length; bar.hidden = !n; bar.querySelector('.rn').textContent = n; };
+  boxes().forEach(b=>b.onchange = upd);
+  root.querySelectorAll('[data-selall]').forEach(btn=>btn.onclick = e=>{ e.preventDefault(); const sec = btn.closest('details'); const bs = [...sec.querySelectorAll('input[data-rsel]')]; const on = bs.some(b=>!b.checked); bs.forEach(b=>b.checked = on); upd(); });
+  bar.querySelector('.rcancel').onclick = ()=>{ boxes().forEach(b=>b.checked=false); upd(); };
+  bar.querySelector('.rgo').onclick = async ()=>{
+    const ids = [...new Set(boxes().filter(b=>b.checked).map(b=>b.dataset.rsel))]; if(!ids.length) return;
+    if(!confirm(`Nullstille ${ids.length} aktivitet${ids.length>1?'er':''}?\n\nSvarene, forsøkene og avkrysningene som hører til slettes, og aktivitetene legges tilbake i planen. Oppgaver som også inngår i andre aktiviteter nullstilles der også. Dette kan ikke angres.`)) return;
+    for(const id of ids){ const a = ACTBY[id]; if(a) await resetAct(a); }
+    PLAN_CACHE = null; toast(`${ids.length} nullstilt`); route();
+  };
+}
 function renderGjoremal(main){
   const P = buildPlan(); const t = todayStr();
   const days = Object.keys(P.plan).filter(d=>P.plan[d].length);
@@ -1596,7 +1625,7 @@ function renderGjoremal(main){
   const doneMin = doneAll.reduce((s,x)=>s+x.a.min,0);
   // fullført gruppert per dag
   const byDay = {}; doneAll.forEach(x=>{ const d = x.st.ts ? iso(new Date(x.st.ts)) : 'ukjent'; (byDay[d]=byDay[d]||[]).push(x); });
-  const doneHtml = Object.keys(byDay).sort().reverse().map(d=>`<div class="weekhd"><h3 style="margin:0">${d==='ukjent'?'Uten dato':d===t?'I dag · '+fmtD(d):fmtD(d)}</h3><span class="small muted">${byDay[d].length} · ${fmtMin(byDay[d].reduce((s,x)=>s+x.a.min,0))}</span></div><div class="todo">${byDay[d].map(x=>actItemHtml(x.a)).join('')}</div>`).join('');
+  const doneHtml = Object.keys(byDay).sort().reverse().map(d=>`<div class="weekhd"><h3 style="margin:0">${d==='ukjent'?'Uten dato':d===t?'I dag · '+fmtD(d):fmtD(d)}</h3><span class="small muted">${byDay[d].length} · ${fmtMin(byDay[d].reduce((s,x)=>s+x.a.min,0))}</span></div><div class="todo">${byDay[d].map(x=>actItemHtml(x.a,{sel:true})).join('')}</div>`).join('');
   const planHtml = days.map(d=>{ const ps2 = P.plan[d]; const m = ps2.reduce((s,p)=>s+p.rem,0);
     return `<div class="weekhd"><h3 style="margin:0">${d===t?'I dag · ':''}${fmtD(d)}</h3><span class="small muted">${fmtMin(m)}</span></div>
     <div class="todo">${ps2.map(p=>actItemHtml(p.a,{rem:p.rem, from: d===t && p.a.due<t ? p.a.due : null, late: p.a.due<d && p.a.due>=t})).join('')}</div>`; }).join('');
@@ -1608,11 +1637,12 @@ function renderGjoremal(main){
     <div><span class="gn">${fmtMin(remMin)}</span><span class="small muted">arbeid igjen</span></div>
   </div>
   <div class="row between" style="margin:10px 0 6px">${capControlHtml(t)}<span class="small muted">Ugjort flyttes til neste ledige dag</span></div>${overflowHtml(P)}
-  ${foldSec('g-start', `Påbegynt (${started.length})`, 'startet, men ikke ferdig', started.length?`<div class="todo">${started.map(x=>actItemHtml(x.a,{rem:Math.max(10,Math.round(x.a.min*(1-x.st.prog)/5)*5)})).join('')}</div>`:'<p class="muted small" style="margin:0">Ingenting påbegynt.</p>', true)}
-  ${foldSec('g-done', `Fullført (${doneAll.length})`, 'alt du har gjort, nyest først', doneHtml || '<p class="muted small" style="margin:0">Ingenting fullført ennå.</p>', true)}
+  <div id="rbar" class="rbar" hidden><span><strong class="rn">0</strong> valgt</span><span class="row" style="gap:6px"><button class="btn small ghost rcancel">Avbryt</button><button class="btn small danger rgo">Nullstill valgte</button></span></div>
+  ${foldSec('g-start', `Påbegynt (${started.length})`, `startet, men ikke ferdig${started.length?' · <a href="#" data-selall>velg alle</a>':''}`, started.length?`<div class="todo">${started.map(x=>actItemHtml(x.a,{sel:true, rem:Math.max(10,Math.round(x.a.min*(1-x.st.prog)/5)*5)})).join('')}</div>`:'<p class="muted small" style="margin:0">Ingenting påbegynt.</p>', true)}
+  ${foldSec('g-done', `Fullført (${doneAll.length})`, `alt du har gjort, nyest først${doneAll.length?' · <a href="#" data-selall>velg alle</a>':''}`, doneHtml || '<p class="muted small" style="margin:0">Ingenting fullført ennå.</p>', true)}
   ${foldSec('g-plan', 'Plan', `${days.length} dager fram til siste eksamen`, planHtml || '<p class="muted small" style="margin:0">Ingenting igjen i planen.</p>', true)}
   ${P.excluded.length?foldSec('g-ned', `Nedprioritert (${P.excluded.length})`, 'får ikke plass med dagens studietid', `<div class="todo">${P.excluded.map(p=>actItemHtml(p.a,{rem:p.rem})).join('')}</div>`, false):''}`;
-  bindActs(main); bindCap(main); bindFolds(main);
+  bindActs(main); bindCap(main); bindFolds(main); bindReset(main);
 }
 
 // ---------- Kalender ----------
