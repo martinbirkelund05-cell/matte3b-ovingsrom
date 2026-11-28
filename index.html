@@ -311,6 +311,7 @@ ul.plain{margin:4px 0;padding-left:18px}
 .it.act .tx{min-width:0}
 .srcline{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
 .qtext.wide{max-width:none}
+.qfelles{border-left:3px solid var(--line,#cbd5e1);padding:2px 0 2px 10px;margin:6px 0 10px}.qfelles .small{display:block;margin-bottom:2px}.qfigs{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 12px}.qfig{margin:0;flex:1 1 300px;max-width:100%;background:#fff;border:1px solid var(--line,#e2e8f0);border-radius:6px;padding:6px;box-sizing:border-box}.qfig img{display:block;width:auto;max-width:100%;height:auto;max-height:78vh;margin:0 auto}.qfig figcaption{font-size:12px;color:#64748b;margin-top:4px;text-align:center}.qfig.bred{flex-basis:100%}
 .segimg{margin:4px 0 8px}.segimg img,.introbox img,.lfimg img{max-width:100%;height:auto;border-radius:4px;background:#fff;display:block}
 img.zoom{cursor:zoom-in}
 .fieldimg img{max-width:min(100%,520px)}
@@ -627,8 +628,15 @@ a.tema{text-decoration:none}.fk-rute{margin-top:8px;min-height:22px}.okt-gjort{d
   <a href="#mer" data-b="mer"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Mer</a>
 </nav>
 
+<script>
+// Testmodus (?testmodus i adressen): egen, tom lagring med prefiks, slik at utprøving på den publiserte siden aldri rører den ekte historikken.
+if(/[?&]testmodus/.test(location.search)){ const P='TEST_'; ['getItem','setItem','removeItem'].forEach(m=>{ const o=Storage.prototype[m]; Storage.prototype[m]=function(k,...a){ return o.call(this, P+k, ...a); }; });
+  window.TESTMODUS = true; document.addEventListener('DOMContentLoaded', ()=>{ const d=document.createElement('div'); d.textContent='Testmodus – egen, tom historikk. Fjern «?testmodus» fra adressen for vanlig bruk.'; d.style.cssText='background:#fde68a;color:#422006;font-size:12px;padding:3px 10px;text-align:center'; document.body.prepend(d); }); }
+</script>
 <script src="bank.js"></script>
 <script src="bank_mek.js"></script>
+<script src="mek_tekst.js"></script>
+<script src="mek_lf.js"></script>
 <script src="bank_fem.js"></script>
 <script src="bank_var.js"></script>
 <script src="vendor/math.js"></script>
@@ -724,8 +732,8 @@ function lsSave(){ if(typeof KF!=='undefined') KF = {}; try{ localStorage.setIte
 const FILE = {
   handle:null, dirty:false, timer:null, savedAt:null,
   supported(){ return !!window.showSaveFilePicker && !window.claude; },
-  async idbGet(){ return new Promise(res=>{ try{ const r=indexedDB.open('m3b',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{ const tx=r.result.transaction('kv','readonly'); const g=tx.objectStore('kv').get('handle'); g.onsuccess=()=>res(g.result||null); g.onerror=()=>res(null); }; r.onerror=()=>res(null); }catch(e){ res(null); } }); },
-  async idbSet(h){ return new Promise(res=>{ try{ const r=indexedDB.open('m3b',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{ try{ const tx=r.result.transaction('kv','readwrite'); if(h) tx.objectStore('kv').put(h,'handle'); else tx.objectStore('kv').delete('handle'); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }catch(e){ res(); } }; r.onerror=()=>res(); }catch(e){ res(); } }); },
+  async idbGet(){ return new Promise(res=>{ try{ const r=indexedDB.open(window.TESTMODUS?'m3b_test':'m3b',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{ const tx=r.result.transaction('kv','readonly'); const g=tx.objectStore('kv').get('handle'); g.onsuccess=()=>res(g.result||null); g.onerror=()=>res(null); }; r.onerror=()=>res(null); }catch(e){ res(null); } }); },
+  async idbSet(h){ return new Promise(res=>{ try{ const r=indexedDB.open(window.TESTMODUS?'m3b_test':'m3b',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{ try{ const tx=r.result.transaction('kv','readwrite'); if(h) tx.objectStore('kv').put(h,'handle'); else tx.objectStore('kv').delete('handle'); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }catch(e){ res(); } }; r.onerror=()=>res(); }catch(e){ res(); } }); },
   markDirty(){ if(!this.handle) return; this.dirty = true; this.render(); clearTimeout(this.timer); this.timer = setTimeout(()=>this.save(), 1500); },
   async les(){ try{ const txt = await (await this.handle.getFile()).text(); return txt.trim() ? JSON.parse(txt) : null; }catch(e){ return null; } },
   // Henter inn endringer som er kommet i fila fra en annen PC, uten å miste noe lokalt
@@ -1514,7 +1522,7 @@ function renderProve(main, s){
         const st = wrap.querySelector('.st');
         if(isAuto(f)){
           const ok = gradeField(f, readField(wrap, f)).ok;
-          wrap.classList.add(ok?'ok':'bad'); if(st) st.textContent = ok?'Riktig svar.':(f.kind==='pick'||f.kind==='mc' ? 'Feil svar. Riktig alternativ er nr. '+(f.ans+1)+' ovenfra.' : 'Feil svar. Riktig svar er: '+f.ans); wrap.querySelectorAll('input,select').forEach(x=>x.disabled = true);
+          wrap.classList.add(ok?'ok':'bad'); if(st) st.textContent = ok?'Riktig svar.':(f.kind==='pick'||f.kind==='mc' ? (f.labels&&f.labels[f.ans]&&/^Alternativ \d+$/.test(f.labels[f.ans]) ? 'Feil svar. Riktig er '+f.labels[f.ans]+'.' : 'Feil svar. Riktig alternativ er nr. '+(f.ans+1)+' ovenfra.') : 'Feil svar. Riktig svar er: '+f.ans); wrap.querySelectorAll('input,select').forEach(x=>x.disabled = true);
           qn++; if(ok) qg++; await recordAttempt(q,f,{ok,mode:'prove',hint:false,fasit:false}); s.fields[fieldKey(q.id,f.i)] = {r:ok?'ok':'feil', hint:0, ts:Date.now()};
         }
       }
@@ -1659,7 +1667,7 @@ document.addEventListener('click', e=>{
 // =====================================================================
 // ---------- Studieplattform: fag, aktiviteter, plan og kalender ----------
 // =====================================================================
-const APP_VER = '28.11 kl. 19.00';
+const APP_VER = '28.11 kl. 21.30';
 const FAG = {
   mek:  { key:'mek',  kode:'MEKA1101', navn:'Mekanikk 1',        kort:'Mekanikk',       canvas:'MEKA1101-26H :: Mekanikk 1',      sem:'MEKA1101-26H', exam:'2026-12-04', tid:'kl. 09:00–13:00 (4 t), oppmøte 30 min før', form:'Skriftlig, Inspera + håndberegninger på ark. Hjelpemiddel D: enkel kalkulator og vedlagt formelark.', farge:'#7b3f98' },
   fem:  { key:'fem',  kode:'MEPA2314', navn:'Elementmetoden',    kort:'Elementmetoden', canvas:'MEPA2314-26H :: Elementmetoden',   sem:'MEPA2314-26H', exam:'2026-12-11', tid:'tidspunkt ikke oppgitt i Canvas', form:'Muntlig eksamen (teller 40 %). Prosjektmappen teller 60 %.', farge:'#1f6f78' },
@@ -2672,8 +2680,17 @@ function srcHtml(q){
   return '';
 }
 function zimg(src, alt, cls){ return `<img class="zoom ${cls||''}" src="${esc(src)}" alt="${esc(alt||'')}" loading="lazy" title="Klikk for å forstørre">`; }
+function mekTekstHtml(t){ return String(t||'').replace(/\s(?=\d\)\s?[A-ZÆØÅ])/g,'\n').split('\n').map(l=>'<p>'+mdInline(l)+'</p>').join(''); }
 function renderSegs(q, mode){
   let html = srcHtml(q);
+  const mt = window.MEK_TEKST && MEK_TEKST[q.id];
+  if(mt){ // 1) oppgavetekst som tekst, 2) hele figuren, 3) svarfelt
+    if(mt.felles) html += `<div class="qfelles"><span class="small muted">Felles opplysninger for oppgave ${esc(String(q.src.oppg).replace(/\(.*/,''))}</span>${mekTekstHtml(mt.felles)}</div>`;
+    html += `<div class="qprompt">${mekTekstHtml(mt.tekst)}</div>`;
+    if(mt.figs.length) html += `<div class="qfigs">${mt.figs.map((f,k)=>`<figure class="qfig${f.w/f.h>2.4||f.h/f.w>1.25?' bred':''}"><img class="zoom" src="${esc(f.src)}" width="${f.w}" height="${f.h}" alt="Figur ${k+1} til oppgave ${esc(q.src.oppg)}" title="Klikk for å forstørre"><figcaption>${f.felles?'Felles figur for oppgaven':'Figur til deloppgaven'} · klikk for å forstørre</figcaption></figure>`).join('')}</div>`;
+    q.fields.forEach(f=>{ html += newFieldHtml(q, f, mode); });
+    return html;
+  }
   if(q.intro && BM.intros[q.intro]){ const it = BM.intros[q.intro]; const first = /a$/.test(q.nr) || !/[a-z]$/.test(q.nr);
     html += `<details class="introbox" ${first?'open':''}><summary>Felles oppgavetekst for oppgave ${esc(q.intro.split('-')[1])}</summary>${it.segs.map(s=>zimg(s.img,'Felles oppgavetekst')).join('')}</details>`; }
   if(q.text) html += `<div class="qprompt">${mdBlock(q.text)}</div>`;
@@ -2702,9 +2719,12 @@ function newFieldHtml(q, f, mode){
   if(f.kind==='pick' || f.kind==='mc'){
     const labels = f.kind==='mc' ? f.opts : (f.labels||[]);
     const textOnly = f.kind==='mc' || (labels.length && labels.every(l=>l && l.trim()));
-    const opts = (f.kind==='mc'?f.opts:f.opts).map((o,k)=>{ const lab = labels[k];
-      return `<label class="opt ${f.orient==='h'?'h':''}"><input type="radio" name="${id}" value="${k}"><span class="ol">${textOnly? mdInline(lab) : zimg(o, lab||('Alternativ '+(k+1)), 'optimg')}</span></label>`; }).join('');
-    return `<div class="fblock"><span class="fld pick" data-q="${q.id}" data-i="${f.i}" style="display:block">${multi?`<div>${tag}</div>`:''}<div class="opts ${f.orient==='h'?'h':''}">${opts}</div><div class="row" style="margin-top:6px">${chk}<span class="st"></span></div><div class="mcfb" hidden></div></span></div>`;
+    const nr = l=>{ const m = /^Alternativ (\d+)$/.exec(l||''); return m ? +m[1] : /^ingen av/i.test(l||'') ? 1e6 : null; };
+    const numm = f.kind==='pick' && labels.length>6 && labels.every(l=>nr(l)!==null);   // «Alternativ 18, 12 …» vises i stigende rekkefølge
+    let rekke = f.opts.map((o,k)=>k); if(numm) rekke.sort((a,b)=>nr(labels[a])-nr(labels[b]));
+    const opts = rekke.map(k=>{ const o = f.opts[k], lab = labels[k];
+      return `<label class="opt ${f.orient==='h'||numm?'h':''}"><input type="radio" name="${id}" value="${k}"><span class="ol">${textOnly? mdInline(lab) : zimg(o, lab||('Alternativ '+(k+1)), 'optimg')}</span></label>`; }).join('');
+    return `<div class="fblock"><span class="fld pick" data-q="${q.id}" data-i="${f.i}" style="display:block">${multi?`<div>${tag}</div>`:''}<div class="opts ${f.orient==='h'||numm?'h':''}">${opts}</div><div class="row" style="margin-top:6px">${chk}<span class="st"></span></div><div class="mcfb" hidden></div></span></div>`;
   }
   if(f.kind==='card'){
     return `<div class="fblock"><span class="fld cardf" data-q="${q.id}" data-i="${f.i}" style="display:block"><div class="cardback" hidden><div class="k">${q.ovpdf?'Slik retter du':'Vurderingspunkter'}</div>${mdBlock(f.ans)}</div>
@@ -2738,6 +2758,11 @@ function newFasitHtml(q, f){
     h += `<p class="rightanswer">Fasit${q.fields.length>1?' – felt '+f.i:''}: ${newAnsHtml(f)}</p>`;
     if(q.fields.length>1) h += `<details style="margin:0 0 10px"><summary class="small" style="cursor:pointer">Fasit for alle felt i deloppgaven</summary><div class="stack" style="gap:4px;margin-top:6px">${q.fields.map(x=>`<div><span class="small">Felt ${x.i}:</span> ${newAnsHtml(x)}</div>`).join('')}</div></details>`;
     if(q.explain) h += q.variant ? `<div style="margin:0 0 8px"><strong>Kort oppsummert:</strong>${mdVar(q.explain)}</div>` : `<p style="margin:0 0 8px"><strong>Kort oppsummert:</strong> ${mdInline(q.explain)}</p>`;
+    const kl = window.MEK_LF && MEK_LF[q.id];
+    if(kl){ const egne = kl.filter(c=>!c.felles), fel = kl.filter(c=>c.felles), bilde = c=>`<div class="lfimg"><div class="small muted">${esc(q.lf.doc)} s. ${c.side}</div><img class="zoom" src="${esc(c.src)}" width="${c.w}" height="${c.h}" alt="Løsningsforslag ${esc(q.src.oppg)}, side ${c.side}" loading="lazy" title="Klikk for å forstørre"></div>`;
+      h += `<div class="lfpages"><div class="small muted" style="margin-bottom:4px">Løsningsforslaget for denne deloppgaven (${esc(q.src.oppg)})</div>${egne.map(bilde).join('')}</div>`;
+      if(fel.length) h += `<details class="lfpages"><summary class="small" style="cursor:pointer">Vis felles mellomregning – den viser også svar på andre deloppgaver i oppgave ${esc(String(q.src.oppg).replace(/\(.*/,''))}</summary>${fel.map(bilde).join('')}</details>`;
+    } else
     h += `<details class="lfpages" open><summary class="small" style="cursor:pointer">Vis løsningsforslaget (${q.lf.pages.length} side${q.lf.pages.length>1?'r':''})</summary>${q.lf.imgs.map((s,k)=>`<div class="lfimg"><div class="small muted">${esc(q.lf.doc)} s. ${q.lf.pages[k]}</div>${zimg(s,'Løsningsforslag side '+q.lf.pages[k])}</div>`).join('')}</details>`;
     if(q.steg && q.steg.length) h += `<h4 style="margin-top:12px">Supplerende forklaring <span class="pill mute">egne mellomregninger</span></h4>${stepsHtml(q)}`;
   } else {
