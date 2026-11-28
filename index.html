@@ -26,7 +26,7 @@ button{font:inherit}
 .topbar nav a{text-decoration:none;color:var(--muted);padding:6px 10px;border-radius:6px;font-size:14px}
 .topbar nav a.active,.topbar nav a:hover{color:var(--fg);background:var(--accent-soft)}
 .wrap{max-width:1840px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:1fr;gap:20px}
-@media(min-width:900px){.wrap{grid-template-columns:minmax(0,1fr);max-width:1180px}}
+@media(min-width:900px){.wrap{grid-template-columns:200px minmax(0,1fr);max-width:1320px}#topnav{display:none}}
 @media(min-width:1300px){.wrap{padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px));gap:28px}}
 .side{display:none}
 @media(min-width:900px){.side{display:block;position:sticky;top:calc(58px + env(safe-area-inset-top,0px));align-self:start}}
@@ -311,6 +311,7 @@ ul.plain{margin:4px 0;padding-left:18px}
 .it.act .tx{min-width:0}
 .srcline{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
 .qtext.wide{max-width:none}
+.qfelles{border-left:3px solid var(--line,#cbd5e1);padding:2px 0 2px 10px;margin:6px 0 10px}.qfelles .small{display:block;margin-bottom:2px}.qfigs{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 12px}.qfig{margin:0;flex:1 1 300px;max-width:100%;background:#fff;border:1px solid var(--line,#e2e8f0);border-radius:6px;padding:6px;box-sizing:border-box}.qfig img{display:block;width:auto;max-width:100%;height:auto;max-height:78vh;margin:0 auto}.qfig figcaption{font-size:12px;color:#64748b;margin-top:4px;text-align:center}.qfig.bred{flex-basis:100%}
 .segimg{margin:4px 0 8px}.segimg img,.introbox img,.lfimg img{max-width:100%;height:auto;border-radius:4px;background:#fff;display:block}
 img.zoom{cursor:zoom-in}
 .fieldimg img{max-width:min(100%,520px)}
@@ -602,6 +603,10 @@ a.tema{text-decoration:none}.fk-rute{margin-top:8px;min-height:22px}.okt-gjort{d
   .os-mer{display:inline-block;justify-self:start;background:none;border:0;padding:0 0 2px;font-size:12px;color:var(--accent)}.os.open .os-mer{display:none}
   .os.open .os-t{white-space:normal}
 }
+
+/* ---- Sidemeny, faner og tilbake ---- */
+.side a.sub{padding:5px 10px 5px 24px;font-size:13px;color:var(--muted)}.side a.sub.active{color:var(--accent)}
+#backbar{margin:0 0 10px}.backlink{display:inline-block;background:none;border:0;padding:4px 0;font:inherit;font-size:14px;color:var(--accent);text-decoration:none;cursor:pointer}.backlink:hover{text-decoration:underline}
 </style>
 
 <header class="topbar">
@@ -613,8 +618,8 @@ a.tema{text-decoration:none}.fk-rute{margin-top:8px;min-height:22px}.okt-gjort{d
 </header>
 <div id="oktsek" hidden></div>
 <div class="wrap">
-  <aside class="side" id="side" hidden></aside>
-  <main id="main-wrap"><div id="tabs" class="tabs" hidden></div><div id="main"><div class="card"><p class="muted">Laster oppgavebanken …</p></div></div></main>
+  <aside class="side" id="side"></aside>
+  <main id="main-wrap"><div id="tabs" class="tabs" hidden></div><div id="backbar" hidden></div><div id="main"><div class="card"><p class="muted">Laster oppgavebanken …</p></div></div></main>
 </div>
 <nav id="botnav" aria-label="Hovedmeny">
   <a href="#hjem" data-b="hjem"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Hjem</a>
@@ -623,8 +628,15 @@ a.tema{text-decoration:none}.fk-rute{margin-top:8px;min-height:22px}.okt-gjort{d
   <a href="#mer" data-b="mer"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Mer</a>
 </nav>
 
+<script>
+// Testmodus (?testmodus i adressen): egen, tom lagring med prefiks, slik at utprøving på den publiserte siden aldri rører den ekte historikken.
+if(/[?&]testmodus/.test(location.search)){ const P='TEST_'; ['getItem','setItem','removeItem'].forEach(m=>{ const o=Storage.prototype[m]; Storage.prototype[m]=function(k,...a){ return o.call(this, P+k, ...a); }; });
+  window.TESTMODUS = true; document.addEventListener('DOMContentLoaded', ()=>{ const d=document.createElement('div'); d.textContent='Testmodus – egen, tom historikk. Fjern «?testmodus» fra adressen for vanlig bruk.'; d.style.cssText='background:#fde68a;color:#422006;font-size:12px;padding:3px 10px;text-align:center'; document.body.prepend(d); }); }
+</script>
 <script src="bank.js"></script>
 <script src="bank_mek.js"></script>
+<script src="mek_tekst.js"></script>
+<script src="mek_lf.js"></script>
 <script src="bank_fem.js"></script>
 <script src="bank_var.js"></script>
 <script src="vendor/math.js"></script>
@@ -720,8 +732,8 @@ function lsSave(){ if(typeof KF!=='undefined') KF = {}; try{ localStorage.setIte
 const FILE = {
   handle:null, dirty:false, timer:null, savedAt:null,
   supported(){ return !!window.showSaveFilePicker && !window.claude; },
-  async idbGet(){ return new Promise(res=>{ try{ const r=indexedDB.open('m3b',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{ const tx=r.result.transaction('kv','readonly'); const g=tx.objectStore('kv').get('handle'); g.onsuccess=()=>res(g.result||null); g.onerror=()=>res(null); }; r.onerror=()=>res(null); }catch(e){ res(null); } }); },
-  async idbSet(h){ return new Promise(res=>{ try{ const r=indexedDB.open('m3b',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{ try{ const tx=r.result.transaction('kv','readwrite'); if(h) tx.objectStore('kv').put(h,'handle'); else tx.objectStore('kv').delete('handle'); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }catch(e){ res(); } }; r.onerror=()=>res(); }catch(e){ res(); } }); },
+  async idbGet(){ return new Promise(res=>{ try{ const r=indexedDB.open(window.TESTMODUS?'m3b_test':'m3b',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{ const tx=r.result.transaction('kv','readonly'); const g=tx.objectStore('kv').get('handle'); g.onsuccess=()=>res(g.result||null); g.onerror=()=>res(null); }; r.onerror=()=>res(null); }catch(e){ res(null); } }); },
+  async idbSet(h){ return new Promise(res=>{ try{ const r=indexedDB.open(window.TESTMODUS?'m3b_test':'m3b',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{ try{ const tx=r.result.transaction('kv','readwrite'); if(h) tx.objectStore('kv').put(h,'handle'); else tx.objectStore('kv').delete('handle'); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }catch(e){ res(); } }; r.onerror=()=>res(); }catch(e){ res(); } }); },
   markDirty(){ if(!this.handle) return; this.dirty = true; this.render(); clearTimeout(this.timer); this.timer = setTimeout(()=>this.save(), 1500); },
   async les(){ try{ const txt = await (await this.handle.getFile()).text(); return txt.trim() ? JSON.parse(txt) : null; }catch(e){ return null; } },
   // Henter inn endringer som er kommet i fila fra en annen PC, uten å miste noe lokalt
@@ -984,8 +996,8 @@ function route(){
   else if(h==='om'||h==='notater') (h==='om'?renderOm:renderNotes)(main);
   else renderHjem(main);
   typeset(main);
-  renderOktSek(h);
-  window.scrollTo(0,0);
+  renderOktSek(h); renderBack(h); renderSide(h);
+  if(TABS.gjen){ TABS.gjen = false; const y = TABS.cur().scroll || 0; window.scrollTo(0, y); [120, 500, 1200].forEach(ms=>setTimeout(()=>{ if(('#'+h)===location.hash) window.scrollTo(0, y); }, ms)); } else window.scrollTo(0,0);
 }
 function typeset(el){ if(window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]).catch(()=>{}); }
 function ctxFag(h){
@@ -998,11 +1010,39 @@ function ctxFag(h){
   return null;
 }
 function renderSide(h){
-  const s = $('#side'); const ctx = ctxFag(h);
-  const a = (href, txt, on) => `<a href="${href}" class="${on?'active':''}">${txt}</a>`;
-  s.innerHTML = a('#hjem','Hjem',h==='hjem') + a('#kalender','Kalender',h==='kalender') + a('#gjoremal','Plan',h==='gjoremal')
-    + `<div class="grp">Fag</div>` + a('#okt','Matte 3B',ctx==='matte') + a('#fag-mek','Mekanikk 1',ctx==='mek') + a('#fag-fem','Elementmetoden',ctx==='fem')
+  const s = $('#side'); if(!s) return; const ctx = ctxFag(h);
+  const a = (href, txt, on, cls) => `<a href="${href}" class="${on?'active':''} ${cls||''}">${txt}</a>`;
+  const under = (f, liste) => ctx===f ? liste.map(([href, txt, on])=>a(href, txt, on, 'sub')).join('') : '';
+  const iQ = h.startsWith('q-') || h.startsWith('oving-') || h.startsWith('forsok-');
+  s.innerHTML = a('#hjem','Hjem',h==='hjem') + a('#gjoremal','Plan',h==='gjoremal') + a('#kalender','Kalender',h==='kalender')
+    + `<div class="grp">Fag</div>`
+    + a('#okt-mek','Mekanikk 1',ctx==='mek') + under('mek', [['#okt-mek','Økt',h==='okt-mek'], ['#fag-mek','Oversikt og ressurser',h==='fag-mek' || iQ]])
+    + a('#okt-fem','Elementmetoden',ctx==='fem') + under('fem', [['#okt-fem','Økt',h==='okt-fem'], ['#fag-fem','Oversikt og ressurser',h==='fag-fem' || iQ], ['#muntlig','Prøvemuntlig',h==='muntlig']])
+    + a('#okt','Matte 3B',ctx==='matte') + under('matte', [['#okt','Økt',h==='okt' || h==='diagnose'], ['#oversikt','Oversikt',h==='oversikt' || h==='fag-matte'], ['#ovinger','Øvinger',h==='ovinger' || (iQ && oppFor(h.startsWith('q-') ? oppFor(h).slice(1) : h)==='#ovinger')], ['#eksamen','Eksamenssett',h==='eksamen' || (iQ && oppFor(h.startsWith('q-') ? oppFor(h).slice(1) : h)==='#eksamen')], ['#komp','Kompendium',h==='komp' || h.startsWith('komp-')], ['#python','Python-pugging',h.startsWith('python')]])
     + `<div class="grp">Annet</div>` + a('#notater','Notater og feil',h==='notater') + a('#om','Synk og innstillinger',h==='om') + `<div class="small muted" style="padding:16px 10px 0">Versjon ${APP_VER}</div>`;
+}
+// ---------- Tilbake: dit du kom fra, ellers naturlig vei opp ----------
+const TOPP = ['hjem','gjoremal','okt','okt-mek','okt-fem','mer'];
+function oppFor(h){
+  if(h.startsWith('q-')){ const q = QBY[h.slice(2)]; return q ? '#oving-'+q.oving : '#hjem'; }
+  if(h.startsWith('oving-')){ const k = h.slice(6), f = (SETS[k]||{}).fag || 'matte'; return f==='matte' ? (/^\d+$/.test(k) ? '#ovinger' : /^(V|PX)/.test(k) ? '#oversikt' : '#eksamen') : '#fag-'+f; }
+  if(h.startsWith('forsok-')){ const s = STATE.sessions[h.slice(7)]; return s ? '#oving-'+s.oving : '#hjem'; }
+  if(h.startsWith('komp-')) return '#komp';
+  if(h.startsWith('python-')) return '#python';
+  if(h==='fag-mek' || h==='fag-fem') return oktHash(h.slice(4));
+  if(h==='muntlig') return '#okt-fem';
+  if(h==='kalender') return '#gjoremal';
+  if(['oversikt','fag-matte','ovinger','eksamen','komp','python','diagnose','gjoremal-matte'].includes(h)) return '#okt';
+  return '#hjem';
+}
+function navnFor(hash){ const h = hash.replace(/^#/,''); const fast = {hjem:'Hjem', gjoremal:'planen', kalender:'kalenderen', okt:'Matte · Økt', 'okt-mek':'Mekanikk · Økt', 'okt-fem':'Elementmetoden · Økt', oversikt:'Matte · Oversikt', 'fag-mek':'Mekanikk · Oversikt', 'fag-fem':'Elementmetoden · Oversikt', komp:'kompendiet', mer:'Mer', ovinger:'øvingene', eksamen:'eksamenssettene', python:'Python-pugging', muntlig:'prøvemuntlig', diagnose:'diagnosen'};
+  return fast[h] || titleFor(h); }
+function renderBack(h){ const el = $('#backbar'); if(!el) return; const t = TABS.cur(), st = t.stack || [];
+  if(TOPP.includes(h)){ el.hidden = true; el.innerHTML = ''; return; }
+  const fra = st.length>1 ? st[st.length-2] : null, lukk = !fra && t.fra && TABS.list.some(x=>x.hash===t.fra);
+  const mal = fra || oppFor(h); el.hidden = false;
+  el.innerHTML = lukk ? `<button class="backlink" id="back-lukk">← Lukk fanen og gå tilbake til ${esc(navnFor(t.fra))}</button>` : `<a class="backlink" ${fra?'':'data-opp="1"'} href="${esc(mal)}">← ${fra?'Tilbake til':'Til'} ${esc(navnFor(mal))}</a>`;
+  const b = $('#back-lukk'); if(b) b.onclick = ()=>TABS.close(TABS.active);
 }
 function daysLeft(){ return Math.max(0, Math.ceil((EXAM_DATE - Date.now())/86400000)); }
 function statusDot(q){ const s = questionScore(q); if(s==null) return '<span class="dot"></span>'; return `<span class="dot ${s>=0.8?'good':s>=0.5?'warn':'bad'}"></span>`; }
@@ -1482,7 +1522,7 @@ function renderProve(main, s){
         const st = wrap.querySelector('.st');
         if(isAuto(f)){
           const ok = gradeField(f, readField(wrap, f)).ok;
-          wrap.classList.add(ok?'ok':'bad'); if(st) st.textContent = ok?'Riktig svar.':(f.kind==='pick'||f.kind==='mc' ? 'Feil svar. Riktig alternativ er nr. '+(f.ans+1)+' ovenfra.' : 'Feil svar. Riktig svar er: '+f.ans); wrap.querySelectorAll('input,select').forEach(x=>x.disabled = true);
+          wrap.classList.add(ok?'ok':'bad'); if(st) st.textContent = ok?'Riktig svar.':(f.kind==='pick'||f.kind==='mc' ? (f.labels&&f.labels[f.ans]&&/^Alternativ \d+$/.test(f.labels[f.ans]) ? 'Feil svar. Riktig er '+f.labels[f.ans]+'.' : 'Feil svar. Riktig alternativ er nr. '+(f.ans+1)+' ovenfra.') : 'Feil svar. Riktig svar er: '+f.ans); wrap.querySelectorAll('input,select').forEach(x=>x.disabled = true);
           qn++; if(ok) qg++; await recordAttempt(q,f,{ok,mode:'prove',hint:false,fasit:false}); s.fields[fieldKey(q.id,f.i)] = {r:ok?'ok':'feil', hint:0, ts:Date.now()};
         }
       }
@@ -1580,16 +1620,22 @@ const TABS = {
   cur(){ return this.list[this.active]; },
   prev:null,
   back(){ const ok = t => t && !t.hash.startsWith('#notater') && !t.hash.startsWith('#komp'); const p = this.list.find(t=>t.hash===this.prev); if(ok(p)) return p; return this.list.find((t,i)=>i!==this.active && ok(t)) || null; },
-  open(hash){ this.prev = this.cur().hash; const k = this.list.findIndex(t=>t.hash===hash); if(k>=0){ this.active=k; } else { this.list.push({hash, title:titleFor(hash)}); this.active=this.list.length-1; } this.save(); this.go(); },
-  close(k){ this.list.splice(k,1); if(!this.list.length) this.list=[{hash:'#oversikt',title:'Oversikt'}]; if(this.active>=this.list.length) this.active=this.list.length-1; else if(k<this.active) this.active--; this.save(); this.go(); },
-  switch(k){ this.prev = this.cur().hash; this.active=k; this.save(); this.go(); },
+  husk(){ const t = this.cur(); if(t) t.scroll = window.scrollY; },
+  open(hash){ this.husk(); const fra = this.cur().hash; this.prev = fra; const k = this.list.findIndex(t=>t.hash===hash); if(k>=0){ this.active=k; this.gjen = true; } else { this.list.push({hash, title:titleFor(hash.replace(/^#/,'')), fra, stack:[hash]}); this.active=this.list.length-1; } this.save(); this.go(); },
+  close(k){ const lukket = this.list[k], varAktiv = k===this.active; this.list.splice(k,1); if(!this.list.length) this.list=[{hash:'#hjem',title:'Hjem'}]; if(this.active>=this.list.length) this.active=this.list.length-1; else if(k<this.active) this.active--;
+    if(varAktiv && lukket && lukket.fra){ const j = this.list.findIndex(t=>t.hash===lukket.fra); if(j>=0) this.active = j; }
+    this.gjen = true; this.save(); this.go(); },
+  switch(k){ this.husk(); this.prev = this.cur().hash; this.active=k; this.gjen = true; this.save(); this.go(); },
   go(){ const h = this.cur().hash; if(location.hash!==h) location.hash = h; else route(); },
-  sync(h){ const t=this.cur(); t.hash=h; t.title=titleFor(h); this.save(); this.render(); },
+  sync(h){ const t=this.cur(); const st = t.stack = t.stack || (t.hash && t.hash!==h ? [t.hash] : []); const topp = st[st.length-1], sosken = (a,b)=>a && ((a.startsWith('#q-') && b.startsWith('#q-')) || (a.startsWith('#komp-') && b.startsWith('#komp-')));
+    if(this.opp){ this.opp = false; st.length = 0; st.push(h); }
+    if(st[st.length-1]!==h){ if(st[st.length-2]===h) st.pop(); else if(sosken(topp, h)) st[st.length-1] = h; else st.push(h); if(st.length>40) st.shift(); }
+    t.hash=h; t.title=titleFor(h.replace(/^#/,'')); this.save(); this.render(); },
   render(){ const bar = $('#tabs'); if(!bar) return; if(this.list.length<2){ bar.hidden=true; bar.innerHTML=''; return; } bar.hidden=false;
     bar.innerHTML = this.list.map((t,k)=>`<div class="tab ${k===this.active?'on':''}" data-k="${k}" title="${esc(t.hash)}"><span class="tt">${esc(t.title)}</span><button class="x" data-k="${k}" title="Lukk fanen" aria-label="Lukk fanen">×</button></div>`).join('') + `<button class="tab plus" id="tab-plus" title="Ny fane (oversikt)">+</button>`;
     bar.querySelectorAll('.tab[data-k]').forEach(el=>el.onclick=e=>{ if(e.target.classList.contains('x')) return; this.switch(+el.dataset.k); });
     bar.querySelectorAll('.x').forEach(b=>b.onclick=e=>{ e.stopPropagation(); this.close(+b.dataset.k); });
-    $('#tab-plus').onclick=()=>{ this.list.push({hash:'#oversikt',title:'Oversikt'}); this.active=this.list.length-1; this.save(); this.go(); };
+    $('#tab-plus').onclick=()=>{ this.husk(); this.list.push({hash:'#hjem',title:'Hjem',stack:['#hjem']}); this.active=this.list.length-1; this.save(); this.go(); };
   }
 };
 function titleFor(h){
@@ -1611,14 +1657,17 @@ function titleFor(h){
 document.addEventListener('click', e=>{
   const a = e.target.closest('a[href^="#"]'); if(!a) return;
   const href = a.getAttribute('href');
-  const wantsTab = a.target==='_blank' || ((href==='#komp' || href.startsWith('#komp-') || href==='#notater') && a.closest('#topnav, #side'));
+  const her = location.hash||'';
+  if(a.dataset.opp) TABS.opp = true;   // «Til …» går opp i strukturen: da skal ikke siden du forlot, bli neste tilbake-mål
+  // Kompendiet åpnes i egen fane når du står i en oppgave, så oppgaven, kladden og plassen på siden står urørt
+  const wantsTab = a.target==='_blank' || ((href==='#komp' || href.startsWith('#komp-') || href==='#notater') && (a.closest('#topnav, #side') || her.startsWith('#q-')) && !a.classList.contains('backlink'));
   if(wantsTab){ e.preventDefault(); TABS.open(href); }
 });
 
 // =====================================================================
 // ---------- Studieplattform: fag, aktiviteter, plan og kalender ----------
 // =====================================================================
-const APP_VER = '28.11 kl. 17.00';
+const APP_VER = '28.11 kl. 21.30';
 const FAG = {
   mek:  { key:'mek',  kode:'MEKA1101', navn:'Mekanikk 1',        kort:'Mekanikk',       canvas:'MEKA1101-26H :: Mekanikk 1',      sem:'MEKA1101-26H', exam:'2026-12-04', tid:'kl. 09:00–13:00 (4 t), oppmøte 30 min før', form:'Skriftlig, Inspera + håndberegninger på ark. Hjelpemiddel D: enkel kalkulator og vedlagt formelark.', farge:'#7b3f98' },
   fem:  { key:'fem',  kode:'MEPA2314', navn:'Elementmetoden',    kort:'Elementmetoden', canvas:'MEPA2314-26H :: Elementmetoden',   sem:'MEPA2314-26H', exam:'2026-12-11', tid:'tidspunkt ikke oppgitt i Canvas', form:'Muntlig eksamen (teller 40 %). Prosjektmappen teller 60 %.', farge:'#1f6f78' },
@@ -2142,7 +2191,16 @@ function oktTypeOf(q){
 const oktRank = q => q.ovpdf ? 1.5 : q.variant ? (/^(Løst eksempel|Med hull)/.test(q.title) ? 0 : 3) : (oktOrig(q) ? 1 : 2);
 const oktQs = tid => Q.filter(q=>oktTypeOf(q)===tid).sort((a,b)=>(oktRank(a)-oktRank(b)) || String(a.oving).localeCompare(String(b.oving), 'nb', {numeric:true}) || String(a.nr).localeCompare(String(b.nr), 'nb', {numeric:true}));
 const oktKey = f => f==='matte' ? 'okt' : 'okt_'+f;
-function oktState(f){ f = f || OKT_FAG; const s = (STATE.settings||{})[oktKey(f)] || {}; return Object.assign({fokus:'auto', bland:true, minDag:180, log:[], cur:null, autoFokus:null, lengde:45}, s, {fag:f}); }
+function oktState(f){ f = f || OKT_FAG; const r = (STATE.settings||{})[oktKey(f)] || {};
+  const s = Object.assign({fokus:'auto', bland:true, minDag:180, log:[], cur:null, autoFokus:null, lengde:45}, r, {fag:f});
+  // Alle visninger leser økten herfra. Økter lagret før øktløpet kom (bare «cur», ingen oppgaveliste) gjøres om til en økt med den ene oppgaven.
+  if(s.cur && Object.keys(QBY).length){ const q = QBY[s.cur.q];
+    if(!q) { s.cur = null; s.sesjon = null; }
+    else if(!s.cur.diag && !(s.sesjon && Array.isArray(s.sesjon.qs) && s.sesjon.qs.includes(s.cur.q))){ const tid = s.cur.type || oktTypeOf(q);
+      s.sesjon = {qs:[s.cur.q], tittel:stripMd(q.title), mal:(OKT_BY[tid]||{}).navn || FAG[f].navn, min:10, kt:{}}; if(!s.oktId) s.oktId = s.cur.start || Date.now(); if(!s.oktStart) s.oktStart = {naa:0, ts:s.cur.start || Date.now()}; } }
+  return s; }
+// Pågående økt i et fag (eller null). Hjem, fagsiden og økt-seksjonen bruker alle denne.
+function oktPagaende(f){ return iFag(f, ()=>{ const s = oktState(); return s.cur && !s.cur.diag && s.sesjon ? s : null; }); }
 async function oktSave(s){ s.log = (s.log||[]).slice(-400); await saveDoc('settings', oktKey(s.fag||OKT_FAG), s); }
 // Mestring per oppgave: score (siste svar, hint teller 70 %) × hvor godt det huskes nå (0.9^(dager siden / intervall)).
 // Mestring = siste svar på oppgaven × temaets kontrollstatus. Faller når en kontrolltest er forfalt, og settes ned når du bommer på en.
@@ -2285,11 +2343,13 @@ function nesteKontroll(s, typer){ let min = Infinity; [...new Set(typer.filter(B
 
 // ---------- Pågående og pausede økter, synlig på hele siden ----------
 const oktMeta = () => (STATE.settings||{}).oktmeta || {};
-function oktAlle(){ return FAG_ORDER.map(f=>iFag(f, ()=>{ const s = oktState(); if(!(s.cur && QBY[s.cur.q] && s.sesjon) || s.cur.diag) return null;
+// Aktiv økt = ikke pauset, og enten den som sist ble startet eller den eneste som er i gang
+function oktAktiv(L){ L = L || oktAlle(); const ak = oktMeta().aktiv, fri = L.filter(x=>!x.s.pauset); return fri.find(x=>x.f===ak) || (fri.length && !L.some(x=>x.f===ak && !x.s.pauset) ? fri[0] : null); }
+function oktAlle(){ return FAG_ORDER.map(f=>iFag(f, ()=>{ const s = oktPagaende(f); if(!s) return null;
   const gj = oktLogg(s).filter(x=>x.okt===s.oktId).length; return {f, s, q:s.cur.q, tittel:s.sesjon.tittel, i:Math.min(gj+1, s.sesjon.qs.length), n:s.sesjon.qs.length}; })).filter(Boolean); }
 function renderOktSek(h){
-  const el = $('#oktsek'); if(!el) return; const L = oktAlle(), ak = oktMeta().aktiv;
-  let akt = L.find(x=>x.f===ak && !x.s.pauset) || null; const pauset = L.filter(x=>x!==akt);
+  const el = $('#oktsek'); if(!el) return; const L = oktAlle();
+  let akt = oktAktiv(L); const pauset = L.filter(x=>x!==akt);
   const her = akt && h==='q-'+akt.q;   // på selve oppgaven vises økten allerede øverst
   if(!L.length || (her && !pauset.length)){ el.hidden = true; el.innerHTML = ''; return; }
   const navn = x => `${fagDot(x.f)}<strong>${esc(FAG[x.f].navn)}</strong> · ${esc(x.tittel)} · ${x.i} av ${x.n} ${x.n===1?'oppgave':'oppgaver'}`;
@@ -2444,7 +2504,7 @@ function oktBarTikk(){ const el = document.getElementById('okt-del'); if(el) iFa
 function renderOkt(main){
   const s = oktState(), st = oktStats(s), nx = oktNeste(s, st), md = oktMinDag(), pg = oktPrognose(st, Object.assign({}, s, {minDag: md})), natt = oktNatt(s);
   const fokus = nx ? nx.fokus : null, F = FAG[OKT_FAG], erM = OKT_FAG==='matte', G = nx ? nx.lop : [];
-  const iGang = !!(s.cur && QBY[s.cur.q] && s.sesjon);
+  const iGang = !!oktPagaende(OKT_FAG), erAktiv = iGang && (oktAktiv()||{}).f===OKT_FAG;
   const status = pg.trengs<=pg.tilgj ? `<span class="pill good">I rute</span> Du trenger ca. ${fmtT(pg.perDag)} ${esc(F.kort.toLowerCase())} per dag, og planen gir ca. ${fmtT(md)}.`
     : `<span class="pill warn">For lite tid</span> Alt krever ca. ${fmtT(pg.perDag)} per dag, og planen gir ca. ${fmtT(md)}. Dette prioriteres ned: ${pg.kuttes.map(x=>esc(x.t.navn)).join(', ')}.`;
   const sisteL = oktLogg(s).filter(x=>x.okt!=='diag').slice(-1)[0], slT = !s.cur && sisteL && sisteL.type && oktSliter(s, sisteL.type) ? sisteL.type : null, slQ = slT ? QBY[sisteL.q] : null, slX = slT ? st.find(x=>x.t.id===slT) : null;
@@ -2464,9 +2524,9 @@ function renderOkt(main){
   <div class="card okt-hero">
     ${slT?`<div class="okt-sliter">To bom på rad i ${esc(OKT_BY[slT].navn)}. Før du går videre: ${erM?'les det løste eksempelet':'se gjennom løsningsforslaget'}${erM&&slQ&&slQ.refs&&slQ.refs[0]?` i <a href="#komp-${esc(slQ.refs[0].key)}">kompendiet §${esc(slQ.refs[0].key)}</a>`:''}${erM?', og gå gjennom «Steg for steg» på':' til'} <a href="#q-${esc(sisteL.q)}">oppgaven du bommet på</a>.${slX&&slX.t.pre.length?` Sitter ikke grunnlaget, bytt tema til forkunnskapen: ${slX.t.pre.map(p=>`<button class="btn small sec" data-fokus="${p}">${esc(OKT_BY[p].navn)}</button>`).join(' ')}`:''}</div>`:''}
     ${fkT?`<div class="okt-forklar"><strong>Forklar for makker (10 min).</strong> Forklar høyt, uten notater: <ul>${OKT_FORKLAR[fkT].map(x=>`<li>${esc(x)}</li>`).join('')}</ul>Det du ikke får forklart, er det du må øve mer på. <button class="btn small sec" id="okt-forklart">Forklart</button></div>`:''}
-    ${ses ? `<div class="small muted">${iGang?'Økt i gang':'Anbefalt økt'}${!iGang&&nx?' · '+esc(nx.hvorfor):''}</div><h1 style="margin:2px 0 6px">${esc(ses.tittel)}</h1>
+    ${ses ? `<div class="small muted">${iGang?(erAktiv?'Økt i gang':'Pauset økt'):'Anbefalt økt'}${!iGang&&nx?' · '+esc(nx.hvorfor):''}</div><h1 style="margin:2px 0 6px">${esc(ses.tittel)}</h1>
     <p class="okt-meta">${iGang?`<span>ca. ${fmtT(ses.min)} igjen</span><span>${oktDelTekst(s)}</span>`:`<span>ca. ${fmtT(ses.min)}</span><span>${ses.qs.length} ${ses.qs.length===1?'oppgave':'oppgaver'} · ${ses.qs.reduce((a,q)=>a+q.fields.length,0)} deloppgaver</span>`}${ref?`<span>${ref}</span>`:''}<span>Bidrar til: ${esc(ses.mal)}</span></p>
-    <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap"><button class="btn primary big" id="okt-start">${iGang?'Fortsett økt':'Start økt'}</button>${iGang?'<button class="btn ghost" id="okt-slutt">Avslutt for i dag</button>':''}</div>
+    <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap"><button class="btn primary big" id="okt-start">${iGang?(erAktiv?'Fortsett økt':'Gjenoppta økt'):'Start økt'}</button>${iGang?'<button class="btn ghost" id="okt-slutt">Avslutt for i dag</button>':''}</div>
     ${iGang?'':`<div class="okt-ctl small"><span>Lengde:</span> ${[[15,'15 min'],[25,'25 min'],[45,'45 min'],[60,'1 t']].map(([m,l])=>`<button class="chip ${(+s.lengde||45)===m?'on':''}" data-lengde="${m}">${l}</button>`).join('')}</div>`}`
       : `<h1>Alt er mestret</h1><p class="muted">${erM?'Bruk tiden på prøveeksamen.':OKT_FAG==='mek'?'Bruk tiden på en hel tidligere eksamen på tid (under Oversikt og ressurser).':'Øv på å forklare høyt, og hold presentasjonen med tidtaker.'}</p>`}
   </div>
@@ -2547,7 +2607,7 @@ function monsterBarHtml(){
     <details class="ol-rest" data-fold="mb-alle"><summary>Vis alle ${R.length} oppgavetypene</summary>${R.slice(5).map(rad).join('')}</details>
     <details class="ol-rest" data-fold="mb-tab"><summary>Vis hele tabellen med oppgavenumre</summary>${monsterHtml()}</details></div>`;
 }
-function oversiktNesteHtml(){ return iFag('matte', ()=>{ const s = oktState(), nx = oktNeste(s, oktStats(s)), iGang = !!(s.cur && s.sesjon); if(!nx && !iGang) return '';
+function oversiktNesteHtml(){ return iFag('matte', ()=>{ const s = oktState(), nx = oktNeste(s, oktStats(s)), iGang = !!oktPagaende('matte'); if(!nx && !iGang) return '';
   const tit = iGang ? s.sesjon.tittel : nx.okt.tittel, mal = iGang ? s.sesjon.mal : nx.gruppe.tittel+' · '+nx.gruppe.under, min = iGang ? oktSesIgjen(s) : nx.okt.min;
   const idag = planFor(todayStr()).filter(p=>p.a.fag==='matte').slice(1,4);
   return `<div class="card hero" style="--fc:${FAG.matte.farge}"><div class="small muted">${iGang?'Økt i gang':'Neste økt'}${!iGang?' · '+esc(nx.hvorfor):''}</div><h1 class="hero-t">${esc(tit)}</h1>
@@ -2620,8 +2680,17 @@ function srcHtml(q){
   return '';
 }
 function zimg(src, alt, cls){ return `<img class="zoom ${cls||''}" src="${esc(src)}" alt="${esc(alt||'')}" loading="lazy" title="Klikk for å forstørre">`; }
+function mekTekstHtml(t){ return String(t||'').replace(/\s(?=\d\)\s?[A-ZÆØÅ])/g,'\n').split('\n').map(l=>'<p>'+mdInline(l)+'</p>').join(''); }
 function renderSegs(q, mode){
   let html = srcHtml(q);
+  const mt = window.MEK_TEKST && MEK_TEKST[q.id];
+  if(mt){ // 1) oppgavetekst som tekst, 2) hele figuren, 3) svarfelt
+    if(mt.felles) html += `<div class="qfelles"><span class="small muted">Felles opplysninger for oppgave ${esc(String(q.src.oppg).replace(/\(.*/,''))}</span>${mekTekstHtml(mt.felles)}</div>`;
+    html += `<div class="qprompt">${mekTekstHtml(mt.tekst)}</div>`;
+    if(mt.figs.length) html += `<div class="qfigs">${mt.figs.map((f,k)=>`<figure class="qfig${f.w/f.h>2.4||f.h/f.w>1.25?' bred':''}"><img class="zoom" src="${esc(f.src)}" width="${f.w}" height="${f.h}" alt="Figur ${k+1} til oppgave ${esc(q.src.oppg)}" title="Klikk for å forstørre"><figcaption>${f.felles?'Felles figur for oppgaven':'Figur til deloppgaven'} · klikk for å forstørre</figcaption></figure>`).join('')}</div>`;
+    q.fields.forEach(f=>{ html += newFieldHtml(q, f, mode); });
+    return html;
+  }
   if(q.intro && BM.intros[q.intro]){ const it = BM.intros[q.intro]; const first = /a$/.test(q.nr) || !/[a-z]$/.test(q.nr);
     html += `<details class="introbox" ${first?'open':''}><summary>Felles oppgavetekst for oppgave ${esc(q.intro.split('-')[1])}</summary>${it.segs.map(s=>zimg(s.img,'Felles oppgavetekst')).join('')}</details>`; }
   if(q.text) html += `<div class="qprompt">${mdBlock(q.text)}</div>`;
@@ -2650,9 +2719,12 @@ function newFieldHtml(q, f, mode){
   if(f.kind==='pick' || f.kind==='mc'){
     const labels = f.kind==='mc' ? f.opts : (f.labels||[]);
     const textOnly = f.kind==='mc' || (labels.length && labels.every(l=>l && l.trim()));
-    const opts = (f.kind==='mc'?f.opts:f.opts).map((o,k)=>{ const lab = labels[k];
-      return `<label class="opt ${f.orient==='h'?'h':''}"><input type="radio" name="${id}" value="${k}"><span class="ol">${textOnly? mdInline(lab) : zimg(o, lab||('Alternativ '+(k+1)), 'optimg')}</span></label>`; }).join('');
-    return `<div class="fblock"><span class="fld pick" data-q="${q.id}" data-i="${f.i}" style="display:block">${multi?`<div>${tag}</div>`:''}<div class="opts ${f.orient==='h'?'h':''}">${opts}</div><div class="row" style="margin-top:6px">${chk}<span class="st"></span></div><div class="mcfb" hidden></div></span></div>`;
+    const nr = l=>{ const m = /^Alternativ (\d+)$/.exec(l||''); return m ? +m[1] : /^ingen av/i.test(l||'') ? 1e6 : null; };
+    const numm = f.kind==='pick' && labels.length>6 && labels.every(l=>nr(l)!==null);   // «Alternativ 18, 12 …» vises i stigende rekkefølge
+    let rekke = f.opts.map((o,k)=>k); if(numm) rekke.sort((a,b)=>nr(labels[a])-nr(labels[b]));
+    const opts = rekke.map(k=>{ const o = f.opts[k], lab = labels[k];
+      return `<label class="opt ${f.orient==='h'||numm?'h':''}"><input type="radio" name="${id}" value="${k}"><span class="ol">${textOnly? mdInline(lab) : zimg(o, lab||('Alternativ '+(k+1)), 'optimg')}</span></label>`; }).join('');
+    return `<div class="fblock"><span class="fld pick" data-q="${q.id}" data-i="${f.i}" style="display:block">${multi?`<div>${tag}</div>`:''}<div class="opts ${f.orient==='h'||numm?'h':''}">${opts}</div><div class="row" style="margin-top:6px">${chk}<span class="st"></span></div><div class="mcfb" hidden></div></span></div>`;
   }
   if(f.kind==='card'){
     return `<div class="fblock"><span class="fld cardf" data-q="${q.id}" data-i="${f.i}" style="display:block"><div class="cardback" hidden><div class="k">${q.ovpdf?'Slik retter du':'Vurderingspunkter'}</div>${mdBlock(f.ans)}</div>
@@ -2686,6 +2758,11 @@ function newFasitHtml(q, f){
     h += `<p class="rightanswer">Fasit${q.fields.length>1?' – felt '+f.i:''}: ${newAnsHtml(f)}</p>`;
     if(q.fields.length>1) h += `<details style="margin:0 0 10px"><summary class="small" style="cursor:pointer">Fasit for alle felt i deloppgaven</summary><div class="stack" style="gap:4px;margin-top:6px">${q.fields.map(x=>`<div><span class="small">Felt ${x.i}:</span> ${newAnsHtml(x)}</div>`).join('')}</div></details>`;
     if(q.explain) h += q.variant ? `<div style="margin:0 0 8px"><strong>Kort oppsummert:</strong>${mdVar(q.explain)}</div>` : `<p style="margin:0 0 8px"><strong>Kort oppsummert:</strong> ${mdInline(q.explain)}</p>`;
+    const kl = window.MEK_LF && MEK_LF[q.id];
+    if(kl){ const egne = kl.filter(c=>!c.felles), fel = kl.filter(c=>c.felles), bilde = c=>`<div class="lfimg"><div class="small muted">${esc(q.lf.doc)} s. ${c.side}</div><img class="zoom" src="${esc(c.src)}" width="${c.w}" height="${c.h}" alt="Løsningsforslag ${esc(q.src.oppg)}, side ${c.side}" loading="lazy" title="Klikk for å forstørre"></div>`;
+      h += `<div class="lfpages"><div class="small muted" style="margin-bottom:4px">Løsningsforslaget for denne deloppgaven (${esc(q.src.oppg)})</div>${egne.map(bilde).join('')}</div>`;
+      if(fel.length) h += `<details class="lfpages"><summary class="small" style="cursor:pointer">Vis felles mellomregning – den viser også svar på andre deloppgaver i oppgave ${esc(String(q.src.oppg).replace(/\(.*/,''))}</summary>${fel.map(bilde).join('')}</details>`;
+    } else
     h += `<details class="lfpages" open><summary class="small" style="cursor:pointer">Vis løsningsforslaget (${q.lf.pages.length} side${q.lf.pages.length>1?'r':''})</summary>${q.lf.imgs.map((s,k)=>`<div class="lfimg"><div class="small muted">${esc(q.lf.doc)} s. ${q.lf.pages[k]}</div>${zimg(s,'Løsningsforslag side '+q.lf.pages[k])}</div>`).join('')}</details>`;
     if(q.steg && q.steg.length) h += `<h4 style="margin-top:12px">Supplerende forklaring <span class="pill mute">egne mellomregninger</span></h4>${stepsHtml(q)}`;
   } else {
@@ -3625,8 +3702,8 @@ function oktTrengerDiagnose(s){ if(OKT_FAG!=='matte') return false; const d = s.
 async function oktStartNa(utenDiagnose, f){
   if(f) OKT_FAG = f;
   const s = oktState();
+  if(s.cur && QBY[s.cur.q] && !s.cur.diag){ if(s.pauset){ s.pauset = false; await oktSave(s); } if(oktMeta().aktiv!==s.fag) await saveDoc('settings','oktmeta', {aktiv:s.fag}); const mal = '#q-'+s.cur.q; if(location.hash===mal) route(); else location.hash = mal; return; }
   if(!utenDiagnose && oktTrengerDiagnose(s)){ location.hash = '#diagnose'; return; }
-  if(s.cur && QBY[s.cur.q]){ if(s.pauset){ s.pauset = false; await oktSave(s); } if(oktMeta().aktiv!==s.fag) await saveDoc('settings','oktmeta', {aktiv:s.fag}); location.hash = '#q-'+s.cur.q; return; }
   const st = oktStats(s), nx = oktNeste(s, st);
   if(!nx){ location.hash = oktHash(); return; }
   s.oktId = Date.now(); s.oktStart = {naa: oktNaaExact(st), ts: Date.now()}; s.kvittering = null;
@@ -3658,6 +3735,10 @@ function heroHtml(){
   if(!nx) return `<div class="card hero"><div class="small muted">${fmtD(t)}</div><h1 class="hero-t">Dagens plan er gjort</h1>
     <p class="muted" style="margin:0 0 12px">Godt jobbet. Vil du gjøre mer, kan du ta en økt til.</p>
     <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap"><button class="btn primary big" id="hero-okt">Ta en økt til</button>${linje}</div></div>`;
+  const pag = oktAlle(), aktiv = oktAktiv(pag), akt = aktiv || pag[0];
+  if(akt) return `<div class="card hero" style="--fc:${FAG[akt.f].farge}"><div class="small muted"><i class="fdot" style="--fc:${FAG[akt.f].farge}"></i> ${akt===aktiv ? 'Økt i gang' : 'Pauset økt'} · ${esc(FAG[akt.f].navn)}</div>
+    <h1 class="hero-t">${esc(akt.tittel)}</h1><p class="muted" style="margin:0 0 14px">${esc(akt.s.sesjon.mal)} · oppgave ${akt.i} av ${akt.n} · ${iFag(akt.f, ()=>oktDelTekst(akt.s))}</p>
+    <div class="row" style="gap:12px;align-items:center;flex-wrap:wrap"><button class="btn primary big" id="hero-fortsett" data-f="${akt.f}">${akt===aktiv ? 'Fortsett økt' : 'Gjenoppta økt'}</button>${linje}</div></div>`;
   let tittel = nx.a.t, under = nx.a.g || '';
   if(nx.a.type==='okt') iFag(nx.a.fag, ()=>{ const s = oktState(); const n2 = s.cur && QBY[s.cur.q] ? {q:QBY[s.cur.q]} : oktNeste(s, oktStats(s));
     tittel = oktTrengerDiagnose(s) ? 'Matte: diagnosetest (ca. 25 min)' : s.cur ? `Fortsett ${FAG[nx.a.fag].kort.toLowerCase()}-økten` : nx.a.t;
@@ -3672,6 +3753,7 @@ function bindHero(main){
   const e = main.querySelector('#endre-tid'); if(e) e.onclick = async ev=>{ ev.preventDefault(); const ps = planSettings(); ps.form = null; await savePlanSettings(ps); route(); };
   const f = main.querySelector('#fortsett'); if(f) f.onclick = ()=>{ const a = ACTBY[f.dataset.act]; if(a) startAct(a); };
   const o = main.querySelector('#hero-okt'); if(o) o.onclick = ()=>oktStartNa(false, 'matte');
+  const hf = main.querySelector('#hero-fortsett'); if(hf) hf.onclick = ()=>oktStartNa(true, hf.dataset.f);
 }
 function renderHjem(main){
   const P = buildPlan(); const t = todayStr();
@@ -3697,14 +3779,14 @@ function renderHjem(main){
 
 // ---------- «Mer» (mobil) ----------
 function renderMer(main){
-  const L = (href, t, s) => `<a class="mer-it" href="${href}"><strong>${t}</strong><span class="small muted">${s}</span></a>`;
+  const L = (href, t, s) => `<a class="mer-it" href="${href}"><strong>${t}</strong>${s?`<span class="small muted">${s}</span>`:''}</a>`;
+  const G = t => `<div class="grp" style="margin:14px 2px 2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">${t}</div>`;
   main.innerHTML = `<h1>Mer</h1><div class="mer">
-    ${FAG_ORDER.map(f=>L(f==='matte'?'#oversikt':'#fag-'+f, esc(FAG[f].navn)+' · oversikt og ressurser', `${FAG[f].kode} · ${f==='fem'?'muntlig':'eksamen'} ${fmtD(FAG[f].exam)}`)).join('')}
-    ${L('#python','Python-pugging','maler og puggekort til matteeksamen')}
     ${L('#kalender','Kalender','planen dag for dag')}
-    ${L('#diagnose','Diagnosetest (matte)','sett startnivået per oppgavetype')}
-    ${L('#notater','Notater og feil','')}
-    ${L('#om','Synk og innstillinger','historikk mellom PC og mobil')}</div><p class="small muted" style="margin-top:14px">Versjon ${APP_VER}</p>`;
+    ${G('Mekanikk 1')}${L('#okt-mek','Økt','')}${L('#fag-mek','Oversikt og ressurser','eksamenssett, øvinger, lysark, formelark')}
+    ${G('Elementmetoden')}${L('#okt-fem','Økt','')}${L('#fag-fem','Oversikt og ressurser','')}${L('#muntlig','Prøvemuntlig','')}
+    ${G('Matte 3B')}${L('#okt','Økt','')}${L('#oversikt','Oversikt','pensum og eksamensmønstre')}${L('#ovinger','Øvinger','')}${L('#eksamen','Eksamenssett','')}${L('#komp','Kompendium','')}${L('#python','Python-pugging','')}
+    ${G('Annet')}${L('#notater','Notater og feil','')}${L('#om','Synk og innstillinger','historikkfil og synk')}</div><p class="small muted" style="margin-top:14px">Versjon ${APP_VER}</p>`;
 }
 
 // ---------- Diagnose (matte) ----------

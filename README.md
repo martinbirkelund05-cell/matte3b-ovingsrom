@@ -62,3 +62,10 @@ Safari/Firefox støtter ikke historikkfil; der ligger historikken i nettleseren 
 ## Regler i historikken
 Et svar teller som riktig bare når det ble gitt uten at fasit var vist først. Svar med hint teller 70 %.
 Forsøk kan slettes under «Tidligere forsøk» (kan ikke angres).
+
+## Navigasjon, øktstatus og mekanikkoppgaver (28.11)
+
+- **Sidemeny og tilbake:** fast sidemeny på brede skjermer, samme valg under «Mer» på mobil. Faner husker rulleposisjon og kladd, og alle undersider har «Tilbake» til stedet du kom fra (eller naturlig vei opp ved direktelenke).
+- **Én øktstatus:** Hjem, fagsiden og øktpanelet leser samme lagrede økt (`oktPagaende`/`oktAktiv`). Økter lagret før øktløpet ble innført blir normalisert ved lesing.
+- **Mekanikk H25/H24 (47 deloppgaver):** hver side viser oppgaveteksten som tekst, hele figuren fra oppgavesettet og deretter svarfelt. Teksten og figurene lages av `verktoy/mek_tekst.py` (→ `mek_tekst.js`, `mek/figur/`), fasitutsnitt per deloppgave av `verktoy/mek_lf.py` (→ `mek_lf.js`, `mek/lfd/`).
+- **Testmodus:** legg `?testmodus` i adressen for å prøve siden med egen, tom lagring. Den vanlige historikken, historikkfilen og synk røres ikke.
