@@ -23,7 +23,7 @@ Safari/Firefox støtter ikke historikkfil; der ligger historikken i nettleseren 
 - En aktivitet med oppgaver hukes av automatisk når alle feltene er besvart, uansett hvor du svarte. Manuelle aktiviteter hukes av for hånd og lagres i samme historikk.
 
 ## Plattform v2 (én motor for alle fag)
-- **Hjem** spør først «Hvor mye tid har du i dag?» (eller «Etter nattevakt»), og viser så én stor **Fortsett**-knapp for det viktigste neste. Fagkortene viser forventet poeng (matte) og hvor mye som sitter (mekanikk, FEM), ikke avkryssing.
+- **Hjem** spør først «Hvor mye tid har du i dag?», og viser så én stor **Fortsett**-knapp for det viktigste neste. Fagkortene viser forventet poeng (matte) og hvor mye som sitter (mekanikk, FEM), ikke avkryssing.
 - **Plan** (`#gjoremal`): én motor planlegger alle fagene fra eksamensdatoene. Matten legges inn som økter der Økt-motoren velger oppgavene, prøveeksamenene legges inn 5.12, 9.12 og 13.12, og repetisjon av det du bommet på kommer først. Du kan legge til egne oppgaver.
 - **Diagnose** (`#diagnose`): én kort testoppgave eller selvvurdering per oppgavetype i matte setter startnivået.
 - **Prøv først**: fasiten åpnes etter et forsøk eller to hint (eller «Jeg har regnet den» for papiroppgaver). Ved feil svar velger du årsak rett ved feltet.

@@ -1599,7 +1599,7 @@ document.addEventListener('click', e=>{
 // =====================================================================
 // ---------- Studieplattform: fag, aktiviteter, plan og kalender ----------
 // =====================================================================
-const APP_VER = '28.11 kl. 15.00';
+const APP_VER = '28.11 kl. 15.30';
 const FAG = {
   mek:  { key:'mek',  kode:'MEKA1101', navn:'Mekanikk 1',        kort:'Mekanikk',       canvas:'MEKA1101-26H :: Mekanikk 1',      sem:'MEKA1101-26H', exam:'2026-12-04', tid:'kl. 09:00–13:00 (4 t), oppmøte 30 min før', form:'Skriftlig, Inspera + håndberegninger på ark. Hjelpemiddel D: enkel kalkulator og vedlagt formelark.', farge:'#7b3f98' },
   fem:  { key:'fem',  kode:'MEPA2314', navn:'Elementmetoden',    kort:'Elementmetoden', canvas:'MEPA2314-26H :: Elementmetoden',   sem:'MEPA2314-26H', exam:'2026-12-11', tid:'tidspunkt ikke oppgitt i Canvas', form:'Muntlig eksamen (teller 40 %). Prosjektmappen teller 60 %.', farge:'#1f6f78' },
@@ -1743,7 +1743,6 @@ let PLAN_CACHE = null;
 function buildPlan(){
   const ps = planSettings(), today = todayStr();
   const all = engineActs().map(a=>({a, st:actStatus(a)}));
-  ps.natt = planForm()==='natt'; ps.nattFag = new Set(FAG_ORDER.filter(f=>dueFields(f).length));
   const pend = all.filter(x=>!x.st.done && todayStr() <= lastStudy(x.a.fag)).map(x=>({a:x.a, st:x.st, rem: Math.max(10, Math.round(x.a.min*(1-(x.st.prog||0))/5)*5)}));
   const doneToday = all.filter(x=>x.st.done && x.st.ts && iso(new Date(x.st.ts))===today).reduce((s,x)=>s+(x.st.brukt!=null ? x.st.brukt : x.a.min),0) + Math.round(oktLoggMin(today));
   const excluded = new Set(); let res;
@@ -1771,7 +1770,7 @@ function schedule(items, ps, today, doneToday){
   const byFag = {}; FAG_ORDER.forEach(f=>byFag[f] = items.filter(p=>p.a.fag===f).sort((x,y)=>x.a.order-y.a.order));
   const edf = (x,y)=> (x.a.due<y.a.due?-1:x.a.due>y.a.due?1:0) || (x.a.pri-y.a.pri) || (FAG_ORDER.indexOf(x.a.fag)-FAG_ORDER.indexOf(y.a.fag)) || (x.a.order-y.a.order);
   const hel = p => p.a.type==='px' || p.a.type==='examscore';   // hele eksamenssett deles ikke
-  const eligible = (p,d) => !placed.has(p.a.id) && (!p.a.earliest || p.a.earliest<=d) && d<=lastStudy(p.a.fag) && !(ps.natt && d===today && !(p.a.type==='okt' && ps.nattFag.has(p.a.fag)));
+  const eligible = (p,d) => !placed.has(p.a.id) && (!p.a.earliest || p.a.earliest<=d) && d<=lastStudy(p.a.fag);
   for(const d of days){
     const cap = capOf(d, ps); let left = cap - (d===today ? doneToday : 0);
     if(left<10) continue;
@@ -2164,7 +2163,7 @@ function oktStats(s){
 }
 const OKT_SISTE_UKE = '2026-12-13';
 const oktSisteUke = () => OKT_FAG==='matte' && todayStr() >= OKT_SISTE_UKE;
-const oktNatt = s => planForm()==='natt' || !!(s.dag && s.dag.d===todayStr() && s.dag.form==='natt');
+const oktNatt = s => false;
 function oktVelgFokus(st){
   const kand = st.filter(x=>x.igjen>0 && (!oktSisteUke() || x.m>=0.2)).sort((a,b)=>b.perMin-a.perMin);
   const best = kand[0]; if(!best) return null;
@@ -2260,7 +2259,7 @@ function oktLop(s, st, opt){
   const legg = (g, qs) => { qs = qs.filter(q=>!brukt.has(q.id)); qs.sort((a,b)=>(bomIDag.has(a.id)?1:0)-(bomIDag.has(b.id)?1:0)); qs.forEach(q=>brukt.add(q.id));
     g.okter = del(qs).map(c=>({qs:c, min:c.reduce((a,q)=>a+est(q),0), felt:c.reduce((a,q)=>a+q.fields.length,0), tittel:oktTittel(c)}));
     if(g.okter.length || g.ekstra) G.push(g); };
-  if(!plan && (oktNatt(s) || s.feilModus)){ legg({id:'rep', tittel:'Repetisjon', under: s.feilModus ? 'oppgaver du bommet på, så fasit på, eller er i ferd med å glemme' : 'etter nattevakt: bare det du har jobbet med før'}, [...new Set(dueFields(f).map(d=>d.q).filter(q=>oktTypeOf(q)))]); return G; }
+  if(!plan && (oktNatt(s) || s.feilModus)){ legg({id:'rep', tittel:'Repetisjon', under: 'oppgaver du bommet på, så fasit på, eller er i ferd med å glemme'}, [...new Set(dueFields(f).map(d=>d.q).filter(q=>oktTypeOf(q)))]); return G; }
   const levG = () => { if(f==='matte') matteLev().forEach(x=>legg({id:'lev'+x.n, lev:x.n, due:x.due, hard:true, tittel:`Øving ${x.n}`, under:`frist ${x.ft} · ${x.lost.length} av ${x.qs.length} løst`, ekstra:{tekst:'Lever i Capquiz', act:x.a.id}}, x.rest.slice())); };
   const temaG = x => legg({id:x.t.id, tema:x.t.id, tittel:x.t.navn, under:`${Math.round(x.t.V/VV*100)} % av ${f==='fem'?'pensum':'eksamen'}`}, oktQs(x.t.id).filter(q=>oktQM(q)<OKT_MAL && (oktOrig(q) || (oktRank(q)===0 && x.m<0.5))));
   if(s.fokus!=='auto'){ const x = st.find(y=>y.t.id===s.fokus); if(x) temaG(x); }
@@ -2374,9 +2373,7 @@ function renderOkt(main){
     <p class="okt-meta">${iGang?`<span>ca. ${fmtT(ses.min)} igjen</span><span>${oktDelTekst(s)}</span>`:`<span>ca. ${fmtT(ses.min)}</span><span>${ses.qs.length} ${ses.qs.length===1?'oppgave':'oppgaver'} · ${ses.qs.reduce((a,q)=>a+q.fields.length,0)} deloppgaver</span>`}${ref?`<span>${ref}</span>`:''}<span>Bidrar til: ${esc(ses.mal)}</span></p>
     <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap"><button class="btn primary big" id="okt-start">${iGang?'Fortsett økt':'Start økt'}</button>${iGang?'<button class="btn ghost" id="okt-slutt">Avslutt for i dag</button>':''}</div>
     ${iGang?'':`<div class="okt-ctl small"><span>Lengde:</span> ${[[15,'15 min'],[25,'25 min'],[45,'45 min'],[60,'1 t']].map(([m,l])=>`<button class="chip ${(+s.lengde||45)===m?'on':''}" data-lengde="${m}">${l}</button>`).join('')}</div>`}`
-      : natt ? `<h1>Ingen repetisjoner forfaller</h1><p class="muted">Etter nattevakt: ${erM?'ta 15 minutter <a href="#python">Python-pugging</a> og hvil':'hvil'}. Nytt stoff tar du når du er uthvilt.</p>`
       : `<h1>Alt er mestret</h1><p class="muted">${erM?'Bruk tiden på prøveeksamen.':OKT_FAG==='mek'?'Bruk tiden på en hel tidligere eksamen på tid (under Oversikt og ressurser).':'Øv på å forklare høyt, og hold presentasjonen med tidtaker.'}</p>`}
-    ${natt?'<div class="okt-ctl small"><span>Etter nattevakt: bare repetisjon i dag (endres på Hjem)</span></div>':''}
   </div>
   ${G.length?oktLopHtml(G, s):''}
   <div class="okt-line"><div class="small">${status}</div></div>
@@ -3558,13 +3555,12 @@ function heroHtml(){
   const t = todayStr(), ps = planSettings();
   if(!(ps.form && ps.form.d===t)) return `<div class="card hero"><div class="small muted">${fmtD(t)}</div><h1 class="hero-t">Hvor mye tid har du i dag?</h1>
     <p class="muted" style="margin:0 0 12px">Svaret bestemmer dagens plan på tvers av fagene.</p>
-    <div class="row" style="gap:8px;flex-wrap:wrap">${[[30,'30 min'],[60,'1 t'],[120,'2 t'],[240,'4 t'],[360,'6 t']].map(([m,l])=>`<button class="btn sec" data-tid="${m}">${l}</button>`).join('')}<button class="btn sec" data-natt="1">Etter nattevakt</button></div>
-    <p class="small muted" style="margin:10px 0 0">Etter nattevakt blir det en kort økt med bare repetisjon og Python, ikke nytt stoff.</p></div>`;
+    <div class="row" style="gap:8px;flex-wrap:wrap">${[[30,'30 min'],[60,'1 t'],[120,'2 t'],[240,'4 t'],[360,'6 t']].map(([m,l])=>`<button class="btn sec" data-tid="${m}">${l}</button>`).join('')}</div></div>`;
   const todays = planFor(t), nx = todays[0], left = todays.reduce((s,p)=>s+p.rem,0), cap = capOf(t, ps), natt = ps.form.form==='natt';
-  const linje = `<span class="small muted">I dag: ${left?fmtMin(left)+' igjen av '+fmtMin(cap):'ferdig'}${natt?' · etter nattevakt':''} · <a href="#" id="endre-tid">endre tid</a></span>`;
+  const linje = `<span class="small muted">I dag: ${left?fmtMin(left)+' igjen av '+fmtMin(cap):'ferdig'} · <a href="#" id="endre-tid">endre tid</a></span>`;
   if(!nx) return `<div class="card hero"><div class="small muted">${fmtD(t)}</div><h1 class="hero-t">Dagens plan er gjort</h1>
-    <p class="muted" style="margin:0 0 12px">${natt?'Ta gjerne 15 minutter <a href="#python">Python-pugging</a>, ellers hvil. Nytt stoff tar du når du er uthvilt.':'Godt jobbet. Vil du gjøre mer, gir en matteøkt mest eksamensgevinst.'}</p>
-    <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap">${natt?'':'<button class="btn primary big" id="hero-okt">Matteøkt</button>'}${linje}</div></div>`;
+    <p class="muted" style="margin:0 0 12px">Godt jobbet. Vil du gjøre mer, kan du ta en økt til.</p>
+    <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap"><button class="btn primary big" id="hero-okt">Ta en økt til</button>${linje}</div></div>`;
   let tittel = nx.a.t, under = nx.a.g || '';
   if(nx.a.type==='okt') iFag(nx.a.fag, ()=>{ const s = oktState(); const n2 = s.cur && QBY[s.cur.q] ? {q:QBY[s.cur.q]} : oktNeste(s, oktStats(s));
     tittel = oktTrengerDiagnose(s) ? 'Matte: diagnosetest (ca. 25 min)' : s.cur ? `Fortsett ${FAG[nx.a.fag].kort.toLowerCase()}-økten` : nx.a.t;
@@ -3575,8 +3571,7 @@ function heroHtml(){
     <div class="row" style="gap:12px;align-items:center;flex-wrap:wrap"><button class="btn primary big" id="fortsett" data-act="${esc(nx.a.id)}">Fortsett</button>${linje}</div></div>`;
 }
 function bindHero(main){
-  main.querySelectorAll('[data-tid]').forEach(b=>b.onclick = ()=>settDag(+b.dataset.tid, 'uthvilt'));
-  const n = main.querySelector('[data-natt]'); if(n) n.onclick = ()=>settDag(60, 'natt');
+  main.querySelectorAll('[data-tid]').forEach(b=>b.onclick = ()=>settDag(+b.dataset.tid, 'valgt'));
   const e = main.querySelector('#endre-tid'); if(e) e.onclick = async ev=>{ ev.preventDefault(); const ps = planSettings(); ps.form = null; await savePlanSettings(ps); route(); };
   const f = main.querySelector('#fortsett'); if(f) f.onclick = ()=>{ const a = ACTBY[f.dataset.act]; if(a) startAct(a); };
   const o = main.querySelector('#hero-okt'); if(o) o.onclick = ()=>oktStartNa(false, 'matte');
