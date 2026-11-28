@@ -496,6 +496,7 @@ pre.pycode{margin:0;background:var(--bg);border:1px solid var(--line);border-rad
 .fs-b .qlist .n{min-width:92px;white-space:nowrap}
 
 /* ---- Plattform v2 ---- */
+.chip{padding:3px 10px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--fg);font:inherit;font-size:12px;cursor:pointer}.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .ea-r{display:grid;grid-template-columns:52px minmax(0,1fr) 58px auto 58px;gap:6px;align-items:center;margin:4px 0}.ea-r input,.ea-r select{padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);min-width:0}
 .dd[hidden]{display:none!important}
 .okt-feilk{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding:12px 16px}
@@ -1352,7 +1353,7 @@ function renderFree(main, qid){
   const ctx = {mode:'fri', hints:0, usedHint:false, answered:new Set(), seen:new Set(), res:{}};
   const hist = x => { const sc = questionScore(x); return sc==null ? '' : sc>=0.8 ? 'ok' : sc>=0.5 ? 'part' : 'bad'; };
   main.innerHTML = `<div class="cq"><div class="cq-main">${oktBarHtml(qid)}
-    <div class="cq-head"><div class="row small muted"><a href="#oving-${q.oving}">${ovName(q.oving)}</a> › Fri øving</div><span class="small muted">Svarene lagres i historikken</span></div>
+    <div class="cq-head"><div class="row small muted"><a href="#oving-${q.oving}">${ovName(q.oving)}</a> › ${(c=>c && c.q===q.id)(iFag(fagOf(q), ()=>oktState().cur)) ? 'Økt' : 'Fri øving'}</div><span class="small muted">Svarene lagres i historikken</span></div>
     ${queHtml(q, 'ov', stateOf(q, {}))}
     <div class="cq-foot">${prev?`<a class="btn sec" href="#q-${prev.id}">Forrige side</a>`:'<span></span>'}${next?`<a class="btn primary" href="#q-${next.id}">Neste side</a>`:`<a class="btn primary" href="#oving-${q.oving}">Tilbake til ${ovName(q.oving).toLowerCase()}</a>`}</div>
   </div>${navBlockHtml(qs, idx, hist, '', `<a class="fin" href="#oving-${q.oving}">Start et forsøk …</a><div class="small muted" style="margin-top:6px">Fargene viser historikken din.</div>`)}</div>`;
@@ -1565,7 +1566,7 @@ document.addEventListener('click', e=>{
 // =====================================================================
 // ---------- Studieplattform: fag, aktiviteter, plan og kalender ----------
 // =====================================================================
-const APP_VER = '28.11 kl. 13.00';
+const APP_VER = '28.11 kl. 14.00';
 const FAG = {
   mek:  { key:'mek',  kode:'MEKA1101', navn:'Mekanikk 1',        kort:'Mekanikk',       canvas:'MEKA1101-26H :: Mekanikk 1',      sem:'MEKA1101-26H', exam:'2026-12-04', tid:'kl. 09:00–13:00 (4 t), oppmøte 30 min før', form:'Skriftlig, Inspera + håndberegninger på ark. Hjelpemiddel D: enkel kalkulator og vedlagt formelark.', farge:'#7b3f98' },
   fem:  { key:'fem',  kode:'MEPA2314', navn:'Elementmetoden',    kort:'Elementmetoden', canvas:'MEPA2314-26H :: Elementmetoden',   sem:'MEPA2314-26H', exam:'2026-12-11', tid:'tidspunkt ikke oppgitt i Canvas', form:'Muntlig eksamen (teller 40 %). Prosjektmappen teller 60 %.', farge:'#1f6f78' },
@@ -2090,7 +2091,7 @@ function oktTypeOf(q){
 const oktRank = q => q.ovpdf ? 1.5 : q.variant ? (/^(Løst eksempel|Med hull)/.test(q.title) ? 0 : 3) : (oktOrig(q) ? 1 : 2);
 const oktQs = tid => Q.filter(q=>oktTypeOf(q)===tid).sort((a,b)=>(oktRank(a)-oktRank(b)) || String(a.oving).localeCompare(String(b.oving), 'nb', {numeric:true}) || String(a.nr).localeCompare(String(b.nr), 'nb', {numeric:true}));
 const oktKey = f => f==='matte' ? 'okt' : 'okt_'+f;
-function oktState(f){ f = f || OKT_FAG; const s = (STATE.settings||{})[oktKey(f)] || {}; return Object.assign({fokus:'auto', bland:true, minDag:180, log:[], cur:null, autoFokus:null}, s, {fag:f}); }
+function oktState(f){ f = f || OKT_FAG; const s = (STATE.settings||{})[oktKey(f)] || {}; return Object.assign({fokus:'auto', bland:true, minDag:180, log:[], cur:null, autoFokus:null, lengde:45}, s, {fag:f}); }
 async function oktSave(s){ s.log = (s.log||[]).slice(-400); await saveDoc('settings', oktKey(s.fag||OKT_FAG), s); }
 // Mestring per oppgave: score (siste svar, hint teller 70 %) × hvor godt det huskes nå (0.9^(dager siden / intervall)).
 function oktQM(q){
@@ -2161,6 +2162,10 @@ function oktNeste(s, st){
     const rep = dueFields(OKT_FAG).map(d=>d.q).find(q=>{ const t = oktTypeOf(q); return t && t!==fokus && !sist.includes(q.id) && (st.find(x=>x.t.id===t)||{}).m>=0.3; });
     if(rep) return {q:rep, fokus, hvorfor:'Repetisjon fra ' + OKT_BY[oktTypeOf(rep)].navn + ' (blandes inn for å holde det ved like)'};
   }
+  // Øving med innleveringsfrist innen to dager går foran (så lenge du ikke har valgt tema selv)
+  if(OKT_FAG==='matte' && s.fokus==='auto'){ const iDenne = oktLogg(s).filter(x=>x.okt===s.oktId).map(x=>x.q);
+    for(const L of matteLev().filter(x=>x.rest.length && daysTo(x.due)<=2)){ const q = L.rest.find(q=>!sist.includes(q.id) && !iDenne.includes(q.id));
+      if(q) return {q, fokus: oktTypeOf(q) || fokus, lev:L.n, hvorfor:`Del av øving ${L.n} · frist ${fristTxt(L.due)} · ${L.lost.length} av ${L.qs.length} løst`}; } }
   // Bli i samme tema: originaløvinger først, så repetisjonsøvingene (samme oppgave, nye tall). Først når temaet er tomt, byttes tema.
   const finn = tid => { const qs = oktQs(tid).filter(q=>!sist.includes(q.id)); const orig = qs.filter(oktOrig);
     const fad = qs.filter(q=>oktRank(q)===0), mt = (st.find(y=>y.t.id===tid)||{}).m||0;
@@ -2170,7 +2175,9 @@ function oktNeste(s, st){
   if(!q) return null;
   const x = st.find(y=>y.t.id===fokus);
   const VV = st.reduce((a,y)=>a+y.t.V,0) || 1;
-  return {q, fokus, hvorfor: OKT_FAG==='matte' ? `${x.t.navn} · kom i ${x.t.k} av 4 eksamenssett · ${x.t.p} p · gir mest eksamensgevinst per minutt akkurat nå` : `${x.t.navn} · ${Math.round(x.t.V/VV*100)} % av ${OKT_FAG==='fem'?'pensum':'eksamen'} · gir mest per minutt akkurat nå`};
+  const siste = q.fields.map(f=>{ const a = STATE.attempts[fieldKey(q.id,f.i)]; return a && a.hist && a.hist.length ? a.hist[a.hist.length-1] : null; }).filter(Boolean);
+  const grunn = siste.some(r=>!r[1]) ? 'du bommet på denne sist' : siste.some(r=>r[3]||r[4]) ? 'du brukte hint eller fasit på denne sist' : siste.length ? 'på tide å repetere' : x.m<0.05 ? 'nytt tema for deg' : 'neste oppgave i temaet';
+  return {q, fokus, hvorfor: OKT_FAG==='matte' ? `${x.t.navn} · ${grunn} · i ${x.t.k} av 4 eksamenssett (${x.t.p} p)` : `${x.t.navn} · ${grunn} · ${Math.round(x.t.V/VV*100)} % av ${OKT_FAG==='fem'?'pensum':'eksamen'}`};
 }
 function oktSliter(s, fokus){ const l = oktLogg(s).filter(x=>x.type===fokus).slice(-2); return l.length===2 && l.every(x=>!x.ok); }
 function oktPrognose(st, s){
@@ -2245,6 +2252,8 @@ function renderOkt(main){
   const sisteL = oktLogg(s).filter(x=>x.okt!=='diag').slice(-1)[0], slT = !s.cur && sisteL && oktSliter(s, sisteL.type) ? sisteL.type : null, slQ = slT ? QBY[sisteL.q] : null, slX = slT ? st.find(x=>x.t.id===slT) : null;
   const fkT = !s.cur && sisteL && sisteL.ok && OKT_FORKLAR[sisteL.type] && !((s.forklart||{})[sisteL.type]===todayStr()) ? sisteL.type : null;
   const temaHtml = oktTemaHtml(st, s, fokus);
+  const pl = planFor(todayStr()).filter(p=>p.a.fag===OKT_FAG), deretter = pl.length>1 ? stripMd(splitTitle(pl[1].a.t)[0]) : '';
+  const harData = QF(OKT_FAG).some(q=>questionScore(q)!=null), lev = OKT_FAG==='matte' ? matteLev() : [];
   const dueQ = [...new Set(dueFields(OKT_FAG).map(d=>d.q).filter(q=>oktTypeOf(q)))], nDue = dueQ.length, dueMin = dueQ.reduce((a,q)=>a+oktTempo(oktTypeOf(q), s),0);
   const bom = (s.log||[]).filter(x=>x.arsak && Date.now()-x.start < 14*864e5);
   const bomHtml = bom.length ? `<h3 style="margin:14px 0 6px">Hvor poengene lekker (siste 14 dager)</h3><table class="mtab"><tbody>${Object.entries(OKT_ARSAK).map(([k,a])=>{ const n = bom.filter(x=>x.arsak===k).length; return n?`<tr><td><strong>${a.navn}</strong></td><td class="c">${n}</td><td class="small">${a.tiltak}</td></tr>`:''; }).join('')}</tbody></table>` : '<p class="small muted" style="margin:10px 0 0">Når du bommer, velger du årsaken. Her ser du etter hvert hvor poengene lekker.</p>';
@@ -2261,15 +2270,19 @@ function renderOkt(main){
     <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap"><button class="btn primary big" id="okt-start">${s.cur?'Fortsett økten':'Start'}</button>${s.cur?'<button class="btn ghost" id="okt-slutt">Avslutt økten</button>':''}${erM?'<a class="small" href="eksamen/formelark_matte3.pdf" target="_blank" rel="noopener">Formelark</a>':OKT_FAG==='mek'&&BM.res&&BM.res.formelark?`<a class="small" href="${BM.res.formelark}" target="_blank" rel="noopener">Formelark</a>`:''}${py?`<span class="small muted">Sjekk med Python: ${py}</span>`:''}</div>`
       : natt ? `<h1>Ingen repetisjoner forfaller</h1><p class="muted">Etter nattevakt: ${erM?'ta 15 minutter <a href="#python">Python-pugging</a> og hvil':'hvil'}. Nytt stoff tar du når du er uthvilt.</p>`
       : `<h1>Alt er mestret</h1><p class="muted">${erM?'Bruk tiden på prøveeksamen.':OKT_FAG==='mek'?'Bruk tiden på en hel tidligere eksamen på tid (under Oversikt og ressurser).':'Øv på å forklare høyt, og hold presentasjonen med tidtaker.'}</p>`}
+    ${nx?`<div class="okt-ctl small"><span>Lengde på økten:</span> ${[[15,'15 min'],[25,'25 min'],[45,'45 min'],[60,'1 t'],[0,'til jeg stopper']].map(([m,l])=>`<button class="chip ${(+s.lengde||0)===m?'on':''}" data-lengde="${m}">${l}</button>`).join('')}</div>`:''}
+    ${deretter?`<p class="small muted" style="margin:8px 0 0">Deretter: ${esc(deretter)}</p>`:''}
     <div class="okt-ctl small"><span>Tema: <strong>${s.fokus==='auto'?'Auto'+(fokus?' ('+esc(OKT_BY[fokus].navn)+')':''):esc((OKT_BY[s.fokus]||{}).navn||'')}</strong> · <a href="#okt-tema" id="okt-bytt">bytt tema</a></span>
       ${natt?'<span>Etter nattevakt: bare repetisjon i dag (endres på Hjem)</span>':''}</div>
   </div>
-  <div class="okt-line"><div><span class="small muted">${erM?'Forventet eksamensscore':OKT_FAG==='fem'?'Andel av pensum som sitter':'Andel av eksamen som sitter'}</span><div class="okt-big">${pg.naa}<span class="muted">${erM?'/72':' %'} nå</span> → ${pg.slutt}<span class="muted">${erM?'/72':' %'} ${fmtD(F.exam).replace(/^\S+ /,'')}</span></div></div><div class="small">${status}</div></div>
+  <div class="okt-line"><div class="small">${status}</div></div>
+  ${lev.map(x=>`<div class="card okt-feilk"><div><strong>Øving ${x.n} · frist ${fristTxt(x.due)}</strong><div class="small muted">${x.rest.length?`${x.lost.length} av ${x.qs.length} oppgaver løst selv · øktene tar resten først`:'Alle oppgavene er løst · klar til levering i Capquiz (kryss av i planen når det er gjort)'}</div></div><a class="btn sec" href="#oving-${x.n}">Åpne øvingen</a></div>`).join('')}
   ${nDue && !s.cur && !natt ? `<div class="card okt-feilk"><div><strong>Tren på feilene mine</strong><div class="small muted">${nDue} ${nDue===1?'oppgave':'oppgaver'} du bommet på, så fasit på, eller er i ferd med å glemme · ca. ${fmtT(dueMin)}</div></div><button class="btn sec" id="okt-feil">Start</button></div>` : ''}
   ${OKT_FAG==='fem'?'<div class="card okt-feilk"><div><strong>Prøvemuntlig</strong><div class="small muted">10 spørsmål: forklar høyt i 2 minutter, og sammenlign med vurderingspunktene</div></div><a class="btn sec" href="#muntlig">Start</a></div>':''}
   ${temaHtml}
   ${erM?oktProveHtml():''}
-  <details class="fsec" data-fold="okt-det" ${foldOpen('okt-det', false)?'open':''}><summary><span class="fs-t">Detaljer</span><span class="fs-s">hvordan neste oppgave velges · bommeliste</span></summary><div class="fs-b">
+  <details class="fsec" data-fold="okt-det" ${foldOpen('okt-det', false)?'open':''}><summary><span class="fs-t">Estimat og detaljer</span><span class="fs-s">forventet resultat · hvordan neste oppgave velges · bommeliste</span></summary><div class="fs-b">
+    <div class="okt-line" style="margin-top:0">${harData ? `<div><span class="small muted">${erM?'Forventet eksamensscore':OKT_FAG==='fem'?'Andel av pensum som sitter':'Andel av eksamen som sitter'}</span><div class="okt-big">${pg.naa}<span class="muted">${erM?'/72':' %'} nå</span> → ${pg.slutt}<span class="muted">${erM?'/72':' %'} ${fmtD(F.exam).replace(/^\S+ /,'')}</span></div></div>` : `<div><span class="small muted">${erM?'Forventet eksamensscore':'Andel som sitter'}</span><div><strong>For lite grunnlag for dagens nivå.</strong> <span class="small muted">Tallet kommer når du har svart på noen oppgaver${erM?' eller tatt diagnosen':''}.</span></div></div>`}</div>
     <label class="small" style="display:flex;gap:8px;align-items:center;margin:0 0 10px"><input type="checkbox" id="okt-bland" ${s.bland?'checked':''}> Bland inn repetisjon fra andre temaer (1 av 5 oppgaver)</label>
     <p class="small" style="margin:0 0 8px">${erM?'':`Hvert tema har en andel av ${OKT_FAG==='fem'?'pensum (muntlig: temaene er vektet likt)':'eksamen (vekten i eksamenssettene)'}. Mestring er siste svar (hint teller 70 %) ganget med hvor godt det huskes nå. Neste tema er det som gir mest per minutt, og du blir i temaet til det sitter.`}</p>
     <p class="small" style="margin:0 0 8px;${erM?'':'display:none'}">Hver oppgavetype har en eksamensverdi = sannsynlighet × poeng. Sannsynligheten er (antall sett + 1)/(4 + 2). Mestring er siste svar (hint teller 70 %) ganget med hvor godt det huskes nå. Har du tatt prøveeksamen, teller svarene der halve mestringen i typen. Neste tema er det som gir mest verdi per minutt, med forkunnskaper først. I et nytt del 2-tema kommer først et løst eksempel og en oppgave med hull. Tempoet er målt fra øktene dine (startverdi ${OKT_START_MIN} min per oppgave).</p>
@@ -2278,8 +2291,10 @@ function renderOkt(main){
   </div></details>`;
   bindFolds(main);
   const b = $('#okt-start'); if(b) b.onclick = ()=>oktStartNa(false, OKT_FAG);
+  main.querySelectorAll('[data-lengde]').forEach(x=>x.onclick = async ()=>{ const s2 = oktState(); s2.lengde = +x.dataset.lengde; await oktSave(s2); route(); });
   const fb = $('#okt-feil'); if(fb) fb.onclick = async ()=>{ const s2 = oktState(); s2.feilModus = true; s2.cur = null; await oktSave(s2); oktStartNa(true, OKT_FAG); };
   const sl = $('#okt-slutt'); if(sl) sl.onclick = ()=>oktAvslutt(oktState());
+  const kn = $('#kv-neste'); if(kn) kn.onclick = async ()=>{ const s2 = oktState(); s2.kvittering = null; await oktSave(s2); const a = ACTBY[kn.dataset.act]; if(a) startAct(a); };
   const kl = $('#kv-lukk'); if(kl) kl.onclick = async ()=>{ const s2 = oktState(); s2.kvittering = null; await oktSave(s2); route(); };
   const by = $('#okt-bytt'); if(by) by.onclick = e=>{ e.preventDefault(); const el = $('#okt-tema'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); };
   main.querySelectorAll('[data-fokus]').forEach(x=>x.onclick = async ()=>{ const s2 = oktState(); s2.fokus = x.dataset.fokus; s2.cur = null; await oktSave(s2); route(); });
@@ -2291,8 +2306,10 @@ function renderOkt(main){
 function oktBarHtml(qid){
   const s = oktState(); if(!s.cur || s.cur.q!==qid) return '';
   if(s.cur.diag){ const L = diagListe(); return `<div class="okt-bar"><span><strong>Diagnose</strong> · ${((s.diag||{}).i||0)+1} av ${L.length} · ${esc((OKT_BY[s.cur.type]||{}).navn||'')} · uten hint og fasit</span><span class="row" style="gap:8px"><button class="btn small primary" id="okt-neste">Neste i diagnosen →</button></span></div>`; }
-  const n = oktLogg(s).filter(x=>x.okt===s.oktId).length + 1;
-  return `<div class="okt-bar"><span><strong>Økt</strong> · oppgave ${n} · ${esc((OKT_BY[s.cur.type]||{}).navn||'')}</span><span class="row" style="gap:8px">${OKT_FAG==='fem'?'':`<a class="btn small ghost" href="${OKT_FAG==='mek'?esc(BM.res.formelark||''):'eksamen/formelark_matte3.pdf'}" target="_blank" rel="noopener">Formelark</a>`}<button class="btn small ghost" id="okt-slutt">Avslutt</button><button class="btn small primary" id="okt-neste">Neste i økten →</button></span></div>`;
+  const n = oktLogg(s).filter(x=>x.okt===s.oktId).length + 1, q0 = QBY[qid];
+  const lev = OKT_FAG==='matte' ? matteLev().find(x=>x.n===q0.oving) : null;
+  const igjen = s.lengde && s.oktStart ? Math.max(0, Math.round(s.lengde - (Date.now()-s.oktStart.ts)/60000)) : null;
+  return `<div class="okt-bar"><span><strong>Økt</strong> · oppgave ${n} · ${esc((OKT_BY[s.cur.type]||{}).navn||'')}${lev?` · teller mot øving ${lev.n} (frist ${fristTxt(lev.due)})`:''}${igjen!=null?` · ${igjen?igjen+' min igjen av økten':'siste oppgave i økten'}`:''}</span><span class="row" style="gap:8px">${OKT_FAG==='fem'?'':`<a class="btn small ghost" href="${OKT_FAG==='mek'?esc(BM.res.formelark||''):'eksamen/formelark_matte3.pdf'}" target="_blank" rel="noopener">Formelark</a>`}<button class="btn small ghost" id="okt-slutt">Avslutt</button><button class="btn small primary" id="okt-neste">Neste i økten →</button></span></div>`;
 }
 function oktBindBar(main, q){
   const b = main.querySelector('#okt-neste'); if(!b) return;
@@ -2309,6 +2326,7 @@ function oktBindBar(main, q){
   const videre = async arsak=>{ const s = oktState(); if(!s.cur) return;
     loggNa(s, arsak);
     const gjort = s.cur.type; s.cur = null; await oktSave(s);
+    if(s.lengde && s.oktStart && (Date.now()-s.oktStart.ts)/60000 >= s.lengde){ await oktAvslutt(s); return; }   // tiden for økten er brukt: økten er ferdig selv om temaet ikke er det
     if(oktSliter(s, gjort)){ toast('To bom på rad: se gjennom løsningen før du går videre'); location.hash = oktHash(s.fag); return; }
     const st = oktStats(s), nx = oktNeste(s, st);
     if(!nx){ await oktAvslutt(s); return; }
@@ -2359,7 +2377,7 @@ function renderFag(main, f){
   }
   main.innerHTML = `<div class="row between" style="margin-bottom:8px"><h1 style="margin:0">${esc(F.navn)}</h1><span class="pill" style="background:${F.farge}22;color:${F.farge}">${f==='fem'?'Muntlig':'Eksamen'} ${fmtD(F.exam)} · ${daysTo(F.exam)} dager</span></div>${f==='matte'?'':iFag(f, ()=>fagTabs('ov'))}
   ${f==='matte'?pyTabs('ov'):''}
-  ${f==='matte'?monsterHtml():''}
+  ${f==='matte'?foldSec('m-monster','Se eksamensmønstre','oppgavetypene i fire eksamenssett, koblet til årets øvinger', monsterHtml(), false):''}
   ${f==='matte'?pensumHtml(f):''}
   ${secs.join('')}
   <div class="grid g2" style="align-items:start;margin-top:14px">
@@ -3326,12 +3344,17 @@ const PX_DATO = {PX1:'2026-12-05', PX2:'2026-12-09', PX3:'2026-12-13'};
 function pxSession(k){ return Object.values(STATE.sessions).filter(s=>s.oving===k && s.mode==='prove' && s.done).sort((a,b)=>b.ts-a.ts)[0]; }
 
 // Alt motoren planlegger: mekanikk- og FEM-innhold, egne oppgaver, repetisjon, matteøkter og prøveeksamener
+const fristTxt = d => { const n = daysTo(d); return n<=0 ? 'i dag' : n===1 ? 'i morgen' : fmtD(d); };
+function matteLev(){ const t = todayStr();
+  return ACTS.filter(a=>a.fag==='matte' && /^Lever øving (\d+)/.test(a.t)).map(a=>{ const n = +a.t.match(/øving (\d+)/)[1], fr = (a.t.match(/frist (\d+)\. nov/)||[])[1];
+    const uke = PLAN.find(w=>w.items.some(i=>i.id===a.id)); const due = fr ? '2026-11-'+String(fr).padStart(2,'0') : (uke ? uke.end : a.due);
+    const qs = Q.filter(q=>q.oving===n && !q.variant && fagOf(q)==='matte' && q.maxp!=null), lost = qs.filter(q=>(questionScore(q)||0)>=OKT_MAL);
+    return {a, n, due, qs, lost, rest: qs.filter(q=>!lost.includes(q))}; }).filter(x=>x.due>=t && !actStatus(x.a).done).sort((x,y)=>x.due<y.due?-1:1); }
 function engineActs(){
   const t = todayStr(), out = ACTS.filter(a=>a.fag!=='matte' && a.type!=='qs' && a.type!=='set' && !/-bom$/.test(a.id));
-  // Innleveringene i matte er frister, så de står i planen selv om øvingen ellers styres av økt-motoren
-  ACTS.filter(a=>a.fag==='matte' && /^Lever øving (\d+)/.test(a.t)).forEach(a=>{ const n = +a.t.match(/øving (\d+)/)[1], fr = (a.t.match(/frist (\d+)\. nov/)||[])[1];
-    const uke = PLAN.find(w=>w.items.some(i=>i.id===a.id)); const due = fr ? '2026-11-'+String(fr).padStart(2,'0') : (uke ? uke.end : a.due); if(due < t) return;   // frister som er passert, vises ikke
-    out.push(Object.assign({}, a, {pri:1, order:-9, min:15, due, link:'#oving-'+n, g:'Leveres i Capquiz (utenfor plattformen). Øvingen åpnes her, så du kan se over svarene først. Kryss av når den er levert.'})); });
+  // Innleveringene i matte er mål med frist: øktene teller mot dem, og selve leveringen bekrefter du selv
+  matteLev().forEach(x=>out.push(Object.assign({}, x.a, {pri:1, order:-9, min:15, due:x.due, link:'#oving-'+x.n, t:`Lever øving ${x.n} i Capquiz (frist ${fristTxt(x.due)})`,
+    g: x.rest.length ? `${x.lost.length} av ${x.qs.length} oppgaver er løst selv. Matteøktene tar resten av øving ${x.n} først. Kryss av her når du har levert i Capquiz.` : `Alle ${x.qs.length} oppgavene er løst selv. Klar til levering i Capquiz. Kryss av her når det er gjort.`})));
   Object.entries(STATE.todos||{}).forEach(([k,v])=>{ if(v && v.egen && !v.slettet && FAG[v.fag])
     out.push({id:k, fag:v.fag, type:'manual', egen:true, min:v.min||30, pri:1, order:900, due:v.due||lastStudy(v.fag), t:v.t, g:'Egen oppgave', link:'#gjoremal'}); });
   // Øving i alle fag legges inn som økter. Økt-motoren velger tema og oppgaver.
@@ -3374,6 +3397,7 @@ function oktGjortHtml(){ const t = todayStr(); return FAG_ORDER.map(f=>{ const L
 // ---------- Status per fag (vises på fagkortene) ----------
 function fagStatus(f){ return iFag(f, ()=>{
   const s = oktState(), st = oktStats(s), pg = oktPrognose(st, Object.assign({}, s, {minDag: oktMinDag()}));
+  if(!QF(f).some(q=>questionScore(q)!=null) && !((s.diag||{}).ferdig)) return {pct:0, txt:'For lite grunnlag for dagens nivå', sub: f==='matte' ? `mål ${pg.slutt}/72 med planen` : `mål ${pg.slutt} % med planen`};
   return f==='matte' ? {pct: pg.naa/72, txt:`${pg.naa}/72 p forventet nå`, sub:`${pg.slutt}/72 den 17.12 med planen`}
     : {pct: pg.naa/100, txt:`${pg.naa} % av ${f==='fem'?'pensum':'eksamen'} sitter nå`, sub:`${pg.slutt} % med planen`}; }); }
 function fagCardHtml(f){
@@ -3559,11 +3583,16 @@ async function oktAvslutt(s){
   s.cur = null; s.oktId = null; s.oktStart = null; s.feilModus = false; await oktSave(s); location.hash = oktHash(s.fag);
 }
 function kvitteringHtml(k){
-  const d = k.neste ? iso(new Date(k.neste)) : null;
+  const d = k.neste ? iso(new Date(k.neste)) : null, t = todayStr(), f = OKT_FAG;
+  const rest = planFor(t).filter(p=>p.a.fag===f).reduce((a,p)=>a+p.rem,0), nx = planFor(t)[0];
+  const lev = f==='matte' ? matteLev() : [];
   return `<div class="card kvit"><div class="row between" style="align-items:baseline"><h2 style="margin:0">Økten er ferdig</h2><button class="btn small ghost" id="kv-lukk">Lukk</button></div>
     <div class="kv-g"><div><span class="kv-n">${fmtT(k.min)}</span><span class="small muted">tid</span></div><div><span class="kv-n">${k.ok}/${k.n}</span><span class="small muted">oppgaver riktig</span></div>
-    <div><span class="kv-n">${k.delta>=0?'+':''}${String(k.delta).replace('.',',')}${OKT_FAG==='matte'?' p':''}</span><span class="small muted">${OKT_FAG==='matte'?'forventet eksamenspoeng':'prosentpoeng mestret'} (nå ${oktSc(k.naa)})</span></div>
-    <div><span class="kv-n">${d ? (d<=todayStr()?'i dag':d===addDays(todayStr(),1)?'i morgen':fmtD(d)) : '–'}</span><span class="small muted">neste repetisjon</span></div></div></div>`;
+    <div><span class="kv-n">${k.delta>=0?'+':''}${String(k.delta).replace('.',',')}${f==='matte'?' p':''}</span><span class="small muted">${f==='matte'?'forventet eksamenspoeng':'prosentpoeng mestret'} (nå ${oktSc(k.naa)})</span></div>
+    <div><span class="kv-n">${d ? (d<=t?'i dag':d===addDays(t,1)?'i morgen':fmtD(d)) : '–'}</span><span class="small muted">neste repetisjon</span></div></div>
+    <ul class="small" style="margin:12px 0 0;padding-left:20px">${lev.map(x=>`<li><strong>Øving ${x.n}</strong> (frist ${fristTxt(x.due)}): ${x.rest.length ? `${x.lost.length} av ${x.qs.length} løst, ${x.rest.length} gjenstår` : 'alle oppgavene er løst. Klar til levering i Capquiz, kryss av i planen når det er gjort'}.</li>`).join('')}
+      <li>${rest ? `Igjen i dag i ${esc(FAG[f].kort.toLowerCase())}: ${fmtMin(rest)}. Det du ikke rekker, flyttes til neste ledige dag.` : `Dagens plan i ${esc(FAG[f].kort.toLowerCase())} er gjort.`}</li>
+      ${nx ? `<li>Deretter: ${fagDot(nx.a.fag)}${mdInline(splitTitle(nx.a.t)[0])} (${fmtMin(nx.rem)}) <button class="btn small sec" id="kv-neste" data-act="${esc(nx.a.id)}">Start</button></li>` : ''}</ul></div>`;
 }
 
 // ---------- Bom med årsak, rett ved feltet ----------
