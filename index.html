@@ -592,7 +592,7 @@ a.tema{text-decoration:none}.fk-rute{margin-top:8px;min-height:22px}.okt-gjort{d
 
 <header class="topbar">
   <a class="brand" href="#hjem"><span class="mark">∭</span>Studieplattform</a>
-  <div id="filebar" class="row" style="gap:6px;margin-left:auto" hidden></div>
+  <div id="filebar" class="row" style="gap:6px;margin-left:auto" hidden></div><span id="syncst"></span>
   <nav id="topnav" style="margin-left:0">
     <a href="#hjem">Hjem</a><a href="#gjoremal">Plan</a><a href="#okt-mek">Mekanikk</a><a href="#okt-fem">Elementmetoden</a><a href="#okt">Matte</a><a href="#mer">Mer</a>
   </nav>
@@ -708,15 +708,18 @@ const FILE = {
   async idbGet(){ return new Promise(res=>{ try{ const r=indexedDB.open('m3b',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{ const tx=r.result.transaction('kv','readonly'); const g=tx.objectStore('kv').get('handle'); g.onsuccess=()=>res(g.result||null); g.onerror=()=>res(null); }; r.onerror=()=>res(null); }catch(e){ res(null); } }); },
   async idbSet(h){ return new Promise(res=>{ try{ const r=indexedDB.open('m3b',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{ try{ const tx=r.result.transaction('kv','readwrite'); if(h) tx.objectStore('kv').put(h,'handle'); else tx.objectStore('kv').delete('handle'); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }catch(e){ res(); } }; r.onerror=()=>res(); }catch(e){ res(); } }); },
   markDirty(){ if(!this.handle) return; this.dirty = true; this.render(); clearTimeout(this.timer); this.timer = setTimeout(()=>this.save(), 1500); },
-  async save(){ if(!this.handle) return false; try{ const w = await this.handle.createWritable(); await w.write(JSON.stringify(STATE, null, 1)); await w.close(); this.dirty=false; this.savedAt=new Date(); this.render(); return true; }catch(e){ console.warn(e); toast('Kunne ikke lagre til fila – bruk «Lagre som»'); return false; } },
+  async les(){ try{ const txt = await (await this.handle.getFile()).text(); return txt.trim() ? JSON.parse(txt) : null; }catch(e){ return null; } },
+  // Henter inn endringer som er kommet i fila fra en annen PC, uten å miste noe lokalt
+  async flettInn(){ if(!this.handle) return false; const d = await this.les(); if(!d) return false; const m = mergeState(STATE, d); if(canon(m)===canon(STATE)) return false;
+    STATE = m; try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} return true; },
+  async save(){ if(!this.handle) return false; try{ await this.flettInn(); const w = await this.handle.createWritable(); await w.write(JSON.stringify(STATE, null, 1)); await w.close(); this.dirty=false; this.savedAt=new Date(); this.render(); return true; }catch(e){ console.warn(e); toast('Kunne ikke lagre til fila – bruk «Lagre som»'); return false; } },
   async open(){ try{ const [h] = await showOpenFilePicker({types:[{description:'Historikk (JSON)',accept:{'application/json':['.json']}}], multiple:false}); await this.use(h, true); }catch(e){ if(e.name!=='AbortError') toast('Kunne ikke åpne fila'); } },
   async create(){ try{ const h = await showSaveFilePicker({suggestedName:'Studieplattform_historikk.json', types:[{description:'Historikk (JSON)',accept:{'application/json':['.json']}}]}); this.handle = h; await this.idbSet(h); this.dirty=true; await this.save(); toast('Historikken lagres nå i ' + h.name); }catch(e){ if(e.name!=='AbortError') toast('Kunne ikke lage fila'); } },
   async use(h, load){ if((await h.requestPermission({mode:'readwrite'}))!=='granted'){ toast('Fikk ikke tilgang til fila'); return; }
     this.handle = h; await this.idbSet(h);
     if(load){ try{ const txt = await (await h.getFile()).text(); const d = txt.trim() ? JSON.parse(txt) : {}; const n = COLLS.reduce((a,c)=>a+Object.keys(d[c]||{}).length,0); const cur = COLLS.reduce((a,c)=>a+Object.keys(STATE[c]||{}).length,0);
-      if(cur && n && !confirm(`Fila «${h.name}» har ${n} poster. Historikken i denne nettleseren (${cur} poster) erstattes med innholdet i fila. Fortsette?`)){ this.handle=null; await this.idbSet(null); this.render(); return; }
-      if(n || !cur){ STATE = Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{},svar:{},pugg:{}}, d); try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
-      this.dirty = !n && cur>0; }catch(e){ toast('Kunne ikke lese fila'); this.handle=null; await this.idbSet(null); this.render(); return; } }
+      const for_ = canon(STATE); STATE = mergeState(STATE, Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{},svar:{},pugg:{}}, d)); try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){}
+      this.dirty = canon(STATE)!==canon(Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{},svar:{},pugg:{}}, d)); if(cur && n && canon(STATE)!==for_) toast('Flettet historikken i fila med den i denne nettleseren'); }catch(e){ toast('Kunne ikke lese fila'); this.handle=null; await this.idbSet(null); this.render(); return; } }
     this.savedAt = this.dirty ? null : new Date(); this.render(); if(this.dirty) await this.save(); toast('Bruker historikkfila ' + h.name); route(); },
   async resume(){ const h = await this.idbGet(); if(h) await this.use(h, true); },
   async close(){ if(this.dirty) await this.save(); this.handle=null; await this.idbSet(null); this.render(); toast('Historikkfila er koblet fra – historikken ligger fortsatt i nettleseren'); },
@@ -728,11 +731,10 @@ const FILE = {
     const inp = $('#fb-file');
     $('#fb-load').onclick = ()=>inp.click();
     inp.onchange = async ()=>{ const f = inp.files[0]; if(!f) return; try{ const d = JSON.parse((await f.text())||'{}'); const n = COLLS.reduce((a,c)=>a+Object.keys(d[c]||{}).length,0); const cur = COLLS.reduce((a,c)=>a+Object.keys(STATE[c]||{}).length,0);
-      if(cur && !confirm(`Fila «${f.name}» har ${n} poster. Historikken i denne nettleseren (${cur} poster) erstattes. Fortsette?`)) return;
-      STATE = Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{},svar:{},pugg:{}}, d); try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} toast('Lastet inn ' + f.name); route(); }catch(e){ toast('Kunne ikke lese fila'); } inp.value=''; };
+      STATE = mergeState(STATE, Object.assign({attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{},svar:{},pugg:{}}, d)); try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} toast('Flettet inn ' + f.name); route(); }catch(e){ toast('Kunne ikke lese fila'); } inp.value=''; };
     $('#fb-dl').onclick = ()=>{ const blob = new Blob([JSON.stringify(STATE, null, 1)],{type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Studieplattform_historikk.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Lastet ned. Historikken lagres også i nettleseren.'); };
   },
-  render(){ const bar = $('#filectl'); if(!bar) return; if(!this.supported()){ if(!window.claude) this.fallback(bar); return; }
+  render(){ const bar = $('#filebar'); if(!bar || window.claude) return; bar.hidden = false; if(!this.supported()){ this.fallback(bar); return; }
     if(this.handle){ bar.innerHTML = `<span class="fn ${this.dirty?'dirty':''}" title="${esc(this.handle.name)}">${this.dirty?'Lagrer … ':'Lagret '}${esc(this.handle.name)}</span><button class="btn small" id="fb-save" title="Lagre nå">Lagre</button><button class="btn small ghost" id="fb-close" title="Koble fra fila">Lukk fil</button>`;
       $('#fb-save').onclick=()=>this.save().then(ok=>ok&&toast('Lagret')); $('#fb-close').onclick=()=>this.close(); }
     else { bar.innerHTML = `${this.pending?`<button class="btn small primary" id="fb-resume" title="Fortsett med ${esc(this.pending.name)}">Fortsett: ${esc(this.pending.name)}</button>`:''}<button class="btn small" id="fb-open">Åpne historikk</button><button class="btn small" id="fb-new">Lagre som …</button>`;
@@ -1512,7 +1514,7 @@ function renderEksamen(main){
 // ---------- Om ----------
 function renderOm(main){
   main.innerHTML = `<h1>Synk og innstillinger</h1><div class="card" id="sync"><h2>Synk mellom enheter</h2>${syncPanelHtml()}</div>
-  ${window.claude?'':`<div class="card"><h2>Historikkfil på denne PC-en (reserve)</h2><p class="small muted" style="margin:0 0 8px">Chrome og Edge kan i tillegg lagre en kopi til en fil på PC-en.</p><div id="filectl" class="row" style="gap:6px;flex-wrap:wrap"></div></div>`}
+  ${window.claude?'':`<div class="card"><h2>Historikkfil (for eksempel i OneDrive)</h2><p class="small" style="margin:0">Bruk «Lagre som …» øverst til høyre og legg fila i OneDrive-mappen. På den andre PC-en velger du «Åpne historikk» og samme fil. I Chrome og Edge lagres endringer til fila fortløpende, og det som er gjort på den andre PC-en flettes inn når du åpner siden. La OneDrive bli ferdig med å synkronisere før du bytter PC.</p></div>`}
   <div class="card"><h2>Hva tallene betyr</h2><ul class="small" style="margin:0;padding-left:20px"><li><strong>Mestring (prosent)</strong>: siste svar per oppgave (hint teller 70 %), ganget med hvor godt det huskes nå. Tallet synker når det går lang tid uten repetisjon.</li><li><strong>Prøvd</strong>: du har svart på minst én oppgave i temaet.</li><li><strong>Løst selv</strong>: riktig uten hint og uten at fasit var vist.</li><li><strong>Bekreftet</strong>: løst selv på to ulike oppgaver, på to ulike dager.</li><li><strong>Andel av eksamen</strong>: matte = sannsynlighet × poeng fra fire eksamenssett. Mekanikk = temaets vekt i eksamenssettene. Elementmetoden = likt per tema.</li><li><strong>I rute</strong>: alt som gjenstår, får plass i planen før eksamen med studietiden du har satt.</li></ul></div>
   <h2 style="margin-top:18px">Om plattformen</h2><div class="card stack">
   <p><strong>Tre fag.</strong> Plattformen dekker Matematikk 3B (IMAA3012), Mekanikk 1 (MEKA1101) og Elementmetoden (MEPA2314). Hjem viser fagkortene og dagens gjøremål. Kalenderen og gjøremålslisten bruker samme plan og samme fullføringsstatus som fagoversiktene: løser du alle feltene i en aktivitet, hukes den av overalt. Ugjorte aktiviteter blir liggende og flyttes til neste dag med ledig kapasitet. Studietiden per dag kan justeres på Hjem og i kalenderen.</p>
@@ -1525,7 +1527,7 @@ function renderOm(main){
   <p><strong>Gjøremål.</strong> Planen fram til eksamen er delt i gjøremål per uke. Øvings-, prøve- og eksamensgjøremål hukes av automatisk ut fra historikken; lesing og innlevering huker du av selv. Statusen øverst sier om du ligger foran, i rute eller bak.</p>
   <p class="small muted">${store?'Historikken lagres i sidens database og følger deg mellom enheter.':FILE.supported()?'<strong>Historikkfil.</strong> Øverst på siden kan du velge «Lagre som …» for å opprette en historikkfil (JSON) på PC-en, eller «Åpne historikk» for å fortsette fra en fil. Når en fil er åpen, lagres hvert svar automatisk til fila (status øverst), og neste gang du åpner øvingsrommet kan du trykke «Fortsett». Hver person bruker sin egen fil – så flere kan dele samme mappe/repo uten å blande historikk. Uten fil ligger historikken bare i denne nettleseren.':'Historikken lagres lokalt i denne nettleseren (localStorage). Ta en sikkerhetskopi med knappen under før du bytter maskin eller nettleser.'}</p>
   <div class="row">${window.claude?'':'<button class="btn" id="exp">Last ned historikk (JSON)</button>'}<label class="btn">Importer historikk <input type="file" id="imp" accept="application/json" hidden></label><button class="btn" id="nuke" style="color:var(--bad)">Slett all historikk</button></div></div>`;
-  bindSyncPanel(main); FILE.render();
+  bindSyncPanel(main);
   if($('#exp')) $('#exp').onclick = ()=>{ const blob = new Blob([JSON.stringify(STATE)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Studieplattform_historikk_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); };
   $('#imp').onchange = async e=>{ const f=e.target.files[0]; if(!f) return; try{ const d = JSON.parse(await f.text()); let n=0; for(const c of COLLS) for(const [k,v] of Object.entries(d[c]||{})){ await saveDoc(c,k,v); n++; } toast('Importerte '+n+' poster'); route(); }catch(err){ toast('Kunne ikke lese fila'); } };
   $('#nuke').onclick = async ()=>{ if(!confirm('Slette all historikk? Dette kan ikke angres.')) return; if(store){ for(const c of COLLS) for(const k of Object.keys(STATE[c])){ try{ await store.collection(c).doc(k).delete(); }catch(e){} } } STATE={attempts:{},exams:{},sessions:{},todos:{},notes:{},settings:{},svar:{},pugg:{}}; lsSave(); toast('Historikken er slettet'); route(); };
@@ -1599,7 +1601,7 @@ document.addEventListener('click', e=>{
 // =====================================================================
 // ---------- Studieplattform: fag, aktiviteter, plan og kalender ----------
 // =====================================================================
-const APP_VER = '28.11 kl. 15.30';
+const APP_VER = '28.11 kl. 16.00';
 const FAG = {
   mek:  { key:'mek',  kode:'MEKA1101', navn:'Mekanikk 1',        kort:'Mekanikk',       canvas:'MEKA1101-26H :: Mekanikk 1',      sem:'MEKA1101-26H', exam:'2026-12-04', tid:'kl. 09:00–13:00 (4 t), oppmøte 30 min før', form:'Skriftlig, Inspera + håndberegninger på ark. Hjelpemiddel D: enkel kalkulator og vedlagt formelark.', farge:'#7b3f98' },
   fem:  { key:'fem',  kode:'MEPA2314', navn:'Elementmetoden',    kort:'Elementmetoden', canvas:'MEPA2314-26H :: Elementmetoden',   sem:'MEPA2314-26H', exam:'2026-12-11', tid:'tidspunkt ikke oppgitt i Canvas', form:'Muntlig eksamen (teller 40 %). Prosjektmappen teller 60 %.', farge:'#1f6f78' },
@@ -3774,11 +3776,9 @@ const SYNC = {
     return {data: txt.trim() ? JSON.parse(txt) : null, sha:j.sha};
   },
   set(st){ this.status = st; this.render(); },
-  render(){ const bar = $('#filebar'); if(!bar) return; bar.hidden = false;
-    const fil = !this.on() && FILE.pending && !FILE.handle && FILE.supported() ? `<button class="btn small primary" id="fb-resume">Fortsett: ${esc(FILE.pending.name)}</button>` : '';
+  render(){ const el = $('#syncst'); if(!el) return; if(store || !this.on()){ el.innerHTML = ''; return; }
     const t = this.at ? this.at.toLocaleTimeString('nb-NO',{hour:'2-digit',minute:'2-digit'}) : '';
-    const txt = store ? '' : !this.on() ? '<a class="sync-st" href="#om" title="Slå på synk for å få historikken på flere enheter">Lagret i denne nettleseren</a>' : this.status==='synker' ? '<span class="sync-st">Synker …</span>' : this.status==='feil' ? `<a class="sync-st feil" href="#om" title="${esc(this.err)}">Synk feilet</a>` : `<a class="sync-st ok" href="#om">Synket ${t}</a>`;
-    bar.innerHTML = fil + txt; const b = $('#fb-resume'); if(b) b.onclick = ()=>FILE.resume(); },
+    el.innerHTML = this.status==='synker' ? '<span class="sync-st">Synker …</span>' : this.status==='feil' ? `<a class="sync-st feil" href="#om" title="${esc(this.err)}">Synk feilet</a>` : `<a class="sync-st ok" href="#om">Synket ${t}</a>`; },
   schedule(ms){ if(!this.on()) return; clearTimeout(this.timer); this.timer = setTimeout(()=>this.sync(), ms==null?8000:ms); },
   async sync(){
     if(!this.on()) return; if(this.busy){ this.again = true; return; } this.busy = true; this.set('synker');
@@ -3802,7 +3802,8 @@ const SYNC = {
     this.busy = false; if(this.again){ this.again = false; this.schedule(1000); }
   }
 };
-document.addEventListener('visibilitychange', ()=>{ if(SYNC.on()) SYNC.schedule(document.visibilityState==='visible' ? 300 : 0); });
+document.addEventListener('visibilitychange', ()=>{ if(SYNC.on()) SYNC.schedule(document.visibilityState==='visible' ? 300 : 0);
+  if(document.visibilityState==='visible' && FILE.handle) FILE.flettInn().then(endret=>{ if(endret){ PLAN_CACHE = null; const hh = (location.hash||'#hjem').slice(1); if(!hh.startsWith('q-') && hh!=='muntlig') route(); } }); });
 function syncPanelHtml(){
   const c = SYNC.cfg() || {};
   if(store) return `<p class="small muted" style="margin:0">Historikken lagres i sidens database og følger deg mellom enheter.</p>`;

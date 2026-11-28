@@ -45,6 +45,7 @@ Safari/Firefox støtter ikke historikkfil; der ligger historikken i nettleseren 
 - Oversikt: neste økt, pensum, og søylediagrammet «Dette går igjen på eksamen».
 - Tid anslås per oppgave ut fra innholdet og justeres med aktiv tid (pauser telles ikke). Øvinger med frist planlegges før fristen, og underskudd vises som «Mangler ca. X min før fristen».
 - Pause og «Avslutt for i dag»: oppgave, utkast i svarfeltene og aktiv tid tas vare på.
+- Historikkfil: «Åpne historikk» og «Lagre som …» ligger øverst til høyre. Legg fila i OneDrive for å bruke samme historikk på flere PC-er. Fila flettes med historikken i nettleseren, så ingenting overskrives.
 
 ## Innhold
 - `index.html` – hele plattformen (oversikt, gjøremål, øvinger i øvings-/prøvemodus, eksamenssett, kompendium, notater)
