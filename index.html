@@ -496,6 +496,17 @@ pre.pycode{margin:0;background:var(--bg);border:1px solid var(--line);border-rad
 .fs-b .qlist .n{min-width:92px;white-space:nowrap}
 
 /* ---- Plattform v2 ---- */
+.tema{display:grid;grid-template-columns:minmax(180px,300px) minmax(0,1fr) minmax(0,1fr) 130px;gap:6px 16px;align-items:center;width:100%;text-align:left;padding:10px 12px;margin:0 0 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--fg);font:inherit;cursor:pointer}
+.tema:hover{border-color:var(--accent)}.tema.on{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent);background:var(--accent-soft)}.tema.auto:not(.on){box-shadow:inset 3px 0 0 var(--accent)}
+.tema.ferdig{opacity:.6}.tema.autorad{grid-template-columns:1fr;margin:10px 0 12px}
+.tm-n{display:grid;gap:2px}.tm-a{display:grid;gap:4px;font-size:13px}.tm-l{display:flex;justify-content:space-between;gap:8px}
+.tm-bar{height:7px;border-radius:4px;background:var(--grey-soft);overflow:hidden}.tm-bar i{display:block;height:100%;background:var(--accent)}.tm-bar.m i{background:var(--good)}
+.tm-r{text-align:right;color:var(--muted);white-space:nowrap}.tm-tag{color:var(--accent);font-weight:600}
+.tm-g{margin-top:6px}.tm-gh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin:8px 2px 6px}
+#okt-tema{margin-bottom:14px;scroll-margin-top:70px}
+.tm-leg{display:none;gap:12px;flex-wrap:wrap}@media(max-width:700px){.tm-leg{display:flex}}
+@media(max-width:700px){.tema{grid-template-columns:1fr 1fr;padding:9px 10px}.tm-n{grid-column:1/-1}.tm-r{grid-column:1/-1;text-align:left}.tm-hide{display:none}}
+
 .hero{padding:20px 22px;margin-bottom:16px;border-left:4px solid var(--fc,var(--accent))}
 .hero-t{font-size:26px;margin:4px 0 6px}
 .btn.big{padding:12px 26px;font-size:16px}
@@ -2141,6 +2152,21 @@ const OKT_FORKLAR = {
   pyint:['sp.integrate med én parentes per d, innerste først','dblquad: f(y, x) og grensene i rekkefølge','tplquad: f(z, y, x) og lambda-grensene'],
   delaunay:['Hva koden regner ut (areal eller volum)','Hvordan du flytter og skalerer punktene','Hvordan du fjerner punkter utenfor en disk','Hva som endres fra 2D (1/2) til 3D (1/6)'],
 };
+// Temavelger: alle oppgavetyper med eksamensandel, mestring og tid igjen
+function oktTemaHtml(st, s, fokus){
+  const VV = st.reduce((a,x)=>a+x.t.V,0) || 1;
+  const rad = x => { const andel = x.t.V/VV, valgt = s.fokus===x.t.id, autoNa = s.fokus==='auto' && fokus===x.t.id, ferdig = !x.igjen;
+    return `<button class="tema ${valgt?'on':''} ${autoNa?'auto':''} ${ferdig?'ferdig':''}" data-fokus="${x.t.id}">
+      <span class="tm-n"><strong>${esc(x.t.navn)}</strong><span class="small muted">i ${x.t.k} av 4 eksamenssett${autoNa?' · <span class="tm-tag">Auto nå</span>':''}${valgt?' · <span class="tm-tag">Valgt</span>':''}</span></span>
+      <span class="tm-a"><span class="tm-l"><span>${Math.round(andel*100)} %<span class="tm-hide"> av eksamen</span></span><span class="muted" style="white-space:nowrap">≈ ${fmtP(x.t.V)} p</span></span><span class="tm-bar"><i style="width:${Math.min(100, andel/0.16*100)}%"></i></span></span>
+      <span class="tm-a"><span class="tm-l"><span>${Math.round(x.m*100)} % mestret</span></span><span class="tm-bar m"><i style="width:${Math.round(x.m*100)}%"></i></span></span>
+      <span class="tm-r small">${ferdig?'✓ ferdig':`${x.igjen} igjen · ${fmtT(x.restMin)}`}</span></button>`; };
+  const grp = (tit, liste) => { const sum = liste.reduce((a,x)=>a+x.t.V,0);
+    return `<div class="tm-g"><div class="tm-gh"><strong>${tit}</strong><span class="small muted">${Math.round(sum/VV*100)} % av forventede eksamenspoeng</span></div>${liste.sort((a,b)=>b.t.V-a.t.V).map(rad).join('')}</div>`; };
+  return `<div class="card" id="okt-tema"><div class="row between" style="align-items:baseline;flex-wrap:wrap;gap:6px"><h2 style="margin:0">Velg tema</h2><span class="small muted">Andel = sannsynlighet for å komme × poeng, av hele eksamen</span></div>
+    <button class="tema autorad ${s.fokus==='auto'?'on':''}" data-fokus="auto"><span class="tm-n"><strong>Auto (anbefalt)</strong><span class="small muted">Tar det som gir flest poeng per minutt nå${fokus&&s.fokus==='auto'?': '+esc(OKT_BY[fokus].navn):''}, og blir i temaet til det sitter.</span></span></button>
+    <div class="tm-leg small muted"><span>Venstre stolpe: andel av eksamen</span><span>Høyre stolpe: hvor mye du mestrer</span></div>${grp('Del 2 · 9 p per oppgave', st.filter(x=>x.t.p>=9))}${grp('Del 1 · 4 p per oppgave', st.filter(x=>x.t.p<9))}</div>`;
+}
 function oktProveHtml(){
   const ks = Object.keys(SETS).filter(k=>/^PX\d/.test(k)).sort(); if(!ks.length) return '';
   const done = k => Object.values(STATE.sessions).filter(s=>s.oving===k && s.mode==='prove' && s.done).sort((a,b)=>b.ts-a.ts)[0];
@@ -2158,8 +2184,7 @@ function renderOkt(main){
     : `<span class="pill warn">For lite tid</span> Alt krever ca. ${fmtT(pg.perDag)} per dag. Med ${fmtT(md)} per dag i planen kuttes: ${pg.kuttes.map(x=>esc(x.t.navn)).join(', ')}.`;
   const sisteL = oktLogg(s).filter(x=>x.okt!=='diag').slice(-1)[0], slT = !s.cur && sisteL && oktSliter(s, sisteL.type) ? sisteL.type : null, slQ = slT ? QBY[sisteL.q] : null, slX = slT ? st.find(x=>x.t.id===slT) : null;
   const fkT = !s.cur && sisteL && sisteL.ok && OKT_FORKLAR[sisteL.type] && !((s.forklart||{})[sisteL.type]===todayStr()) ? sisteL.type : null;
-  const opts = `<option value="auto" ${s.fokus==='auto'?'selected':''}>Auto (anbefalt${fokus&&s.fokus==='auto'?': '+esc(OKT_BY[fokus].navn):''})</option>` + st.slice().sort((a,b)=>b.t.V-a.t.V).map(x=>`<option value="${x.t.id}" ${s.fokus===x.t.id?'selected':''}>${esc(x.t.navn)} · ${Math.round(x.m*100)} %</option>`).join('');
-  const rows = st.slice().sort((a,b)=>b.perMin-a.perMin).map(x=>`<tr class="${x.t.id===fokus?'on':''}"><td>${esc(x.t.navn)}</td><td class="c">${Math.round(x.t.P*100)} % · ${x.t.p} p</td><td><div class="okt-m"><i style="width:${Math.round(x.m*100)}%"></i></div></td><td class="c">${x.igjen}/${x.n}</td><td class="c">${Math.round(x.tempo)} min</td><td class="c">${fmtT(x.restMin)}</td></tr>`).join('');
+  const temaHtml = oktTemaHtml(st, s, fokus);
   const bom = (s.log||[]).filter(x=>x.arsak && Date.now()-x.start < 14*864e5);
   const bomHtml = bom.length ? `<h3 style="margin:14px 0 6px">Hvor poengene lekker (siste 14 dager)</h3><table class="mtab"><tbody>${Object.entries(OKT_ARSAK).map(([k,a])=>{ const n = bom.filter(x=>x.arsak===k).length; return n?`<tr><td><strong>${a.navn}</strong></td><td class="c">${n}</td><td class="small">${a.tiltak}</td></tr>`:''; }).join('')}</tbody></table>` : '<p class="small muted" style="margin:10px 0 0">Når du bommer, velger du årsaken. Her ser du etter hvert hvor poengene lekker.</p>';
   const py = fokus && OKT_PY[fokus] && PY_BY[OKT_PY[fokus]] ? `<a href="#python-${OKT_PY[fokus]}">${esc(PY_BY[OKT_PY[fokus]].t)}</a>` : '';
@@ -2175,15 +2200,15 @@ function renderOkt(main){
     <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap"><button class="btn primary big" id="okt-start">${s.cur?'Fortsett økten':'Start'}</button>${s.cur?'<button class="btn ghost" id="okt-slutt">Avslutt økten</button>':''}<a class="small" href="eksamen/formelark_matte3.pdf" target="_blank" rel="noopener">Formelark</a>${py?`<span class="small muted">Sjekk med Python: ${py}</span>`:''}</div>`
       : natt ? `<h1>Ingen repetisjoner forfaller</h1><p class="muted">Etter nattevakt: ta 15 minutter <a href="#python">Python-pugging</a> og hvil. Nytt stoff tar du når du er uthvilt.</p>`
       : '<h1>Alt er mestret</h1><p class="muted">Bruk tiden på prøveeksamen.</p>'}
-    <div class="okt-ctl small"><label>Tema <select id="okt-fokus">${opts}</select></label>
+    <div class="okt-ctl small"><span>Tema: <strong>${s.fokus==='auto'?'Auto'+(fokus?' ('+esc(OKT_BY[fokus].navn)+')':''):esc((OKT_BY[s.fokus]||{}).navn||'')}</strong> · <a href="#okt-tema" id="okt-bytt">bytt tema</a></span>
       <label>I dag <select id="okt-dag"><option value="uthvilt" ${natt?'':'selected'}>Uthvilt</option><option value="natt" ${natt?'selected':''}>Etter nattevakt (bare repetisjon)</option></select></label>
       <label><input type="checkbox" id="okt-bland" ${s.bland?'checked':''}> Bland inn repetisjon (1 av 5)</label></div>
   </div>
   <div class="okt-line"><div><span class="small muted">Forventet eksamensscore</span><div class="okt-big">${pg.naa}<span class="muted">/72 nå</span> → ${pg.slutt}<span class="muted">/72 17.12</span></div></div><div class="small">${status}</div></div>
+  ${temaHtml}
   ${oktProveHtml()}
   <details class="fsec" data-fold="okt-det" ${foldOpen('okt-det', false)?'open':''}><summary><span class="fs-t">Detaljer</span><span class="fs-s">hvordan neste oppgave velges · bommeliste</span></summary><div class="fs-b">
     <p class="small" style="margin:0 0 8px">Hver oppgavetype har en eksamensverdi = sannsynlighet × poeng. Sannsynligheten er (antall sett + 1)/(4 + 2). Mestring er siste svar (hint teller 70 %) ganget med hvor godt det huskes nå. Har du tatt prøveeksamen, teller svarene der halve mestringen i typen. Neste tema er det som gir mest verdi per minutt, med forkunnskaper først. I et nytt del 2-tema kommer først et løst eksempel og en oppgave med hull. Tempoet er målt fra øktene dine (startverdi ${OKT_START_MIN} min per oppgave).</p>
-    <div class="mx-scroll"><table class="mtab"><thead><tr><th>Type</th><th class="c">Sannsynlighet · poeng</th><th>Mestring</th><th class="c">Igjen</th><th class="c">Tempo</th><th class="c">Tid igjen</th></tr></thead><tbody>${rows}</tbody></table></div>
     ${bomHtml}
     <p class="small muted" style="margin:10px 0 0">Matte får ca. ${fmtT(md)} per dag i felles plan (tiden settes på Hjem) · ${pg.dager} dager igjen · ${fmtT(pg.trengs)} arbeid igjen.</p>
   </div></details>`;
@@ -2191,7 +2216,7 @@ function renderOkt(main){
   const b = $('#okt-start'); if(b) b.onclick = ()=>oktStartNa();
   const sl = $('#okt-slutt'); if(sl) sl.onclick = ()=>oktAvslutt(oktState());
   const kl = $('#kv-lukk'); if(kl) kl.onclick = async ()=>{ const s2 = oktState(); s2.kvittering = null; await oktSave(s2); route(); };
-  $('#okt-fokus').onchange = async e=>{ const s2 = oktState(); s2.fokus = e.target.value; s2.cur = null; await oktSave(s2); route(); };
+  const by = $('#okt-bytt'); if(by) by.onclick = e=>{ e.preventDefault(); const el = $('#okt-tema'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); };
   $('#okt-dag').onchange = e=>{ const ps = planSettings(), t = todayStr(); settDag(e.target.value==='natt' ? 60 : (ps.days[t]!=null ? ps.days[t] : capOf(t, ps)), e.target.value); };
   main.querySelectorAll('[data-fokus]').forEach(x=>x.onclick = async ()=>{ const s2 = oktState(); s2.fokus = x.dataset.fokus; s2.cur = null; await oktSave(s2); route(); });
   $('#okt-bland').onchange = async e=>{ const s2 = oktState(); s2.bland = e.target.checked; await oktSave(s2); };
