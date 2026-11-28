@@ -496,6 +496,7 @@ pre.pycode{margin:0;background:var(--bg);border:1px solid var(--line);border-rad
 .fs-b .qlist .n{min-width:92px;white-space:nowrap}
 
 /* ---- Plattform v2 ---- */
+a.tema{text-decoration:none}.fk-rute{margin-top:8px;min-height:22px}.okt-gjort{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);opacity:.8}
 .tema{display:grid;grid-template-columns:minmax(180px,300px) minmax(0,1fr) minmax(0,1fr) 130px;gap:6px 16px;align-items:center;width:100%;text-align:left;padding:10px 12px;margin:0 0 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--fg);font:inherit;cursor:pointer}
 .tema:hover{border-color:var(--accent)}.tema.on{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent);background:var(--accent-soft)}.tema.auto:not(.on){box-shadow:inset 3px 0 0 var(--accent)}
 .tema.ferdig{opacity:.6}.tema.autorad{grid-template-columns:1fr;margin:10px 0 12px}
@@ -911,7 +912,7 @@ function route(){
   else if(/^python-[\w-]+$/.test(h)) renderPugg(main, h.slice(7));
   else if(h==='oversikt' || h==='fag-matte') renderFag(main, 'matte');
   else if(h==='gjoremal') renderGjoremal(main);
-  else if(h==='gjoremal-matte') renderTodos(main);
+  else if(h==='gjoremal-matte'){ location.replace('#gjoremal'); return; }
   else if(/^fag-(mek|fem)$/.test(h)) renderFag(main, h.slice(4));
   else if(h==='ovinger') renderOvinger(main);
   else if(/^oving-[\w-]+$/.test(h)) renderOving(main, setKey(h.slice(6)));
@@ -1552,7 +1553,7 @@ document.addEventListener('click', e=>{
 // =====================================================================
 // ---------- Studieplattform: fag, aktiviteter, plan og kalender ----------
 // =====================================================================
-const APP_VER = '27.11 kl. 18.00';
+const APP_VER = '28.11 kl. 10.00';
 const FAG = {
   mek:  { key:'mek',  kode:'MEKA1101', navn:'Mekanikk 1',        kort:'Mekanikk',       canvas:'MEKA1101-26H :: Mekanikk 1',      sem:'MEKA1101-26H', exam:'2026-12-04', tid:'kl. 09:00–13:00 (4 t), oppmøte 30 min før', form:'Skriftlig, Inspera + håndberegninger på ark. Hjelpemiddel D: enkel kalkulator og vedlagt formelark.', farge:'#7b3f98' },
   fem:  { key:'fem',  kode:'MEPA2314', navn:'Elementmetoden',    kort:'Elementmetoden', canvas:'MEPA2314-26H :: Elementmetoden',   sem:'MEPA2314-26H', exam:'2026-12-11', tid:'tidspunkt ikke oppgitt i Canvas', form:'Muntlig eksamen (teller 40 %). Prosjektmappen teller 60 %.', farge:'#1f6f78' },
@@ -2288,12 +2289,11 @@ function renderFag(main, f){
     secs.push(foldSec('m-eks','Eksamener', `${EXAMS.length} sett med løsningsforslag`, cardGrid(EXAMS.map(e=>{ const done = Object.keys(STATE.exams).filter(k=>k.startsWith(e.key+'_')||k===e.key).length;
       return docCardHtml(f, e.navn, e.dato, [['Oppgaver',e.pdf],['Løsning',e.lf],['Logg resultater','#eksamen',false]]); })), true));
     secs.push(foldSec('m-komp','Kompendium', 'forelesningsnotatene side for side', cardGrid((window.BANK.sections||[]).filter(x=>x.lvl===1).map(x=>`<a class="setkort" href="#komp-${x.key}" style="--fc:${F.farge}"><div class="sk-n">§${esc(x.key)} ${esc(x.title)}</div><div class="sk-i">s. ${x.start}–${x.end}</div></a>`)), false));
-    secs.push(foldSec('m-uke','Ukeplan', 'den opprinnelige matteplanen', cardGrid([`<a class="setkort" href="#gjoremal-matte" style="--fc:${F.farge}"><div class="sk-n">Ukeplan uke 46–51</div><div class="sk-i">Samme gjøremål som i den felles planen</div></a>`]), false));
   }
   main.innerHTML = `<div class="row between"><h1>${esc(F.navn)}</h1><span class="pill" style="background:${F.farge}22;color:${F.farge}">${f==='fem'?'Muntlig':'Eksamen'} ${fmtD(F.exam)} · ${daysTo(F.exam)} dager</span></div>
   ${f==='matte'?pyTabs('ov'):''}
   ${f==='matte'?monsterHtml():''}
-  ${pensumHtml(f)}
+  ${f==='matte'?pensumHtml(f):fagTemaHtml(f)}
   ${secs.join('')}
   <div class="grid g2" style="align-items:start;margin-top:14px">
     <div class="card"><h2>Neste i planen</h2>${nx?`<div class="todo">${actItemHtml(nx.p.a,{noFag:true, rem:nx.p.rem})}</div><p class="small muted" style="margin:6px 0 0">${nx.d===todayStr()?'I dag':fmtD(nx.d)} · <a href="#gjoremal">hele planen</a></p>`:'<p class="muted">Alt i planen er gjort.</p>'}</div>
@@ -3257,10 +3257,10 @@ function engineActs(){
     const st = oktStats(oktState());
     let rest = Math.round(st.reduce((a,x)=>a+x.restMin,0)/15)*15;
     if(!rest && dueFields('matte').length) rest = 30;
-    const n = Math.ceil(rest/60);
+    const n = Math.ceil(rest/60), rekke = oktBlokkRekke(st);
     for(let k=0; k<n; k++){ const m = Math.max(15, Math.min(60, rest-60*k));
-      out.push({id:'okt-'+k, fag:'matte', type:'okt', min:m, pri: k < Math.ceil(n*0.7) ? 1 : 2, order:k, due:lastStudy('matte'), t:'Matte-økt',
-        g:'Økt-motoren velger oppgavene etter eksamensverdi per minutt.', link:'#okt'}); }
+      out.push({id:'okt-'+k, fag:'matte', type:'okt', min:m, pri: k < Math.ceil(n*0.7) ? 1 : 2, order:k, due:lastStudy('matte'), t:'Matte-økt' + ((tt=>tt?': '+tt.navn:'')(oktBlokkTema(k, rekke))),
+        g: k ? 'Temaet er det motoren regner med at du er kommet til da. Det justeres etter hvordan øktene går.' : 'Samme økt som på Økt-siden. Bytter du tema der, endres planen.', link:'#okt'}); }
     Object.keys(PX_DATO).filter(k=>SETS[k]).forEach((k,i)=>out.push({id:'px-'+k, fag:'matte', type:'px', set:k, min:240, pri:1, order:-5+i, earliest:PX_DATO[k], due:lastStudy('matte'),
       t:`${SETS[k].navn.replace(' (nye tall)','')} på tid (4 t)`, g:'Som på eksamen: formelark og Python, ingen hint. Resultatet teller tungt i mestringen.', link:'#oving-'+k}));
   }
@@ -3271,13 +3271,57 @@ function oktMinDag(){ const P = PLAN_CACHE || buildPlan(); const ds = Object.key
   const sum = ds.reduce((a,d)=>a+P.plan[d].filter(p=>p.a.fag==='matte').reduce((b,p)=>b+p.rem,0),0);
   return ds.length ? Math.round(sum/ds.length) : 0; }
 
+// ---------- Tema-oversikt for mekanikk og elementmetoden (samme prinsipp som matte-økten) ----------
+let QMIN = null;
+function qMinutter(q){ if(!QMIN){ QMIN = {}; ACTS.forEach(a=>{ const qs = qsOfAct(a); qs.forEach(x=>{ QMIN[x.id] = a.min/qs.length; }); }); } return QMIN[q.id] || 10; }
+function fagTema(f){
+  const qs = QF(f), ts = Object.entries(TOPICS).filter(([k,t])=>(t.fag||(k.startsWith('m-')?'mek':k.startsWith('f-')?'fem':'matte'))===f);
+  const W = ts.reduce((a,[k,t])=>a+(t.vekt||0),0) || 1;
+  return ts.map(([k,t])=>{ const tq = qs.filter(q=>q.topic===k), P = tq.reduce((a,q)=>a+(q.maxp||1),0);
+    const m = P ? tq.reduce((a,q)=>a+(q.maxp||1)*oktQM(q),0)/P : 0, igjen = tq.filter(q=>oktQM(q)<OKT_MAL);
+    return {k, t, andel:(t.vekt||0)/W, n:tq.length, m, igjen:igjen.length, min:igjen.reduce((a,q)=>a+qMinutter(q),0), neste:igjen[0]||tq[0]||null};
+  }).sort((a,b)=>b.andel-a.andel);
+}
+function fagForventet(f){ return fagTema(f).reduce((a,x)=>a+x.andel*x.m,0); }
+function fagTemaHtml(f){
+  const F = FAG[f], L = fagTema(f), fv = fagForventet(f), uten = L.filter(x=>!x.n).reduce((a,x)=>a+x.andel,0);
+  const best = L.filter(x=>x.igjen).sort((a,b)=>(b.andel*(OKT_MAL-Math.min(b.m,OKT_MAL))/(b.min||1))-(a.andel*(OKT_MAL-Math.min(a.m,OKT_MAL))/(a.min||1)))[0];
+  const rad = x => { const lys = x.t.lysark && x.t.lysark[0];
+    const href = x.neste ? '#q-'+x.neste.id : lys ? lys.pdf : '#fag-'+f, ferdig = x.n && !x.igjen;
+    return `<a class="tema ${best&&best.k===x.k?'auto':''} ${ferdig?'ferdig':''}" href="${esc(href)}" ${x.neste?'':'target="_blank" rel="noopener"'}>
+      <span class="tm-n"><strong>${esc(x.t.navn)}</strong>${best&&best.k===x.k?'<span class="small"><span class="tm-tag">Flest poeng per minutt nå</span></span>':''}</span>
+      <span class="tm-a"><span class="tm-l"><span>${Math.round(x.andel*100)} %<span class="tm-hide"> av ${f==='fem'?'pensum':'eksamen'}</span></span></span><span class="tm-bar"><i style="width:${Math.min(100, x.andel/0.3*100)}%;background:${F.farge}"></i></span></span>
+      <span class="tm-a"><span class="tm-l"><span>${x.n?Math.round(x.m*100)+' % mestret':'–'}</span></span><span class="tm-bar m"><i style="width:${Math.round(x.m*100)}%"></i></span></span>
+      <span class="tm-r small">${!x.n?'les lysark':ferdig?'✓ ferdig':`${x.igjen} igjen · ${fmtT(x.min)}`}</span></a>`; };
+  return `<div class="card" id="fag-tema" style="--fc:${F.farge}"><div class="row between" style="align-items:baseline;flex-wrap:wrap;gap:6px"><h2 style="margin:0">Tema etter andel av ${f==='fem'?'pensum':'eksamen'}</h2><span class="small muted">Trykk på et tema for å øve på det</span></div>
+    <div class="phero"><span class="pnum">${Math.round(fv*100)} %</span><span class="muted small">av ${f==='fem'?'pensum':'eksamenspoengene'} sitter nå (andel × mestring)</span></div>
+    <div class="tm-leg small muted"><span>Venstre stolpe: andel av ${f==='fem'?'pensum':'eksamen'}</span><span>Høyre stolpe: hvor mye du mestrer</span></div>
+    ${L.map(rad).join('')}
+    <p class="small muted" style="margin:8px 0 0">${f==='mek'?'Andelen er temaets vekt i eksamenssettene. ':'Muntlig eksamen: temaene er vektet likt. '}Mestring er siste svar (hint teller 70 %) ganget med hvor godt det huskes nå.${uten>0?` ${Math.round(uten*100)} % av ${f==='fem'?'pensum':'eksamen'} har ingen interaktive oppgaver her og må øves fra lysark og PDF.`:''}</p></div>`;
+}
+// Rekker jeg det? Per fag, fra den felles planen
+function fagRute(f){ const P = PLAN_CACHE || buildPlan();
+  const kutt = (P.excluded||[]).concat(P.overflow||[]).filter(p=>p.a.fag===f), min = kutt.reduce((a,p)=>a+p.rem,0);
+  if(todayStr() > lastStudy(f)) return '';
+  return kutt.length ? `<span class="pill warn" title="${esc(kutt.map(p=>splitTitle(p.a.t)[0]).join(' · '))}">For lite tid: ${fmtMin(min)} kuttes</span>` : `<span class="pill good">I rute</span>`; }
+// Hvilket tema hver matteøkt i planen handler om
+function oktBlokkRekke(st){ const s = oktState(), f0 = oktFokus(s, st);
+  return st.filter(x=>x.igjen>0).sort((a,b)=>((b.t.id===f0)-(a.t.id===f0)) || ((b.preOk?1:0)-(a.preOk?1:0)) || (b.perMin-a.perMin)); }
+function oktBlokkTema(k, rekke){
+  let acc = 0; for(const x of rekke){ acc += x.restMin; if(acc > 60*k + 1) return x.t; }
+  return null;
+}
+function oktGjortHtml(){ const t = todayStr(), L = oktLogg(oktState()).filter(x=>x.min && iso(new Date(x.start))===t); if(!L.length) return '';
+  const tema = [...new Set(L.map(x=>(OKT_BY[x.type]||{}).navn).filter(Boolean))];
+  return `<div class="it done okt-gjort"><span class="cb on" aria-hidden="true">✓</span><span><strong>Matte-økt</strong> · ${fmtMin(Math.round(L.reduce((a,x)=>a+x.min,0)))} · ${L.filter(x=>x.ok).length}/${L.length} riktig<br><span class="small muted">${esc(tema.join(', '))}</span></span></div>`; }
+
 // ---------- Status per fag (vises på fagkortene) ----------
 function fagStatus(f){
   if(f==='matte'){ const s = oktState(), st = oktStats(s), pg = oktPrognose(st, Object.assign({}, s, {minDag: oktMinDag()}));
     return {pct: pg.naa/72, txt:`${pg.naa}/72 p forventet nå`, sub:`${pg.slutt}/72 den 17.12 med planen`}; }
   const qs = QF(f); const sc = qs.map(questionScore); const tried = sc.filter(x=>x!=null).length;
-  const m = qs.length ? sc.reduce((a,x)=>a+(x||0),0)/qs.length : 0;
-  return {pct:m, txt:`${Math.round(m*100)} % ${f==='fem'?'av spørsmålene':'av oppgavene'} sitter`, sub:`${tried}/${qs.length} prøvd`};
+  const m = fagForventet(f);
+  return {pct:m, txt:`${Math.round(m*100)} % av ${f==='fem'?'pensum':'eksamenspoengene'} sitter`, sub:`${tried}/${qs.length} prøvd`};
 }
 function fagCardHtml(f){
   const F = FAG[f], n = daysTo(F.exam), fs = fagStatus(f);
@@ -3287,7 +3331,7 @@ function fagCardHtml(f){
     <div class="fk-body"><div class="fk-tittel">${esc(F.navn)}</div>
     <div class="fk-sem">${f==='fem'?'Muntlig':'Eksamen'} ${fmtD(F.exam)}${f!=='fem'?' kl. 09':''}</div>
     <div class="prog"><i style="width:${Math.round(fs.pct*100)}%;background:${F.farge}"></i></div>
-    <div class="fk-kpi"><span>${esc(fs.txt)}</span><span>${esc(fs.sub)}</span></div></div></a>`;
+    <div class="fk-kpi"><span>${esc(fs.txt)}</span><span>${esc(fs.sub)}</span></div><div class="fk-rute">${fagRute(f)}</div></div></a>`;
 }
 
 // ---------- Start neste ting ----------
@@ -3352,8 +3396,8 @@ function renderHjem(main){
   <div class="fagkort-grid">${FAG_ORDER.map(fagCardHtml).join('')}</div>
   <div class="hjem-grid">
     <div class="card"><div class="row between"><h2 style="margin:0">I dag</h2><span class="small muted">${done.length||mm?`${done.length} gjort${mm?` · ${fmtMin(Math.round(mm))} matteøkt`:''}`:''}</span></div>
-      <div class="todo" style="margin-top:10px">${todays.map(p=>actItemHtml(p.a,{rem:p.rem, from: p.a.due<t && p.a.type!=='rep' ? p.a.due : null})).join('')}${done.map(x=>actItemHtml(x.a)).join('')}</div>
-      ${!todays.length&&!done.length?'<p class="muted">Ingenting planlagt i dag.</p>':''}
+      <div class="todo" style="margin-top:10px">${todays.map(p=>actItemHtml(p.a,{rem:p.rem, from: p.a.due<t && p.a.type!=='rep' ? p.a.due : null})).join('')}${oktGjortHtml()}${done.map(x=>actItemHtml(x.a)).join('')}</div>
+      ${!todays.length&&!done.length&&!mm?'<p class="muted">Ingenting planlagt i dag.</p>':''}
       <div class="row between" style="margin-top:12px"><span class="small muted">Rekkefølgen er satt av motoren: nærmeste eksamen og mest verdi per minutt først.</span><a class="btn small ghost" href="#gjoremal">Hele planen →</a></div>
       ${overflowHtml(P)}</div>
     <div class="stack">
