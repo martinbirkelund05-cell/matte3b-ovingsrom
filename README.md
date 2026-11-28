@@ -39,6 +39,13 @@ Safari/Firefox støtter ikke historikkfil; der ligger historikken i nettleseren 
 - Én meny: Hjem, Plan, de tre fagene og Mer. Hvert fag har fanene Økt og Oversikt.
 - Mekanikk bruker bare emnets egne øvinger (med løsningsforslag) og tidligere eksamener med fasit. Øvingene ligger som oppgaver i øktene («Gjør øving 4»), og Oppgavesamlingen er tatt ut av planen. Poeng per oppgave fra PDF-eksamenene kan føres inn under «Etterarbeid».
 
+### Øktløp, temavalg og pensumdekning (28.11)
+- Økt-siden viser én anbefalt økt (tittel, tid, oppgaver og deloppgaver, pensumreferanse, hvilket gjøremål den bidrar til) og øktløpet gruppert etter gjøremål. En økt er en fast liste med oppgaver.
+- «Velg tema»: anbefalt + to alternativer med begrunnelse og tid. «Pensum fram mot eksamen»: fire statuser per tema (klarer selv, trenger mer trening, planlagt, uten planlagt økt).
+- Oversikt: neste økt, pensum, og søylediagrammet «Dette går igjen på eksamen».
+- Tid anslås per oppgave ut fra innholdet og justeres med aktiv tid (pauser telles ikke). Øvinger med frist planlegges før fristen, og underskudd vises som «Mangler ca. X min før fristen».
+- Pause og «Avslutt for i dag»: oppgave, utkast i svarfeltene og aktiv tid tas vare på.
+
 ## Innhold
 - `index.html` – hele plattformen (oversikt, gjøremål, øvinger i øvings-/prøvemodus, eksamenssett, kompendium, notater)
 - `bank_mek.js`, `bank_fem.js` – oppgavebanker for Mekanikk 1 og Elementmetoden · `mek/`, `fem/` – PDF-er, figurer og LF-sider
