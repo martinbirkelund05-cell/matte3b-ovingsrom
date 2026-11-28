@@ -588,6 +588,20 @@ a.tema{text-decoration:none}.fk-rute{margin-top:8px;min-height:22px}.okt-gjort{d
   .pn-q a{grid-template-columns:26px minmax(0,1fr)}.pn-q a .muted{display:none}
   .okt-bar{flex-direction:column;align-items:stretch;gap:6px}.okt-bar .row{flex-wrap:wrap}
 }
+
+/* ---- Økt-seksjon og kontrolltester ---- */
+#oktsek{position:sticky;top:calc(52px + env(safe-area-inset-top,0px));z-index:8;background:var(--surface);border-bottom:1px solid var(--line)}
+.os{max-width:1180px;margin:0 auto;padding:6px 16px;display:grid;grid-template-columns:minmax(0,1fr);gap:4px}.os-r{min-width:0}
+.os-r{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.os-t{flex:1;min-width:0;text-align:left;background:none;border:0;padding:4px 0;font:inherit;font-size:14px;color:var(--fg);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.os-k{display:flex;gap:6px;align-items:center;flex:none}.os-mer{display:none}
+.okt-bar.kt{box-shadow:inset 3px 0 0 var(--warn)}
+.pn-kt{color:var(--muted)}.pn-kt.rep,.pn-rep{color:var(--bad);font-weight:600}
+@media(max-width:700px){
+  .os{padding:4px 12px}.os .os-x{display:none}.os.open .os-x{display:flex}.os.open button.os-x{display:inline-flex}
+  .os-mer{display:inline-block;justify-self:start;background:none;border:0;padding:0 0 2px;font-size:12px;color:var(--accent)}.os.open .os-mer{display:none}
+  .os.open .os-t{white-space:normal}
+}
 </style>
 
 <header class="topbar">
@@ -597,6 +611,7 @@ a.tema{text-decoration:none}.fk-rute{margin-top:8px;min-height:22px}.okt-gjort{d
     <a href="#hjem">Hjem</a><a href="#gjoremal">Plan</a><a href="#okt-mek">Mekanikk</a><a href="#okt-fem">Elementmetoden</a><a href="#okt">Matte</a><a href="#mer">Mer</a>
   </nav>
 </header>
+<div id="oktsek" hidden></div>
 <div class="wrap">
   <aside class="side" id="side" hidden></aside>
   <main id="main-wrap"><div id="tabs" class="tabs" hidden></div><div id="main"><div class="card"><p class="muted">Laster oppgavebanken …</p></div></div></main>
@@ -700,7 +715,7 @@ const PLAN = [
 
 // ---------- Lagring ----------
 function lsLoad(){ try{ const s = localStorage.getItem(LS_KEY) || localStorage.getItem('m3b_state_v1'); if(s) return JSON.parse(s);}catch(e){} return null; }
-function lsSave(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} FILE.markDirty(); if(typeof SYNC!=='undefined') SYNC.schedule(); }
+function lsSave(){ if(typeof KF!=='undefined') KF = {}; try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} FILE.markDirty(); if(typeof SYNC!=='undefined') SYNC.schedule(); }
 // ---------- Historikkfil på PC-en (Chrome/Edge: File System Access API) ----------
 const FILE = {
   handle:null, dirty:false, timer:null, savedAt:null,
@@ -941,6 +956,7 @@ function route(){
   const bsel = ['hjem','gjoremal','mer'].includes(h) ? h : (/^okt/.test(h) || h==='diagnose' || (h.startsWith('q-') && oktState().cur)) ? 'okt' : ['kalender','om','notater'].includes(h) || ctx ? 'mer' : 'hjem';
   document.querySelectorAll('#botnav a').forEach(a=>a.classList.toggle('active', a.dataset.b===bsel));
   document.querySelectorAll('#topnav a').forEach(a=>a.classList.toggle('active', a.getAttribute('href')==='#'+sect));
+  KF = {};
   const bo = $('#bn-okt'); if(bo){ const P0 = PLAN_CACHE || buildPlan(), fo = ((planFor(todayStr()).find(p=>p.a.type==='okt')||{}).a||{}).fag; bo.setAttribute('href', ctx ? oktHash(ctx) : oktHash(fo||'matte')); }
   const main = $('#main'); main.innerHTML='';
   const setKey = x => /^\d+$/.test(x) ? +x : x;
@@ -968,6 +984,7 @@ function route(){
   else if(h==='om'||h==='notater') (h==='om'?renderOm:renderNotes)(main);
   else renderHjem(main);
   typeset(main);
+  renderOktSek(h);
   window.scrollTo(0,0);
 }
 function typeset(el){ if(window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]).catch(()=>{}); }
@@ -1601,7 +1618,7 @@ document.addEventListener('click', e=>{
 // =====================================================================
 // ---------- Studieplattform: fag, aktiviteter, plan og kalender ----------
 // =====================================================================
-const APP_VER = '28.11 kl. 16.00';
+const APP_VER = '28.11 kl. 17.00';
 const FAG = {
   mek:  { key:'mek',  kode:'MEKA1101', navn:'Mekanikk 1',        kort:'Mekanikk',       canvas:'MEKA1101-26H :: Mekanikk 1',      sem:'MEKA1101-26H', exam:'2026-12-04', tid:'kl. 09:00–13:00 (4 t), oppmøte 30 min før', form:'Skriftlig, Inspera + håndberegninger på ark. Hjelpemiddel D: enkel kalkulator og vedlagt formelark.', farge:'#7b3f98' },
   fem:  { key:'fem',  kode:'MEPA2314', navn:'Elementmetoden',    kort:'Elementmetoden', canvas:'MEPA2314-26H :: Elementmetoden',   sem:'MEPA2314-26H', exam:'2026-12-11', tid:'tidspunkt ikke oppgitt i Canvas', form:'Muntlig eksamen (teller 40 %). Prosjektmappen teller 60 %.', farge:'#1f6f78' },
@@ -2128,14 +2145,8 @@ const oktKey = f => f==='matte' ? 'okt' : 'okt_'+f;
 function oktState(f){ f = f || OKT_FAG; const s = (STATE.settings||{})[oktKey(f)] || {}; return Object.assign({fokus:'auto', bland:true, minDag:180, log:[], cur:null, autoFokus:null, lengde:45}, s, {fag:f}); }
 async function oktSave(s){ s.log = (s.log||[]).slice(-400); await saveDoc('settings', oktKey(s.fag||OKT_FAG), s); }
 // Mestring per oppgave: score (siste svar, hint teller 70 %) × hvor godt det huskes nå (0.9^(dager siden / intervall)).
-function oktQM(q){
-  const sc = questionScore(q); if(sc==null) return 0;
-  let last = 0, streak = Infinity;
-  q.fields.forEach(f=>{ const a = STATE.attempts[fieldKey(q.id,f.i)]; if(a && a.hist && a.hist.length){ last = Math.max(last, a.hist[a.hist.length-1][0]); streak = Math.min(streak, Math.max(1, a.streak||1)); } });
-  if(!isFinite(streak)) streak = 1;
-  const dager = (Date.now()-last)/864e5, intervall = [1,3,7,14,30][Math.min(streak-1,4)];
-  return sc * Math.pow(0.9, Math.max(0, dager)/intervall);
-}
+// Mestring = siste svar på oppgaven × temaets kontrollstatus. Faller når en kontrolltest er forfalt, og settes ned når du bommer på en.
+function oktQM(q){ const sc = questionScore(q); if(sc==null) return 0; return sc * oktKF(oktTypeOf(q), fagOf(q)); }
 function oktTempo(tid, s){ const qs = oktQs(tid).filter(oktOrig); return qs.length ? oktFakt(s)*qs.reduce((a,q)=>a+qEst0(q),0)/qs.length : 10; }
 // Nivå per tema. Løst selv = riktig uten vist fasit. Bekreftet = løst selv på to ulike oppgaver, på to ulike dager.
 function oktNiva(qs){ const ok = [], dager = new Set(); let provd = false;
@@ -2156,10 +2167,12 @@ function oktStats(s){
     if(px.length) m = 0.5*m + 0.5*px.reduce((a,b)=>a+b,0)/px.length;
     if(OKT_FAG==='mek'){ const eo = Object.values(STATE.exams||{}).filter(r=>r && r.fag==='mek' && r.opp).flatMap(r=>r.opp).filter(o=>o.tema===t.id && o.fikk!=null && o.maks>0);
       if(eo.length) m = 0.5*m + 0.5*eo.reduce((a,o)=>a+o.fikk,0)/eo.reduce((a,o)=>a+o.maks,0); }
-    const igjen = qs.filter((q,i)=>ms[i]<OKT_MAL).length, tempo = oktTempo(t.id, s);
+    // Trening gjenstår for oppgaver du ikke har fått til. Temaer som bare trenger å holdes ved like, tas med kontrolltester.
+    const tren = qs.map((q,i)=> harData[i] ? questionScore(q)<OKT_MAL : ms[i]<OKT_MAL);
+    const igjen = tren.filter(Boolean).length, tempo = oktTempo(t.id, s);
     const preOk = t.pre.every(p=>{ const pq = oktQs(p).filter(oktOrig); return !pq.length || pq.map(oktQM).reduce((a,b)=>a+b,0)/pq.length >= 0.5; });
     // Det du kan fra før, går raskere: oppgaver uten egne svar teller mindre tid etter diagnosen
-    const restMin = qs.reduce((a,q,i)=> a + (ms[i]<OKT_MAL ? qEst0(q)*fk*(harData[i] || pr==null ? 1 : 1-0.6*pr) : 0), 0), gevinst = t.V*Math.max(0, OKT_MAL-m);
+    const restMin = qs.reduce((a,q,i)=> a + (tren[i] ? qEst0(q)*fk*(harData[i] || pr==null ? 1 : 1-0.6*pr) : 0), 0), gevinst = t.V*Math.max(0, OKT_MAL-m);
     return {t, n:qs.length, m, igjen, tempo, restMin, preOk, perMin: restMin ? gevinst/restMin : 0, niva: oktNiva(oktQs(t.id))};
   }).filter(x=>x.n);
 }
@@ -2226,6 +2239,74 @@ function oktProveHtml(){
     <p class="small" style="margin:6px 0 8px">${tekst}</p><div class="row" style="gap:8px;flex-wrap:wrap">${ks.map(k=>{ const d = done(k); return `<a class="btn small ${k===neste?'primary':'sec'}" href="#oving-${k}">${esc(SETS[k].navn.replace(' (nye tall)',''))}${d?` · ${d.poeng!=null?fmtP(d.poeng)+'/72 p':Math.round((d.score||0)*100)+' %'}`:''}</a>`; }).join('')}</div></div>`;
 }
 // =====================================================================
+// Kontrolltester per tema, og pågående økter på tvers av fag
+// =====================================================================
+const KT_INT = [2,4,8,16,30];   // dager til neste kontroll etter hver bestått kontroll
+let KF = {};                     // mellomlager, tømmes når historikken endres
+function selvLost(q){ let ts = Infinity; for(const f of q.fields){ const a = STATE.attempts[fieldKey(q.id,f.i)]; const r = a && a.hist ? a.hist.filter(r=>r[1]===1 && !r[3] && !r[4]).pop() : null; if(!r) return 0; ts = Math.min(ts, r[0]); } return isFinite(ts) ? ts : 0; }
+// Kontrolltilstanden for et tema: lagret etter første kontroll, ellers utledet fra når du sist løste en oppgave selv
+function oktKontroll(s, tid){
+  const k = (s.kontroll||{})[tid]; if(k) return k;
+  const key = 'k|'+tid; if(KF[key]!==undefined) return KF[key];
+  const sist = Math.max(0, ...oktQs(tid).map(selvLost));
+  return KF[key] = sist ? {sist, intervall:2, neste: sist + 2*864e5, status:'ok', utledet:true} : null; }
+const ktDag = ts => iso(new Date(ts));
+function oktKF(tid, fag){ if(!tid) return 1; const key = 'f|'+tid; if(KF[key]!==undefined) return KF[key];
+  const k = iFag(fag, ()=>oktKontroll(oktState(), tid)); let v = 1;
+  if(k && k.status==='rep') v = 0.6;
+  else if(k && k.neste){ const over = (Date.now()-k.neste)/864e5; if(over>0) v = Math.pow(0.9, over/Math.max(1, k.intervall||2)); }
+  return KF[key] = v; }
+// Kontrolloppgaven: helst en annen oppgave som tester det samme (variant eller repetisjonsøving du ikke har gjort), ellers den du løste for lengst siden
+function kontrollQ(s, tid){ const k = oktKontroll(s, tid) || {};
+  const siste = q => Math.max(0, ...q.fields.map(f=>{ const a = STATE.attempts[fieldKey(q.id,f.i)]; return (a && a.last) || 0; }));
+  const kand = oktQs(tid).filter(q=>oktRank(q)!==0 && !q.ovpdf && q.id!==k.q), nyest = kand.slice().sort((a,b)=>selvLost(b)-selvLost(a))[0];
+  const k2 = kand.filter(q=>!nyest || kand.length<2 || q.id!==nyest.id || !selvLost(nyest));
+  const nye = k2.filter(q=>!siste(q)); if(nye.length) return nye.sort((a,b)=>(oktOrig(a)?1:0)-(oktOrig(b)?1:0))[0];
+  return k2.sort((a,b)=>siste(a)-siste(b))[0] || kand[0] || null; }
+function ktTekst(k){ if(!k) return ''; if(k.status==='rep') return `Trenger repetisjon (bom på kontrolltest ${fmtD(ktDag(k.bom||Date.now()))}). ${k.neste ? 'Ny kontroll '+fmtD(ktDag(k.neste)) : 'Ny kontroll kommer etter målrettet trening'}.`;
+  return `Sist bekreftet ${fmtD(ktDag(k.sist))} · Neste kontroll ${fmtD(ktDag(k.neste))}.`; }
+// Registrerer en oppgave i økten. Brukes både fra oppgavesiden og fra «Avslutt» i økt-seksjonen.
+function oktLoggQ(s, q, arsak){
+  const akt = AKT.min(q.id), min = Math.min(120, akt>0.05 ? akt : (Date.now()-s.cur.start)/60000), sc = questionScore(q); AKT.null(q.id);
+  const rader = q.fields.map(f=>{ const a = STATE.attempts[fieldKey(q.id,f.i)]; const r = a && a.hist && a.hist.length ? a.hist[a.hist.length-1] : null; return r && r[0]>=s.cur.start ? r : null; });
+  const svart = rader.some(Boolean), selv = rader.every(r=>r && r[1]===1 && !r[3] && !r[4]);
+  const tid = s.cur.kontroll || null, type = s.cur.type;
+  s.log = (s.log||[]).concat([{q:q.id, type, okt:s.oktId, start:s.cur.start, min, ok: tid ? (selv?1:0) : (sc!=null && sc>=OKT_MAL ? 1 : 0), arsak: arsak||null, kt: tid?1:0}]);
+  s.kontroll = s.kontroll || {};
+  if(tid && svart){ const k = Object.assign({}, oktKontroll(s, tid) || {intervall:2}); delete k.utledet; k.q = q.id;
+    if(selv){ const i = KT_INT.indexOf(k.intervall); k.intervall = k.status==='rep' ? 2 : KT_INT[Math.min(KT_INT.length-1, (i<0?0:i)+1)]; k.sist = Date.now(); k.neste = Date.now() + k.intervall*864e5; k.status = 'ok'; k.trent = 0; }
+    else { k.status = 'rep'; k.bom = Date.now(); k.intervall = 2; k.neste = null; k.trent = 0; }
+    s.kontroll[tid] = k; s.sisteKontroll = {tid, ok:selv, ts:Date.now()}; }
+  else if(!tid && type && selv){ const k0 = (s.kontroll||{})[type];   // målrettet trening etter bom: ny kontroll dagen etter
+    if(k0 && k0.status==='rep'){ const k = Object.assign({}, k0); k.trent = (k.trent||0)+1; if(!k.neste) k.neste = Date.now() + 864e5; s.kontroll[type] = k; } }
+  KF = {};
+}
+function nesteKontroll(s, typer){ let min = Infinity; [...new Set(typer.filter(Boolean))].forEach(t=>{ const k = oktKontroll(s, t); if(k && k.neste) min = Math.min(min, k.neste); }); return isFinite(min) ? min : null; }
+
+// ---------- Pågående og pausede økter, synlig på hele siden ----------
+const oktMeta = () => (STATE.settings||{}).oktmeta || {};
+function oktAlle(){ return FAG_ORDER.map(f=>iFag(f, ()=>{ const s = oktState(); if(!(s.cur && QBY[s.cur.q] && s.sesjon) || s.cur.diag) return null;
+  const gj = oktLogg(s).filter(x=>x.okt===s.oktId).length; return {f, s, q:s.cur.q, tittel:s.sesjon.tittel, i:Math.min(gj+1, s.sesjon.qs.length), n:s.sesjon.qs.length}; })).filter(Boolean); }
+function renderOktSek(h){
+  const el = $('#oktsek'); if(!el) return; const L = oktAlle(), ak = oktMeta().aktiv;
+  let akt = L.find(x=>x.f===ak && !x.s.pauset) || null; const pauset = L.filter(x=>x!==akt);
+  const her = akt && h==='q-'+akt.q;   // på selve oppgaven vises økten allerede øverst
+  if(!L.length || (her && !pauset.length)){ el.hidden = true; el.innerHTML = ''; return; }
+  const navn = x => `${fagDot(x.f)}<strong>${esc(FAG[x.f].navn)}</strong> · ${esc(x.tittel)} · ${x.i} av ${x.n} ${x.n===1?'oppgave':'oppgaver'}`;
+  el.hidden = false;
+  el.innerHTML = `<div class="os ${el.dataset.open==='1'?'open':''}">
+    ${akt && !her ? `<div class="os-r"><button class="os-t" data-os-tgl title="Vis valg">${navn(akt)}</button><span class="os-k"><a class="btn small primary" href="#q-${esc(akt.q)}" data-os-ga="${akt.f}">Gå til økt</a><button class="btn small ghost os-x" data-os-pause="${akt.f}">Pause</button><button class="btn small ghost os-x" data-os-slutt="${akt.f}">Avslutt</button></span></div>` : ''}
+    ${pauset.map((x,i)=>`<div class="os-r ${akt && !her ? 'os-x' : ''}"><button class="os-t" data-os-tgl><span class="small muted">Pauset${pauset.length>1?' '+(i+1):''}:</span> ${navn(x)}</button><span class="os-k"><a class="btn small ${akt && !her ? 'sec' : 'primary'}" href="#q-${esc(x.q)}" data-os-ga="${x.f}">Gjenoppta</a><button class="btn small ghost os-x" data-os-slutt="${x.f}">Avslutt</button></span></div>`).join('')}
+    ${akt && !her && pauset.length ? `<button class="os-mer" data-os-tgl>${pauset.length} pauset</button>` : ''}</div>`;
+  el.querySelectorAll('[data-os-tgl]').forEach(b=>b.onclick = ()=>{ el.dataset.open = el.dataset.open==='1' ? '0' : '1'; el.firstElementChild.classList.toggle('open'); });
+  el.querySelectorAll('[data-os-ga]').forEach(a=>a.onclick = async e=>{ e.preventDefault(); const f = a.dataset.osGa, s = oktState(f); s.pauset = false; await oktSave(s); await saveDoc('settings','oktmeta', {aktiv:f}); const mal = '#q-'+s.cur.q; if(location.hash===mal) route(); else location.hash = mal; });
+  el.querySelectorAll('[data-os-pause]').forEach(b=>b.onclick = async ()=>{ const s = oktState(b.dataset.osPause); s.pauset = true; await oktSave(s); toast('Økten er satt på pause. Den ligger klar her.'); renderOktSek((location.hash||'#hjem').slice(1)); });
+  el.querySelectorAll('[data-os-slutt]').forEach(b=>b.onclick = async ()=>{ const f = b.dataset.osSlutt; OKT_FAG = f; const s = oktState(f), q = QBY[s.cur.q];
+    const svart = q.fields.some(ff=>{ const x = STATE.attempts[fieldKey(q.id,ff.i)]; return x && x.last>=s.cur.start; }); if(svart) oktLoggQ(s, q, null);
+    await oktAvslutt(s); if((location.hash||'')===oktHash(f)) route(); });
+}
+
+// =====================================================================
 // Økt v3: estimat per oppgave, aktiv tid, øktløp, temavalg, pensum, utkast
 // =====================================================================
 const KIND_MIN = {choice:3, mc:2, expr:6, code:15, confirm:12, self:10, card:3, text:5};
@@ -2238,10 +2319,13 @@ function oktFakt(s){ const r = oktLogg(s).filter(x=>x.min>0.5 && x.min<120 && QB
 
 // ---------- Aktiv tid: klokka går bare mens oppgaven er åpen og fanen er synlig ----------
 const AKT = { les(){ try{ return JSON.parse(localStorage.getItem('m3b_akt')||'null') || {}; }catch(e){ return {}; } }, skriv(a){ try{ localStorage.setItem('m3b_akt', JSON.stringify(a)); }catch(e){} },
-  start(q){ let a = this.les(); if(a.q!==q) a = {q, acc:0}; if(!a.t0) a.t0 = Date.now(); this.skriv(a); },
-  stopp(){ const a = this.les(); if(a.t0){ a.acc = (a.acc||0) + Math.min(Date.now()-a.t0, 30*60000); a.t0 = null; this.skriv(a); } },
-  min(q){ const a = this.les(); if(a.q!==q) return 0; return ((a.acc||0) + (a.t0 ? Math.min(Date.now()-a.t0, 30*60000) : 0))/60000; },
-  null(){ this.skriv({}); } };
+  legg(a){ if(a.t0 && a.q){ a.acc = a.acc || {}; a.acc[a.q] = (a.acc[a.q]||0) + Math.min(Date.now()-a.t0, 30*60000); } a.t0 = null; },
+  start(q){ const a = this.les(); if(a.q!==q) this.legg(a); if(a.q!==q || !a.t0){ a.q = q; a.t0 = Date.now(); } this.skriv(a); },
+  stopp(){ const a = this.les(); this.legg(a); this.skriv(a); },
+  min(q){ const a = this.les(); return (((a.acc||{})[q]||0) + (a.q===q && a.t0 ? Math.min(Date.now()-a.t0, 30*60000) : 0))/60000; },
+  null(q){ const a = this.les(); if(a.acc) delete a.acc[q]; if(a.q===q){ a.q = null; a.t0 = null; } this.skriv(a); },
+  oppstart(){ const a = this.les(); a.t0 = null; this.skriv(a); } };   // tid mens siden var lukket, telles ikke
+window.addEventListener('pagehide', ()=>AKT.stopp());
 document.addEventListener('visibilitychange', ()=>{ const h = (location.hash||'').slice(1); if(document.visibilityState!=='visible') AKT.stopp(); else if(h.startsWith('q-')){ const id = h.slice(2), q = QBY[id]; if(q && iFag(fagOf(q), ()=>(oktState().cur||{}).q)===id) AKT.start(id); } });
 
 // ---------- Utkast: det du har skrevet i svarfeltene, tåler pause og oppdatering av siden ----------
@@ -2263,9 +2347,18 @@ function oktLop(s, st, opt){
     if(g.okter.length || g.ekstra) G.push(g); };
   if(!plan && (oktNatt(s) || s.feilModus)){ legg({id:'rep', tittel:'Repetisjon', under: 'oppgaver du bommet på, så fasit på, eller er i ferd med å glemme'}, [...new Set(dueFields(f).map(d=>d.q).filter(q=>oktTypeOf(q)))]); return G; }
   const levG = () => { if(f==='matte') matteLev().forEach(x=>legg({id:'lev'+x.n, lev:x.n, due:x.due, hard:true, tittel:`Øving ${x.n}`, under:`frist ${x.ft} · ${x.lost.length} av ${x.qs.length} løst`, ekstra:{tekst:'Lever i Capquiz', act:x.a.id}}, x.rest.slice())); };
-  const temaG = x => legg({id:x.t.id, tema:x.t.id, tittel:x.t.navn, under:`${Math.round(x.t.V/VV*100)} % av ${f==='fem'?'pensum':'eksamen'}`}, oktQs(x.t.id).filter(q=>oktQM(q)<OKT_MAL && (oktOrig(q) || (oktRank(q)===0 && x.m<0.5))));
+  const utrent = q => (questionScore(q)||0) < OKT_MAL;
+  const temaG = x => legg({id:x.t.id, tema:x.t.id, tittel:x.t.navn, under:`${Math.round(x.t.V/VV*100)} % av ${f==='fem'?'pensum':'eksamen'}`}, oktQs(x.t.id).filter(q=>utrent(q) && (oktOrig(q) || (oktRank(q)===0 && x.m<0.5))));
+  // Kontrolltester som forfaller i dag: korte, og først i køen (etter øvinger med frist)
+  const ktG = () => { const kt = {}, qs = [];
+    st.forEach(x=>{ const k = oktKontroll(s, x.t.id); if(!k || !k.neste || ktDag(k.neste) > t) return; const q = kontrollQ(s, x.t.id); if(q && !brukt.has(q.id) && !kt[q.id]){ kt[q.id] = x.t.id; qs.push(q); } });
+    if(!qs.length) return; const g = {id:'kt', tittel:'Kontrolltester', under:'sjekker at det du har løst før, fortsatt sitter'}; legg(g, qs); g.okter.forEach(o=>{ o.kt = {}; o.qs.forEach(q=>o.kt[q.id] = kt[q.id]); o.tittel = o.qs.length===1 ? 'Kontrolltest: '+OKT_BY[kt[o.qs[0].id]].navn : `Kontrolltest i ${o.qs.length} temaer`; }); };
+  // Bom på en kontrolltest: målrettet trening i temaet, og så en ny kontroll
+  const repG = () => st.forEach(x=>{ const k = (s.kontroll||{})[x.t.id]; if(!k || k.status!=='rep' || (k.trent||0)>=1) return;
+    const eldst = oktQs(x.t.id).filter(q=>oktOrig(q) && !q.ovpdf && q.id!==k.q).sort((a,b)=>selvLost(a)-selvLost(b)).slice(0,2);
+    legg({id:'rep-'+x.t.id, tema:x.t.id, tittel:'Trenger repetisjon: '+x.t.navn, under:'du bommet på kontrolltesten · ny kontroll etterpå'}, [QBY[k.q]].concat(eldst).filter(Boolean)); });
   if(s.fokus!=='auto'){ const x = st.find(y=>y.t.id===s.fokus); if(x) temaG(x); }
-  levG(); oktBlokkRekke(st).forEach(temaG);
+  levG(); ktG(); repG(); oktBlokkRekke(st).forEach(temaG);
   return G;
 }
 // Hvor mye av en øving med frist som ikke får plass før fristen
@@ -2278,7 +2371,7 @@ function qGrunn(q){ const siste = q.fields.map(f=>{ const a = STATE.attempts[fie
 function oktNeste(s, st){
   const G = oktLop(s, st), g = G.find(x=>x.okter.length); if(!g) return null;
   const o = g.okter[0], q = o.qs[0];
-  const hvorfor = g.lev ? `Frist ${matteLev().find(x=>x.n===g.lev).ft}` : g.id==='rep' ? 'Repetisjon' : qGrunn(q);
+  const hvorfor = g.lev ? `Frist ${matteLev().find(x=>x.n===g.lev).ft}` : g.id==='rep' ? 'Repetisjon' : g.id==='kt' ? 'Kontrolltest forfaller i dag' : /^rep-/.test(g.id) ? 'Du bommet på kontrolltesten' : qGrunn(q);
   return {q, fokus: g.tema || oktTypeOf(q) || oktFokus(s, st), hvorfor, okt:o, gruppe:g, lop:G};
 }
 
@@ -2312,9 +2405,9 @@ function oktPensumHtml(st, s){
   const tot = {selv:0, tren:0, plan:0, uten:0};
   const rader = st.slice().sort((a,b)=>b.t.V-a.t.V).map(x=>{ const qs = oktQs(x.t.id).filter(oktOrig), c = {selv:0, tren:0, plan:0, uten:0}; const sts = qs.map(status); sts.forEach(k=>{ c[k]++; tot[k]++; });
     const nOkt = akter.filter(p=>(p.a.qids||[]).some(id=>qs.some(q=>q.id===id))).length;
-    return `<details class="pn" data-fold="pn-${x.t.id}"><summary><span class="pn-n"><strong>${esc(x.t.navn)}</strong><span class="small muted">${Math.round(x.t.V/VV*100)} % av ${hva}</span></span>
+    return `<details class="pn" data-fold="pn-${x.t.id}"><summary><span class="pn-n"><strong>${esc(x.t.navn)}</strong><span class="small muted">${Math.round(x.t.V/VV*100)} % av ${hva}${(k=>!k?'':k.status==='rep'?' · <span class="pn-rep">trenger repetisjon</span>':k.neste?' · kontroll '+fmtD(ktDag(k.neste)).replace(/^\S+ /,''):'')(oktKontroll(s, x.t.id))}</span></span>
       <span class="pn-bar" role="img" aria-label="${Object.keys(PN).map(k=>`${c[k]} ${PN[k][1].toLowerCase()}`).join(', ')}">${Object.keys(PN).map(k=>c[k]?`<i class="pn-${k}" style="flex:${c[k]}">${PN[k][0]} ${c[k]}</i>`:'').join('')}</span></summary>
-      <div class="pn-b"><p class="small" style="margin:0 0 6px">${c.uten ? `<strong>${c.uten} mål har ingen planlagt økt</strong> (får ikke plass før eksamen med dagens studietid). ` : 'Alle mål har en planlagt økt eller er vist. '}Dekkes av ${nOkt} ${nOkt===1?'økt':'økter'} i planen.</p>
+      <div class="pn-b">${(k=>k?`<p class="small pn-kt ${k.status==='rep'?'rep':''}" style="margin:0 0 6px">${esc(ktTekst(k))}</p>`:'')(oktKontroll(s, x.t.id))}<p class="small" style="margin:0 0 6px">${c.uten ? `<strong>${c.uten} mål har ingen planlagt økt</strong> (får ikke plass før eksamen med dagens studietid). ` : 'Alle mål har en planlagt økt eller er vist. '}Dekkes av ${nOkt} ${nOkt===1?'økt':'økter'} i planen.</p>
         <div class="pn-q">${qs.map((q,i)=>`<a href="#q-${q.id}" title="${PN[sts[i]][1]}"><span class="pn-s pn-${sts[i]}">${PN[sts[i]][0]}</span><span>${esc(ovShort(q.oving))}.${esc(q.nr)} ${mdInline(q.title)}</span><span class="small muted">${PN[sts[i]][1]}</span></a>`).join('')}</div>
         <button class="btn small ${s.fokus===x.t.id?'primary':'sec'}" data-fokus="${x.t.id}" style="margin-top:8px">${s.fokus===x.t.id?'Valgt tema':'Velg dette temaet'}</button></div></details>`; }).join('');
   const sum = tot.selv+tot.tren+tot.plan+tot.uten || 1;
@@ -2407,14 +2500,13 @@ function oktBarHtml(qid){
   const s = oktState(); if(!s.cur || s.cur.q!==qid) return '';
   if(s.cur.diag){ const L = diagListe(); return `<div class="okt-bar"><span><strong>Diagnose</strong> · ${((s.diag||{}).i||0)+1} av ${L.length} · ${esc((OKT_BY[s.cur.type]||{}).navn||'')} · uten hint og fasit</span><span class="row" style="gap:8px"><button class="btn small primary" id="okt-neste">Neste i diagnosen →</button></span></div>`; }
   const ses = s.sesjon || {qs:[qid], tittel:(QBY[qid]||{}).title||'', mal:''}, i = Math.max(0, ses.qs.indexOf(qid)) + 1, sist = i>=ses.qs.length;
-  return `<div class="okt-bar"><span class="ob-t"><strong>${esc(ses.tittel)}</strong><span class="small">${esc(ses.mal)} · oppgave ${i} av ${ses.qs.length} · <span id="okt-del">${oktDelTekst(s)}</span> · ca. ${oktSesIgjen(s)} min igjen</span></span><span class="row" style="gap:8px">${OKT_FAG==='fem'?'':`<a class="btn small ghost" href="${OKT_FAG==='mek'?esc(BM.res.formelark||''):'eksamen/formelark_matte3.pdf'}" target="_blank" rel="noopener">Formelark</a>`}<a class="btn small ghost" href="${oktHash()}" title="Lagrer hvor du er. Fortsett økten når du vil.">Pause</a><button class="btn small ghost" id="okt-slutt">Avslutt for i dag</button><button class="btn small primary" id="okt-neste">${sist?'Fullfør økten':'Neste oppgave →'}</button></span></div>`;
+  return `<div class="okt-bar ${s.cur.kontroll?'kt':''}"><span class="ob-t"><strong>${esc(ses.tittel)}</strong>${s.cur.kontroll?'<span class="small"><strong>Kontrolltest:</strong> løs den uten hint og fasit. Riktig gir lengre tid til neste kontroll, feil gir målrettet trening.</span>':''}<span class="small">${esc(ses.mal)} · oppgave ${i} av ${ses.qs.length} · <span id="okt-del">${oktDelTekst(s)}</span> · ca. ${oktSesIgjen(s)} min igjen</span></span><span class="row" style="gap:8px">${OKT_FAG==='fem'?'':`<a class="btn small ghost" href="${OKT_FAG==='mek'?esc(BM.res.formelark||''):'eksamen/formelark_matte3.pdf'}" target="_blank" rel="noopener">Formelark</a>`}<a class="btn small ghost" href="${oktHash()}" title="Lagrer hvor du er. Fortsett økten når du vil.">Pause</a><button class="btn small ghost" id="okt-slutt">Avslutt for i dag</button><button class="btn small primary" id="okt-neste">${sist?'Fullfør økten':'Neste oppgave →'}</button></span></div>`;
 }
 function oktBindBar(main, q){
   const b = main.querySelector('#okt-neste'); if(!b) return;
   const sc0 = oktState(); AKT.start(q.id);
   const foot = main.querySelector('.cq-foot'); if(foot){ foot.innerHTML = sc0.cur && sc0.cur.diag ? `<a class="btn sec" href="#diagnose">Til diagnosen</a><button class="btn primary" id="okt-neste2">Neste i diagnosen →</button>` : `<a class="btn sec" href="${oktHash()}">Pause</a><button class="btn primary" id="okt-neste2">${b.textContent}</button>`; }
-  const loggNa = (s, arsak)=>{ const akt = AKT.min(q.id), min = Math.min(120, akt>0.05 ? akt : (Date.now()-s.cur.start)/60000); const sc = questionScore(q); AKT.null();
-    s.log = (s.log||[]).concat([{q:q.id, type:s.cur.type, okt:s.oktId, start:s.cur.start, min, ok: sc!=null && sc>=OKT_MAL ? 1 : 0, arsak: arsak||null}]); };
+  const loggNa = (s, arsak)=>oktLoggQ(s, q, arsak);
   const harSvart = s => q.fields.some(f=>{ const x = STATE.attempts[fieldKey(q.id,f.i)]; return x && s.cur && x.last>=s.cur.start; });
   const avslutt = async ()=>{ const s = oktState(); if(s.cur && s.cur.q===q.id && harSvart(s)) loggNa(s, null); await oktAvslutt(s); };
   main.querySelectorAll('#okt-slutt').forEach(x=>x.onclick = avslutt);
@@ -2429,7 +2521,8 @@ function oktBindBar(main, q){
     // Økten er en fast liste: neste oppgave er den neste i lista, og økten er ferdig når lista er tom
     const gj = new Set(oktLogg(s).filter(x=>x.okt===s.oktId).map(x=>x.q)), nid = ((s.sesjon||{}).qs||[]).find(id=>!gj.has(id) && QBY[id]);
     if(!nid){ await oktAvslutt(s); return; }
-    s.cur = {q:nid, type:oktTypeOf(QBY[nid]), start:Date.now()}; await oktSave(s);
+    const kt = ((s.sesjon||{}).kt||{})[nid] || null;
+    s.cur = {q:nid, type: kt || oktTypeOf(QBY[nid]), start:Date.now(), kontroll:kt}; await oktSave(s);
     location.hash = '#q-'+nid; };
   // Ikke riktig: spør hvorfor (bommeliste med årsak) før vi går videre
   const neste = ()=>{ const sc = questionScore(q);
@@ -3483,6 +3576,8 @@ function engineActs(){
     alle.forEach(({g, o}, k)=>out.push({id:`okt-${f}-${g.id}-${k}`, fag:f, type:'okt', min:Math.max(10, Math.round(o.min/5)*5), pri: g.hard || k < Math.ceil(n*0.7) ? 1 : 2,
       order: g.hard ? -20+k : f==='matte' ? k : -0.5 + k*manuelle/Math.max(n,1)*0.6, due: g.due || lastStudy(f), hard:!!g.hard, lev:g.lev||null, qids:o.qs.map(q=>q.id),
       t:`${FAG[f].kort}-økt: ${o.tittel}`, g:`Bidrar til: ${g.tittel} · ${g.under}. ${o.qs.length} ${o.qs.length===1?'oppgave':'oppgaver'}, ${o.felt} deloppgaver.`, link:oktHash(f)}));
+    const st2 = oktStats(s); st2.forEach(x=>{ const k = oktKontroll(s, x.t.id); if(!k || !k.neste) return; const d = ktDag(k.neste); if(d <= t || d > lastStudy(f)) return; const q = kontrollQ(s, x.t.id); if(!q) return;
+      out.push({id:`kt-${f}-${x.t.id}`, fag:f, type:'okt', kontroll:true, min:Math.max(10, Math.round(qEst0(q)*oktFakt(s)/5)*5), pri:1, order:-3, earliest:d, due:lastStudy(f), t:`${FAG[f].kort}-økt: Kontrolltest ${x.t.navn}`, g: ktTekst(k) + ' En annen oppgave i samme tema, uten hint og fasit.', link:oktHash(f)}); });
   }); });
   if(t <= lastStudy('matte')) Object.keys(PX_DATO).filter(k=>SETS[k]).forEach((k,i)=>out.push({id:'px-'+k, fag:'matte', type:'px', set:k, min:240, pri:1, order:-5+i, earliest:PX_DATO[k], due:lastStudy('matte'),
       t:`${SETS[k].navn.replace(' (nye tall)','')} på tid (4 t)`, g:'Som på eksamen: formelark og Python, ingen hint. Resultatet teller tungt i mestringen.', link:'#oving-'+k}));
@@ -3531,13 +3626,13 @@ async function oktStartNa(utenDiagnose, f){
   if(f) OKT_FAG = f;
   const s = oktState();
   if(!utenDiagnose && oktTrengerDiagnose(s)){ location.hash = '#diagnose'; return; }
-  if(s.cur && QBY[s.cur.q]){ location.hash = '#q-'+s.cur.q; return; }
+  if(s.cur && QBY[s.cur.q]){ if(s.pauset){ s.pauset = false; await oktSave(s); } if(oktMeta().aktiv!==s.fag) await saveDoc('settings','oktmeta', {aktiv:s.fag}); location.hash = '#q-'+s.cur.q; return; }
   const st = oktStats(s), nx = oktNeste(s, st);
   if(!nx){ location.hash = oktHash(); return; }
   s.oktId = Date.now(); s.oktStart = {naa: oktNaaExact(st), ts: Date.now()}; s.kvittering = null;
   if(s.fokus==='auto') s.autoFokus = nx.fokus;
-  s.sesjon = {qs:nx.okt.qs.map(q=>q.id), tittel:nx.okt.tittel, mal:nx.gruppe.tittel+' · '+nx.gruppe.under, min:nx.okt.min, lev:nx.gruppe.lev||null}; AKT.null();
-  s.cur = {q:nx.q.id, type:oktTypeOf(nx.q), start:Date.now()}; await oktSave(s); location.hash = '#q-'+nx.q.id;
+  s.sesjon = {qs:nx.okt.qs.map(q=>q.id), tittel:nx.okt.tittel, mal:nx.gruppe.tittel+' · '+nx.gruppe.under, min:nx.okt.min, lev:nx.gruppe.lev||null, kt:nx.okt.kt||{}}; nx.okt.qs.forEach(q=>AKT.null(q.id));
+  s.pauset = false; s.cur = {q:nx.q.id, type:(nx.okt.kt||{})[nx.q.id] || oktTypeOf(nx.q), start:Date.now(), kontroll:(nx.okt.kt||{})[nx.q.id]||null}; await oktSave(s); await saveDoc('settings','oktmeta', {aktiv:s.fag}); location.hash = '#q-'+nx.q.id;
 }
 const oktHash = f => { f = f || OKT_FAG; return f==='matte' ? '#okt' : '#okt-'+f; };
 function startAct(a){
@@ -3691,10 +3786,11 @@ function nesteRep(qids){ let min = Infinity;
 async function oktAvslutt(s){
   const id = s.oktId, L = oktLogg(s).filter(x=>x.okt===id && id!=null);
   const naa = oktNaaExact(oktStats(s)), fra = s.oktStart ? s.oktStart.naa : naa;
-  s.kvittering = L.length ? {min: L.reduce((a,x)=>a+(x.min||0),0), n:L.length, ok:L.filter(x=>x.ok).length, delta: Math.round((naa-fra)*10)/10, naa: Math.round(naa), neste: nesteRep(L.map(x=>x.q)), ts:Date.now()} : null;
+  s.kvittering = L.length ? {min: L.reduce((a,x)=>a+(x.min||0),0), n:L.length, ok:L.filter(x=>x.ok).length, delta: Math.round((naa-fra)*10)/10, naa: Math.round(naa), neste: nesteKontroll(s, L.map(x=>x.type)), ts:Date.now()} : null;
+  if(s.kvittering && s.sisteKontroll && L.some(x=>x.kt)){ s.kvittering.kt = L.filter(x=>x.kt).map(x=>({tid:x.type, ok:x.ok})); }
   if(L.length && s.sesjon) s.ferdig = (s.ferdig||[]).concat([{d:todayStr(), tittel:s.sesjon.tittel, min:L.reduce((a,x)=>a+(x.min||0),0), mal:s.sesjon.mal}]).slice(-30);
   if(s.kvittering && s.sesjon){ const gj = new Set(L.map(x=>x.q)); s.kvittering.igjenSes = s.sesjon.qs.filter(id=>!gj.has(id)).length; s.kvittering.tittel = s.sesjon.tittel; }
-  s.cur = null; s.oktId = null; s.oktStart = null; s.feilModus = false; s.sesjon = null; AKT.null(); await oktSave(s); PLAN_CACHE = null; location.hash = oktHash(s.fag);
+  s.cur = null; s.oktId = null; s.oktStart = null; s.feilModus = false; (s.sesjon ? s.sesjon.qs : []).forEach(id=>AKT.null(id)); s.sesjon = null; s.pauset = false; await oktSave(s); PLAN_CACHE = null; location.hash = oktHash(s.fag);
 }
 function kvitteringHtml(k){
   const d = k.neste ? iso(new Date(k.neste)) : null, t = todayStr(), f = OKT_FAG;
@@ -3703,8 +3799,8 @@ function kvitteringHtml(k){
   return `<div class="card kvit"><div class="row between" style="align-items:baseline"><h2 style="margin:0">${k.igjenSes?'Avsluttet for i dag':'Økten er ferdig'}${k.tittel?': '+esc(k.tittel):''}</h2><button class="btn small ghost" id="kv-lukk">Lukk</button></div>
     <div class="kv-g"><div><span class="kv-n">${fmtT(k.min)}</span><span class="small muted">tid</span></div><div><span class="kv-n">${k.ok}/${k.n}</span><span class="small muted">oppgaver riktig</span></div>
     <div><span class="kv-n">${k.delta>=0?'+':''}${String(k.delta).replace('.',',')}${f==='matte'?' p':''}</span><span class="small muted">${f==='matte'?'forventet eksamenspoeng':'prosentpoeng mestret'} (nå ${oktSc(k.naa)})</span></div>
-    <div><span class="kv-n">${d ? (d<=t?'i dag':d===addDays(t,1)?'i morgen':fmtD(d)) : '–'}</span><span class="small muted">neste repetisjon</span></div></div>
-    <ul class="small" style="margin:12px 0 0;padding-left:20px">${lev.map(x=>`<li><strong>Øving ${x.n}</strong> (frist ${x.ft}): ${x.rest.length ? `${x.lost.length} av ${x.qs.length} løst, ${x.rest.length} gjenstår` : 'alle oppgavene er løst. Klar til levering i Capquiz, kryss av i planen når det er gjort'}.</li>`).join('')}
+    <div><span class="kv-n">${d ? (d<=t?'i dag':d===addDays(t,1)?'i morgen':fmtD(d)) : '–'}</span><span class="small muted">neste kontrolltest</span></div></div>
+    <ul class="small" style="margin:12px 0 0;padding-left:20px">${(k.kt||[]).map(x=>{ const kk = (oktState().kontroll||{})[x.tid], nv = esc((OKT_BY[x.tid]||{}).navn||''); return x.ok ? `<li><strong>Kontrolltest bestått: ${nv}.</strong> Neste kontroll ${kk&&kk.neste?fmtD(ktDag(kk.neste)):''}.</li>` : `<li><strong>Kontrolltest ikke bestått: ${nv}.</strong> Temaet er satt til «Trenger repetisjon». Målrettet trening ligger først i neste økt, og så kommer en ny kontroll.</li>`; }).join('')}${lev.map(x=>`<li><strong>Øving ${x.n}</strong> (frist ${x.ft}): ${x.rest.length ? `${x.lost.length} av ${x.qs.length} løst, ${x.rest.length} gjenstår` : 'alle oppgavene er løst. Klar til levering i Capquiz, kryss av i planen når det er gjort'}.</li>`).join('')}
       ${k.igjenSes?`<li>${k.igjenSes} ${k.igjenSes===1?'oppgave':'oppgaver'} i økten gjenstår. De ligger først i neste økt.</li>`:''}
       <li>${rest ? `Igjen i dag i ${esc(FAG[f].kort.toLowerCase())}: ${fmtMin(rest)}. Det du ikke rekker, flyttes til neste ledige dag.` : `Dagens plan i ${esc(FAG[f].kort.toLowerCase())} er gjort.`}</li>
       ${nx ? `<li>Deretter: ${fagDot(nx.a.fag)}${mdInline(splitTitle(nx.a.t)[0])} (${fmtMin(nx.rem)}) <button class="btn small sec" id="kv-neste" data-act="${esc(nx.a.id)}">Start</button></li>` : ''}</ul></div>`;
@@ -3842,6 +3938,7 @@ async function boot(){
     window.__SETS = SETS;
     Q.forEach(q=>q.fields.forEach(f=>{ if(f.kind==='expr' && f.ans && /=/.test(f.ans)) f.kind='self'; }));
   }catch(e){ $('#main').innerHTML = '<div class="card"><p>Kunne ikke laste oppgavebanken (bank.js).</p></div>'; return; }
+  AKT.oppstart();
   await initStore();
   await FILE.init();
   if(SYNC.on()) await Promise.race([SYNC.sync(), new Promise(r=>setTimeout(r, 6000))]);
