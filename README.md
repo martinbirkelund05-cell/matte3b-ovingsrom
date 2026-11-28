@@ -37,6 +37,7 @@ Safari/Firefox støtter ikke historikkfil; der ligger historikken i nettleseren 
 - Planen legger øvingen i alle fag som økter, deler lange aktiviteter og legger aldri mer på en dag enn studietiden. Innleveringer med frist står i planen.
 - «Tren på feilene mine» på Økt-siden, og «Prøvemuntlig» (`#muntlig`) for Elementmetoden.
 - Én meny: Hjem, Plan, de tre fagene og Mer. Hvert fag har fanene Økt og Oversikt.
+- Mekanikk bruker bare emnets egne øvinger (med løsningsforslag) og tidligere eksamener med fasit. Øvingene ligger som oppgaver i øktene («Gjør øving 4»), og Oppgavesamlingen er tatt ut av planen. Poeng per oppgave fra PDF-eksamenene kan føres inn under «Etterarbeid».
 
 ## Innhold
 - `index.html` – hele plattformen (oversikt, gjøremål, øvinger i øvings-/prøvemodus, eksamenssett, kompendium, notater)

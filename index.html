@@ -496,6 +496,7 @@ pre.pycode{margin:0;background:var(--bg);border:1px solid var(--line);border-rad
 .fs-b .qlist .n{min-width:92px;white-space:nowrap}
 
 /* ---- Plattform v2 ---- */
+.ea-r{display:grid;grid-template-columns:52px minmax(0,1fr) 58px auto 58px;gap:6px;align-items:center;margin:4px 0}.ea-r input,.ea-r select{padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);min-width:0}
 .dd[hidden]{display:none!important}
 .okt-feilk{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding:12px 16px}
 .tm-niva{font-size:11px;padding:1px 7px;border-radius:9px;background:var(--grey-soft);color:var(--muted);white-space:nowrap}
@@ -1275,7 +1276,7 @@ function attachHelp(root, q, ctx){
     if(panel.querySelector('.h-ok')){ panel.querySelector('.h-ok').onclick = selfBtn(true); panel.querySelector('.h-bad').onclick = selfBtn(false); }
     if(f.kind==='card'){
       const fl = wrap.querySelector('.flip'), cb = wrap.querySelector('.cardback'), cok = wrap.querySelector('.c-ok'), cbad = wrap.querySelector('.c-bad'), cdel = wrap.querySelector('.c-del');
-      if(fl) fl.onclick = ()=>{ cb.hidden = !cb.hidden; fl.textContent = cb.hidden ? 'Vis vurderingspunkter' : 'Skjul vurderingspunkter'; fl.classList.toggle('primary', cb.hidden); if(!cb.hidden && !ctx.answered.has(k)){ cok.hidden = false; cbad.hidden = false; if(cdel) cdel.hidden = false; } typeset(cb); };
+      if(fl) fl.onclick = ()=>{ cb.hidden = !cb.hidden; if(!q.ovpdf) fl.textContent = cb.hidden ? 'Vis vurderingspunkter' : 'Skjul vurderingspunkter'; fl.classList.toggle('primary', cb.hidden); if(!cb.hidden && !ctx.answered.has(k)){ cok.hidden = false; cbad.hidden = false; if(cdel) cdel.hidden = false; } typeset(cb); };
       const cardRate = (ok, delvis) => async ()=>{ if(ctx.answered.has(k)) return; if(delvis) ctx.usedHint = true; await selfBtn(ok)(); cok.disabled = true; cbad.disabled = true; if(cdel) cdel.disabled = true; const ws = wrap.querySelector('.st'); if(ws) ws.textContent = delvis ? 'Registrert: delvis (teller 70 %)' : ok ? 'Registrert: klarte selv' : 'Registrert: kommer tilbake i repetisjonen'; };
       if(cok){ cok.onclick = cardRate(true); cbad.onclick = cardRate(false); if(cdel) cdel.onclick = cardRate(true, true); }
     }
@@ -1478,6 +1479,7 @@ function renderEksamen(main){
 function renderOm(main){
   main.innerHTML = `<h1>Synk og innstillinger</h1><div class="card" id="sync"><h2>Synk mellom enheter</h2>${syncPanelHtml()}</div>
   ${window.claude?'':`<div class="card"><h2>Historikkfil på denne PC-en (reserve)</h2><p class="small muted" style="margin:0 0 8px">Chrome og Edge kan i tillegg lagre en kopi til en fil på PC-en.</p><div id="filectl" class="row" style="gap:6px;flex-wrap:wrap"></div></div>`}
+  <div class="card"><h2>Hva tallene betyr</h2><ul class="small" style="margin:0;padding-left:20px"><li><strong>Mestring (prosent)</strong>: siste svar per oppgave (hint teller 70 %), ganget med hvor godt det huskes nå. Tallet synker når det går lang tid uten repetisjon.</li><li><strong>Prøvd</strong>: du har svart på minst én oppgave i temaet.</li><li><strong>Løst selv</strong>: riktig uten hint og uten at fasit var vist.</li><li><strong>Bekreftet</strong>: løst selv på to ulike oppgaver, på to ulike dager.</li><li><strong>Andel av eksamen</strong>: matte = sannsynlighet × poeng fra fire eksamenssett. Mekanikk = temaets vekt i eksamenssettene. Elementmetoden = likt per tema.</li><li><strong>I rute</strong>: alt som gjenstår, får plass i planen før eksamen med studietiden du har satt.</li></ul></div>
   <h2 style="margin-top:18px">Om plattformen</h2><div class="card stack">
   <p><strong>Tre fag.</strong> Plattformen dekker Matematikk 3B (IMAA3012), Mekanikk 1 (MEKA1101) og Elementmetoden (MEPA2314). Hjem viser fagkortene og dagens gjøremål. Kalenderen og gjøremålslisten bruker samme plan og samme fullføringsstatus som fagoversiktene: løser du alle feltene i en aktivitet, hukes den av overalt. Ugjorte aktiviteter blir liggende og flyttes til neste dag med ledig kapasitet. Studietiden per dag kan justeres på Hjem og i kalenderen.</p>
   <p><strong>Mekanikk 1.</strong> Eksamen H25 og H24 er lagt inn deloppgave for deloppgave fra Inspera-utskriftene, med originale figurer (klikk for å forstørre). Tall- og flervalgssvar rettes mot fasiten i utskriften, og løsningsforslaget vises side for side med dokument og sidetall. Egne mellomregninger er merket «Supplerende forklaring». Eldre sett ligger som PDF med logging av poengsum.</p>
@@ -1563,7 +1565,7 @@ document.addEventListener('click', e=>{
 // =====================================================================
 // ---------- Studieplattform: fag, aktiviteter, plan og kalender ----------
 // =====================================================================
-const APP_VER = '28.11 kl. 12.00';
+const APP_VER = '28.11 kl. 13.00';
 const FAG = {
   mek:  { key:'mek',  kode:'MEKA1101', navn:'Mekanikk 1',        kort:'Mekanikk',       canvas:'MEKA1101-26H :: Mekanikk 1',      sem:'MEKA1101-26H', exam:'2026-12-04', tid:'kl. 09:00–13:00 (4 t), oppmøte 30 min før', form:'Skriftlig, Inspera + håndberegninger på ark. Hjelpemiddel D: enkel kalkulator og vedlagt formelark.', farge:'#7b3f98' },
   fem:  { key:'fem',  kode:'MEPA2314', navn:'Elementmetoden',    kort:'Elementmetoden', canvas:'MEPA2314-26H :: Elementmetoden',   sem:'MEPA2314-26H', exam:'2026-12-11', tid:'tidspunkt ikke oppgitt i Canvas', form:'Muntlig eksamen (teller 40 %). Prosjektmappen teller 60 %.', farge:'#1f6f78' },
@@ -1625,8 +1627,6 @@ const ACTS = [];
     {id:'mek-h24-4', type:'qs', qs:mq('H24',['4a','4b','4c','4d','4e']), min:55, pri:1, t:'Løs eksamen H24 oppgave 4a–e (T-mast i tre: moment og bøyespenning)', g:'Mål: riktig M-diagram og $\\sigma_{max}$ med én desimal.'},
     {id:'mek-h24-5', type:'qs', qs:mq('H24',['5a','5b','5c','5d']), min:50, pri:1, t:'Løs eksamen H24 oppgave 5a–d (deformasjon av ramme)', g:'Mål: forskyvning og rotasjon i B, og horisontalforskyvning av C.'},
     {id:'mek-h24-2', type:'qs', qs:mq('H24',['2a','2b']), min:25, pri:2, t:'Løs eksamen H24 oppgave 2a–b (tverrsnitt med Steiner)', g:'Mål: $z_C$ og $I_y$ uten feil i avstandene.'},
-    {id:'mek-saml-ramme', type:'manual', min:60, pri:2, t:'Løs oppgave 34–36 i Oppgavesamlingen (snittkrefter), sjekk løsningen s. 74–80', g:'Mål: tre M-diagram uten å se i løsningen.', link:'mek/pdf/oppgavesamling.pdf#page=19', ext:true},
-    {id:'mek-saml-def', type:'manual', min:60, pri:2, t:'Løs oppgave 52 og 53 i Oppgavesamlingen (nedbøyning og elementærbjelker), sjekk løsningen s. 131–132', g:'Mål: begge oppgavene regnet ferdig før du åpner løsningen.', link:'mek/pdf/oppgavesamling.pdf#page=30', ext:true},
     {id:'mek-h25-6', type:'qs', qs:mq('H25',['6']), min:25, pri:2, t:'Løs eksamen H25 oppgave 6 (damluke i Python, vanntrykk)', g:'Mål: forklar alle fem delspørsmålene med fysiske størrelser.'},
     {id:'mek-v26', type:'examscore', set:'V26', min:300, pri:1, earliest:'2026-11-30', t:'Hele eksamen vår 2026 på tid (4 t), rett med LF og sensurveiledningen, logg poengsummen', g:'Mål: realistisk generalprøve med formelark og kalkulator.', link:'mek/pdf/V26.pdf', ext:true},
     {id:'mek-bom', type:'manual', min:45, pri:2, earliest:'2026-12-02', t:'Repeter mekanikkoppgavene du har bommet på (listen under Repetisjon i Mekanikk-oversikten)', g:'Mål: alle felt med «feil» eller «fasit vist» løst på nytt.', link:'#fag-mek'},
@@ -1939,7 +1939,7 @@ function pensumHtml(f){
     ${bar(tot.m, tot.t, true, 'Hele pensum')}
     <details class="ptopics" ${foldOpen('pt-'+f, false)?'open':''} data-fold="pt-${f}"><summary class="small">Per tema</summary>
     <div class="prows">${topics.map(x=>`<div class="prow"><span class="pl small" title="${esc(x.t.navn)}">${esc(shortTopic(x.t.navn))}</span>${bar(x.p.m/x.p.n, x.p.t/x.p.n, false, x.t.navn)}<span class="pv small muted">${x.p.m}/${x.p.n}</span></div>`).join('')}</div></details>
-    <p class="small muted" style="margin:8px 0 0">Vektet etter temaenes andel av pensum. «Mestret» = riktig minst én gang uten at fasit var vist.</p></div>`;
+    <p class="small muted" style="margin:8px 0 0">Vektet etter temaenes andel av pensum. Her betyr «mestret» riktig minst én gang uten at fasit var vist. Økt-siden bruker et strengere mål som også synker når du glemmer.</p></div>`;
 }
 
 // ---------- Sammenleggbare seksjoner ----------
@@ -1966,7 +1966,7 @@ const MONSTER = {
   rader: [
     ['PDE-løsning ved innsetting', ['9','12, 13','9','8'], ['o6q1','o6q2','o5q15'], 'Sett kandidaten inn med sp.diff'],
     ['Fluks og Gauss', ['13','10','12','12'], ['o5q5','o5q8','o5q9','o5q11'], 'Mai26 12 er øving 5.5 med nye tall'],
-    ['Div, curl og identiteter', ['3, 4, 6','','4','5, 9'], ['o4q9','o4q10'], 'Alltid én identitetsfelle'],
+    ['Div, curl og identiteter', ['3, 4, 6','','4','5, 9'], ['o4q9','o4q10'], 'Én identitetsfelle i alle fire sett'],
     ['Sympy, dblquad og tplquad', ['11','3','13',''], ['o2q9','o2q10','o3q1','o3q11'], 'Kreves ved navn i langsvaret'],
     ['Parametrisk flate, N og areal', ['7, 11','','13','12'], ['o4q5','o4q6','o4q7','o4q8'], 'Feb26 13 = Ord25 11 med aksene byttet'],
     ['Utledning av varmelikningen', ['10','14','10',''], ['o6q9'], 'Samme utfyllingstekst som øving 6.9'],
@@ -2087,7 +2087,7 @@ function oktTypeOf(q){
   return OKT_QTYPE[q.id] || null;
 }
 // Rekkefølge i et tema: løst eksempel og «med hull» først (fading), så øvingene, så repetisjonsøvingene, så nye varianter
-const oktRank = q => q.variant ? (/^(Løst eksempel|Med hull)/.test(q.title) ? 0 : 3) : (oktOrig(q) ? 1 : 2);
+const oktRank = q => q.ovpdf ? 1.5 : q.variant ? (/^(Løst eksempel|Med hull)/.test(q.title) ? 0 : 3) : (oktOrig(q) ? 1 : 2);
 const oktQs = tid => Q.filter(q=>oktTypeOf(q)===tid).sort((a,b)=>(oktRank(a)-oktRank(b)) || String(a.oving).localeCompare(String(b.oving), 'nb', {numeric:true}) || String(a.nr).localeCompare(String(b.nr), 'nb', {numeric:true}));
 const oktKey = f => f==='matte' ? 'okt' : 'okt_'+f;
 function oktState(f){ f = f || OKT_FAG; const s = (STATE.settings||{})[oktKey(f)] || {}; return Object.assign({fokus:'auto', bland:true, minDag:180, log:[], cur:null, autoFokus:null}, s, {fag:f}); }
@@ -2125,6 +2125,8 @@ function oktStats(s){
     // Prøveeksamen veier tyngre: halve mestringen kommer fra prøveeksamen-svarene i typen
     const px = Q.filter(q=>OKT_PXTYPE && OKT_PXTYPE[q.id]===t.id).map(questionScore).filter(x=>x!=null);
     if(px.length) m = 0.5*m + 0.5*px.reduce((a,b)=>a+b,0)/px.length;
+    if(OKT_FAG==='mek'){ const eo = Object.values(STATE.exams||{}).filter(r=>r && r.fag==='mek' && r.opp).flatMap(r=>r.opp).filter(o=>o.tema===t.id && o.fikk!=null && o.maks>0);
+      if(eo.length) m = 0.5*m + 0.5*eo.reduce((a,o)=>a+o.fikk,0)/eo.reduce((a,o)=>a+o.maks,0); }
     const igjen = qs.filter((q,i)=>ms[i]<OKT_MAL).length, tempo = oktTempo(t.id, s);
     const preOk = t.pre.every(p=>{ const pq = oktQs(p).filter(oktOrig); return !pq.length || pq.map(oktQM).reduce((a,b)=>a+b,0)/pq.length >= 0.5; });
     // Det du kan fra før, går raskere: oppgaver uten egne svar teller mindre tid etter diagnosen
@@ -2183,12 +2185,21 @@ function oktPrognose(st, s){
 }
 const fmtT = m => { m = Math.round(m); return m>=60 ? `${Math.floor(m/60)} t${m%60?` ${m%60} min`:''}` : `${m} min`; };
 const OKT_PY = {pde:'pde', felt:'vek', potens:'vek', flate:'flate', fluks:'flate', arbeid:'linje', stokes:'linje', pyint:'sci', trippel:'int', dobbel:'int', polar:'alt', delaunay:'del', kode:'varme', kurve:'kurve'};
-const OKT_ARSAK = {
+const OKT_ARSAK_M = {
   begrep:{navn:'Begrep', tiltak:'Les det løste eksempelet og kompendiet før neste forsøk.'},
   oppsett:{navn:'Oppsett', tiltak:'Ta flere løste eksempler og «med hull»-oppgaver i temaet før du regner selv.'},
   regning:{navn:'Regning', tiltak:'Sjekk svaret med Python før du går videre (snarveien under oppgaven).'},
   python:{navn:'Python-syntaks', tiltak:'Pugg malen i Python-pugging, 15 minutter om dagen.'},
 };
+const OKT_ARSAK_ANDRE = {
+  mek:{ fld:{navn:'Fritt-legeme-diagram / oppsett', tiltak:'Tegn fritt-legeme-diagrammet først, og sammenlign det med løsningsforslaget før du regner.'},
+        fortegn:{navn:'Fortegn eller retning', tiltak:'Skriv opp fortegnskonvensjonen for N, V og M før du starter, og kontroller mot diagramreglene.'},
+        formel:{navn:'Formel eller enhet', tiltak:'Slå opp formelen i formelarket, og gjør om til N og mm før du setter inn tall.'},
+        regning:{navn:'Regning', tiltak:'Kontroller med en ekstra likevektslikning (for eksempel moment om et annet punkt).'} },
+  fem:{ begrep:{navn:'Husket ikke begrepet', tiltak:'Les lysbildet det er hentet fra, og forklar det høyt med egne ord.'},
+        forklaring:{navn:'Klarte ikke å forklare hvorfor', tiltak:'Øv på å svare med definisjon, skisse, når og hvorfor.'},
+        prosjekt:{navn:'Manglet eksempel fra prosjektet', tiltak:'Knytt spørsmålet til ett konkret valg dere gjorde i prosjektet.'} } };
+const OKT_ARSAK = new Proxy({}, { get:(o,k)=>(OKT_FAG==='matte'?OKT_ARSAK_M:OKT_ARSAK_ANDRE[OKT_FAG])[k], ownKeys:()=>Reflect.ownKeys(OKT_FAG==='matte'?OKT_ARSAK_M:OKT_ARSAK_ANDRE[OKT_FAG]), getOwnPropertyDescriptor:(o,k)=>({enumerable:true, configurable:true, value:(OKT_FAG==='matte'?OKT_ARSAK_M:OKT_ARSAK_ANDRE[OKT_FAG])[k]}) });
 const OKT_FORKLAR = {
   flate:['Hvordan du finner r_u og r_v','Hvorfor N = r_u × r_v, og hvordan du regner det ut','Hvorfor arealet er dobbeltintegralet av |N|','Rekkefølgen på variablene i dblquad og tplquad','Hvorfor det kommer en faktor r i sylinderkoordinater'],
   fluks:['Hvilken vei normalvektoren peker på topp, bunn og vegg','Hva divergensen er, og hvordan du regner den ut','Hva Gauss sier: fluks ut = trippelintegralet av div F','Hvordan du finner én delflate som total minus de andre'],
@@ -2249,7 +2260,7 @@ function renderOkt(main){
     <p class="muted" style="margin:0 0 12px">${esc(nx.hvorfor)} · ca. ${Math.round(oktTempo(oktTypeOf(nx.q), s))} min</p>
     <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap"><button class="btn primary big" id="okt-start">${s.cur?'Fortsett økten':'Start'}</button>${s.cur?'<button class="btn ghost" id="okt-slutt">Avslutt økten</button>':''}${erM?'<a class="small" href="eksamen/formelark_matte3.pdf" target="_blank" rel="noopener">Formelark</a>':OKT_FAG==='mek'&&BM.res&&BM.res.formelark?`<a class="small" href="${BM.res.formelark}" target="_blank" rel="noopener">Formelark</a>`:''}${py?`<span class="small muted">Sjekk med Python: ${py}</span>`:''}</div>`
       : natt ? `<h1>Ingen repetisjoner forfaller</h1><p class="muted">Etter nattevakt: ${erM?'ta 15 minutter <a href="#python">Python-pugging</a> og hvil':'hvil'}. Nytt stoff tar du når du er uthvilt.</p>`
-      : `<h1>Alt er mestret</h1><p class="muted">${erM?'Bruk tiden på prøveeksamen.':OKT_FAG==='mek'?'Bruk tiden på en hel eksamen på tid (se Oversikt og ressurser).':'Øv på å forklare høyt, og hold presentasjonen med tidtaker.'}</p>`}
+      : `<h1>Alt er mestret</h1><p class="muted">${erM?'Bruk tiden på prøveeksamen.':OKT_FAG==='mek'?'Bruk tiden på en hel tidligere eksamen på tid (under Oversikt og ressurser).':'Øv på å forklare høyt, og hold presentasjonen med tidtaker.'}</p>`}
     <div class="okt-ctl small"><span>Tema: <strong>${s.fokus==='auto'?'Auto'+(fokus?' ('+esc(OKT_BY[fokus].navn)+')':''):esc((OKT_BY[s.fokus]||{}).navn||'')}</strong> · <a href="#okt-tema" id="okt-bytt">bytt tema</a></span>
       ${natt?'<span>Etter nattevakt: bare repetisjon i dag (endres på Hjem)</span>':''}</div>
   </div>
@@ -2325,6 +2336,10 @@ function renderFag(main, f){
       return docCardHtml(f, e.navn.split(' (')[0], e.dato+' · PDF', [['Oppgaver',e.pdf],['Løsning',e.lf]].concat(e.sensur?[['Sensur',e.sensur]]:[]),
         `<label class="sk-score small">Poeng <input type="number" class="mexlog" data-k="${e.key}" min="0" max="${e.max}" value="${r?r.score:''}"> / ${e.max}</label>`); });
     secs.push(foldSec('mek-eks','Eksamener', `${inter.length} interaktive · ${pdfs.length} som PDF`, cardGrid(inter.concat(pdfs)), true));
+    const mt = Object.entries(TOPICS).filter(([k])=>k.startsWith('m-'));
+    secs.push(foldSec('mek-etter','Etterarbeid: poeng per oppgave', 'gjør en eksamen fra PDF om til neste økt', `<p class="small" style="margin:0 0 8px">Etter en hel eksamen: velg settet, og før inn tema og poeng for hver oppgave slik løsningsforslaget og sensuren viser. Temaene du taper poeng på, kommer først i øktene.</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><label class="small">Eksamen <select id="ea-set">${(BM.exams||[]).map(e=>`<option value="${e.key}">${esc(e.navn.split(' (')[0])}</option>`).join('')}</select></label><span class="small muted" id="ea-sum"></span></div>
+      <div id="ea-rows"></div><div class="row" style="gap:8px;margin-top:8px"><button class="btn small primary" id="ea-lagre">Lagre</button><span class="small muted" id="ea-st"></span></div>`, false));
     secs.push(foldSec('mek-ov','Øvinger', 'løsningsforslag til regneøvingene', cardGrid((BM.res.lfov||[]).map(o=>docCardHtml(f, 'Øving '+o.n, 'Oppgaveteksten mangler i eksporten', [['Løsningsforslag', o.pdf]]))), true));
     secs.push(foldSec('mek-hj','Hjelpemidler', 'formelark, oppgavesamling, diagramregler', cardGrid([
       docCardHtml(f,'Formelark','Tillatt på eksamen',[['Åpne',BM.res.formelark]]), docCardHtml(f,'Oppgavesamling','Med løsninger',[['Åpne',BM.res.oppgavesamling]]),
@@ -2352,12 +2367,23 @@ function renderFag(main, f){
     <div class="card"><h2>Repetisjon</h2>${due.length?`<div class="qlist">${due.slice(0,8).map(d=>`<a href="#q-${d.q.id}"><span class="n">${esc(ovShort(d.q.oving))}.${esc(d.q.nr)}</span><span class="t">${mdInline(d.q.title)}</span><span class="pill warn">${esc(d.why)}</span></a>`).join('')}</div>`:'<p class="muted small">Oppgaver du bommer på dukker opp her.</p>'}</div>
   </div>`;
   bindActs(main); bindFolds(main);
+  if(f==='mek' && $('#ea-set')){ const mt = Object.entries(TOPICS).filter(([k])=>k.startsWith('m-'));
+    const tegn = ()=>{ const k = $('#ea-set').value, r = STATE.exams['mek-'+k] || {}, opp = r.opp || [];
+      $('#ea-rows').innerHTML = [1,2,3,4,5,6].map(i=>{ const o = opp[i-1] || {}; return `<div class="ea-r"><span class="small">Oppg. ${i}</span><select class="ea-t"><option value="">(tema)</option>${mt.map(([tk,t])=>`<option value="${tk}" ${o.tema===tk?'selected':''}>${esc(shortTopic(t.navn))}</option>`).join('')}</select><input class="ea-f" type="number" min="0" placeholder="fikk" value="${o.fikk!=null?o.fikk:''}"><span class="small muted">av</span><input class="ea-m" type="number" min="1" placeholder="maks" value="${o.maks!=null?o.maks:''}"></div>`; }).join('');
+      $('#ea-sum').textContent = r.score!=null ? `Lagret: ${r.score} poeng` : ''; };
+    $('#ea-set').onchange = tegn; tegn();
+    $('#ea-lagre').onclick = async ()=>{ const k = $('#ea-set').value, e = (BM.exams||[]).find(x=>x.key===k);
+      const opp = [...main.querySelectorAll('.ea-r')].map(r=>({tema:r.querySelector('.ea-t').value, fikk:r.querySelector('.ea-f').value===''?null:+r.querySelector('.ea-f').value, maks:r.querySelector('.ea-m').value===''?null:+r.querySelector('.ea-m').value}));
+      const gyld = opp.filter(o=>o.fikk!=null && o.maks>0); if(gyld.some(o=>o.fikk>o.maks)){ $('#ea-st').textContent = 'Poeng kan ikke være høyere enn maks.'; return; }
+      const gml = STATE.exams['mek-'+k] || {}; await saveDoc('exams','mek-'+k, Object.assign({}, gml, {set:k, fag:'mek', opp, score: gyld.length ? gyld.reduce((a,o)=>a+o.fikk,0) : gml.score, max:e?e.max:100, ts:Date.now()}));
+      PLAN_CACHE = null; $('#ea-st').textContent = 'Lagret. Øktene er oppdatert.'; tegn(); }; }
   main.querySelectorAll('.mexlog').forEach(inp=>inp.onchange = async ()=>{ const k = inp.dataset.k; const v = inp.value.trim(); if(v===''){ await deleteDoc('exams','mek-'+k); } else await saveDoc('exams','mek-'+k, {set:k, fag:'mek', score:+v, max:100, ts:Date.now()}); PLAN_CACHE=null; toast('Lagret'); });
 }
 
 // ---------- Visning av mek/fem-oppgaver ----------
 function isNew(q){ return fagOf(q)!=='matte'; }
 function srcHtml(q){
+  if(q.ovpdf) return `<div class="srcline"><span class="pill good">Øving fra emnet</span> <a class="btn small sec" href="${esc(q.ovpdf)}" target="_blank" rel="noopener">Åpne løsningsforslaget</a></div>`;
   if(q.egen) return `<div class="srcline"><span class="pill mute">Egenlaget treningsspørsmål</span> ${q.type?`<span class="pill">${esc(q.type)}</span>`:''} <span class="small">Kilde: <a href="${q.src.pdf}" target="_blank" rel="noopener">${esc(q.src.doc)}, ${esc(q.src.label)}</a></span></div>`;
   if(q.src) return `<div class="srcline"><span class="pill good">Original eksamensoppgave</span> <span class="small">Oppgave ${esc(q.src.oppg)} · ${q.maxp} poeng · <a href="${q.src.pdf}#page=${q.src.page}" target="_blank" rel="noopener">${esc(q.src.doc)}, s. ${q.src.page}</a></span></div>`;
   return '';
@@ -2398,8 +2424,8 @@ function newFieldHtml(q, f, mode){
     return `<div class="fblock"><span class="fld pick" data-q="${q.id}" data-i="${f.i}" style="display:block">${multi?`<div>${tag}</div>`:''}<div class="opts ${f.orient==='h'?'h':''}">${opts}</div><div class="row" style="margin-top:6px">${chk}<span class="st"></span></div><div class="mcfb" hidden></div></span></div>`;
   }
   if(f.kind==='card'){
-    return `<div class="fblock"><span class="fld cardf" data-q="${q.id}" data-i="${f.i}" style="display:block"><div class="cardback" hidden><div class="k">Vurderingspunkter</div>${mdBlock(f.ans)}</div>
-      <div class="row" style="margin-top:6px">${mode==='ov'?`<button class="btn small primary flip">Vis vurderingspunkter</button><button class="btn small sec c-ok" hidden>Klarte selv</button><button class="btn small sec c-del" hidden>Delvis</button><button class="btn small sec c-bad" hidden>Må repetere</button>`:''}<span class="st"></span></div></span></div>`;
+    return `<div class="fblock"><span class="fld cardf" data-q="${q.id}" data-i="${f.i}" style="display:block"><div class="cardback" hidden><div class="k">${q.ovpdf?'Slik retter du':'Vurderingspunkter'}</div>${mdBlock(f.ans)}</div>
+      <div class="row" style="margin-top:6px">${mode==='ov'?`<button class="btn small primary flip">${q.ovpdf?'Jeg har regnet øvingen':'Vis vurderingspunkter'}</button><button class="btn small sec c-ok" hidden>Klarte selv</button><button class="btn small sec c-del" hidden>Delvis</button><button class="btn small sec c-bad" hidden>Må repetere</button>`:''}<span class="st"></span></div></span></div>`;
   }
   // self / text
   return `<div class="fblock"><span class="fld selff" data-q="${q.id}" data-i="${f.i}" style="display:block">${tag}<textarea class="ans" id="${id}" placeholder="${f.kind==='text'?'Skriv svaret ditt her før du sammenligner med modellsvaret.':'Skriv svaret eller sluttsvaret ditt her (håndberegningen gjør du på papir).'}"></textarea><span class="st muted small"></span></span></div>`;
@@ -3328,7 +3354,7 @@ function oktMinDag(){ const f = OKT_FAG, P = PLAN_CACHE || buildPlan(); const ds
   return ds.length ? Math.round(sum/ds.length) : 0; }
 
 let QMIN = null;
-function qMinutter(q){ if(!QMIN){ QMIN = {}; ACTS.forEach(a=>{ const qs = qsOfAct(a); qs.forEach(x=>{ QMIN[x.id] = a.min/qs.length; }); }); } return QMIN[q.id] || (fagOf(q)==='fem' ? 3 : 10); }
+function qMinutter(q){ if(!QMIN){ QMIN = {}; ACTS.forEach(a=>{ const qs = qsOfAct(a); qs.forEach(x=>{ QMIN[x.id] = a.min/qs.length; }); }); } return q.minutter || QMIN[q.id] || (fagOf(q)==='fem' ? 3 : 10); }
 // Rekker jeg det? Per fag, fra den felles planen
 function fagRute(f){ const P = PLAN_CACHE || buildPlan();
   const kutt = (P.excluded||[]).concat(P.overflow||[]).filter(p=>p.a.fag===f), min = kutt.reduce((a,p)=>a+p.rem,0);
@@ -3424,7 +3450,7 @@ function renderHjem(main){
   main.innerHTML = `${heroHtml()}
   <div class="fagkort-grid">${FAG_ORDER.map(fagCardHtml).join('')}</div>
   <div class="hjem-grid">
-    <div class="card"><div class="row between"><h2 style="margin:0">I dag</h2><span class="small muted">${done.length||mm?`${done.length} gjort${mm?` · ${fmtMin(Math.round(mm))} matteøkt`:''}`:''}</span></div>
+    <div class="card"><div class="row between"><h2 style="margin:0">I dag</h2><span class="small muted">${done.length||mm?`${done.length} gjort${mm?` · ${fmtMin(Math.round(mm))} i økt`:''}`:''}</span></div>
       <div class="todo" style="margin-top:10px">${todays.map(p=>actItemHtml(p.a,{rem:p.rem, del:p.del, from: p.a.due<t && p.a.type!=='rep' ? p.a.due : null})).join('')}${oktGjortHtml()}${done.map(x=>actItemHtml(x.a)).join('')}</div>
       ${!todays.length&&!done.length&&!mm?'<p class="muted">Ingenting planlagt i dag.</p>':''}
       <div class="row between" style="margin-top:12px"><span class="small muted">Rekkefølgen er satt av motoren: nærmeste eksamen og mest verdi per minutt først.</span><a class="btn small ghost" href="#gjoremal">Hele planen →</a></div>
@@ -3489,6 +3515,7 @@ function renderDiagnose(main){
 
 // ---------- Prøvemuntlig (Elementmetoden) ----------
 let MUNT = null;
+const MUNT_OPPF = ['Hvorfor er det slik? Forklar årsaken, ikke bare hva som skjer.', 'Gi et konkret eksempel fra prosjektet deres.', 'Hva ville du kontrollert for å være sikker på at resultatet er riktig?', 'Hva skjer hvis forutsetningen ikke holder?', 'Hvordan ville du forklart dette med en enkel skisse?', 'Hvilken størrelse ville du sett på videre, og hvorfor?'];
 function muntFasit(q){ return q.fields.map(f=>{ const s = f.kind==='mc' ? f.opts[f.ans] + (f.why && f.why[f.ans] ? ' — ' + f.why[f.ans] : '') : (f.ref || f.ans || '');
     return s ? `<div>${f.label?`<strong>${esc(f.label)}:</strong> `:''}${mdBlock(String(s) + (f.unit && f.kind==='expr' ? ' ' + f.unit : ''))}</div>` : ''; }).join('') + (q.explain ? mdBlock(q.explain) : ''); }
 function renderMuntlig(main){
@@ -3507,6 +3534,7 @@ function renderMuntlig(main){
     <p class="small muted" style="margin:0 0 12px">Forklar høyt som på eksamen: definisjon, skisse, når og hvorfor, og et eksempel fra prosjektet ditt. Klokka starter når du er klar.</p>
     <div class="row" style="gap:10px;flex-wrap:wrap"><button class="btn primary big" id="mu-start">Start 2 minutter</button><button class="btn ghost" id="mu-vis">Vis vurderingspunkter</button></div>
     <div id="mu-fasit" hidden><div class="ddp fas" style="margin-top:14px"><h4>Vurderingspunkter</h4>${muntFasit(q) || '<p class="small muted">Ingen fasit i kursmaterialet for dette spørsmålet.</p>'}${q.src&&q.src.pdf?`<p class="small" style="margin:8px 0 0">Kilde: <a href="${esc(q.src.pdf)}${q.src.page?'#page='+q.src.page:''}" target="_blank" rel="noopener">åpne lysbildet</a></p>`:''}</div>
+      <p style="margin:12px 0 0"><strong>Oppfølging fra sensor:</strong> ${esc(MUNT_OPPF[(M.i*5 + q.id.length) % MUNT_OPPF.length])} <span class="small muted">Svar høyt før du vurderer deg selv.</span></p>
       <p class="small" style="margin:12px 0 6px"><strong>Hvordan gikk forklaringen din?</strong></p>
       <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn sec" data-mu="ok">Klarte selv</button><button class="btn sec" data-mu="del">Delvis</button><button class="btn sec" data-mu="bad">Må repetere</button></div></div></div>`;
   let tm = null, igjen = 120;
@@ -3658,7 +3686,16 @@ async function boot(){
   try{
     if(!window.BANK) throw new Error('bank.js mangler');
     const BV = window.BVAR || {questions:[], sets:{}}; Object.assign(SETS, BV.sets);
-    Q = window.BANK.questions.concat(BM.questions||[], BF.questions||[], BV.questions||[]); TOPICS = Object.assign({}, window.BANK.topics, BM.topics||{}, BF.topics||{}); Q.forEach(q=>QBY[q.id]=q);
+    // Mekanikk-øvingene: oppgaveteksten har dere selv, løsningsforslaget ligger her. Temaet er satt ut fra løsningsforslaget.
+    const MEK_OV = {1:['m-statikk','kraftkomponenter og resultant'], 2:['m-statikk','moment, fritt-legeme-diagram og lagerreaksjoner'], 3:['m-statikk','statisk bestemthet og reaksjoner med ledd'],
+      4:['m-fordelt','fordelt last og vanntrykk'], 5:['m-fagverk','fagverk med knutepunktmetoden'], 6:['m-ramme','spenning og tøyning, snittkrefter og diagram'], 7:['m-ramme','N-, V- og M-diagram for ramme'],
+      8:['m-fasthet','spenning, tøyning og forlengelse'], 9:['m-tverrsnitt','arealsenter og temperaturtøyning'], 10:['m-boy','arealsenter, annet arealmoment og bøyespenning'],
+      11:['m-deform','elastisk linje og nedbøyning'], 13:['m-deform','elementærbjelkemetoden'], 14:['m-skjaer','skjærspenning']};
+    SETS.mOv = {navn:'Øvinger med løsningsforslag', kort:'Øving', info:'Regnes på papir og rettes mot løsningsforslaget', fag:'mek'};
+    const MOV = ((BM.res||{}).lfov||[]).filter(o=>MEK_OV[o.n] && (BM.topics||{})[MEK_OV[o.n][0]]).map(o=>({id:'mOv-'+o.n, fag:'mek', oving:'mOv', nr:String(o.n), maxp:10, topic:MEK_OV[o.n][0], ovpdf:o.pdf, minutter:60,
+      title:`Gjør øving ${o.n} (${MEK_OV[o.n][1]})`, text:`Regn øving ${o.n} på papir. Oppgaveteksten finner du i Blackboard. Rett oppgave for oppgave mot løsningsforslaget, og registrer hvordan det gikk.`,
+      segs:[], fields:[{i:1, kind:'card', ans:'Åpne løsningsforslaget (lenken øverst) og rett oppgave for oppgave. Velg «Klarte selv» bare hvis du fikk til alle oppgavene uten å se i løsningen underveis.'}], hints:[], explain:'', refs:[], steg:[]}));
+    Q = window.BANK.questions.concat(BM.questions||[], MOV, BF.questions||[], BV.questions||[]); TOPICS = Object.assign({}, window.BANK.topics, BM.topics||{}, BF.topics||{}); Q.forEach(q=>QBY[q.id]=q);
     window.__SETS = SETS;
     Q.forEach(q=>q.fields.forEach(f=>{ if(f.kind==='expr' && f.ans && /=/.test(f.ans)) f.kind='self'; }));
   }catch(e){ $('#main').innerHTML = '<div class="card"><p>Kunne ikke laste oppgavebanken (bank.js).</p></div>'; return; }
