@@ -26,7 +26,7 @@ button{font:inherit}
 .topbar nav a{text-decoration:none;color:var(--muted);padding:6px 10px;border-radius:6px;font-size:14px}
 .topbar nav a.active,.topbar nav a:hover{color:var(--fg);background:var(--accent-soft)}
 .wrap{max-width:1840px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:1fr;gap:20px}
-@media(min-width:900px){.wrap{grid-template-columns:200px minmax(0,1fr)}}
+@media(min-width:900px){.wrap{grid-template-columns:minmax(0,1fr);max-width:1180px}}
 @media(min-width:1300px){.wrap{padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px));gap:28px}}
 .side{display:none}
 @media(min-width:900px){.side{display:block;position:sticky;top:calc(58px + env(safe-area-inset-top,0px));align-self:start}}
@@ -496,6 +496,11 @@ pre.pycode{margin:0;background:var(--bg);border:1px solid var(--line);border-rad
 .fs-b .qlist .n{min-width:92px;white-space:nowrap}
 
 /* ---- Plattform v2 ---- */
+.dd[hidden]{display:none!important}
+.okt-feilk{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding:12px 16px}
+.tm-niva{font-size:11px;padding:1px 7px;border-radius:9px;background:var(--grey-soft);color:var(--muted);white-space:nowrap}
+.tm-niva.n-lstselv{background:var(--accent-soft);color:var(--accent)}.tm-niva.n-bekreftet{background:var(--good-soft);color:var(--good)}
+.munt-q{font-size:19px;line-height:1.45;margin:10px 0 14px}.munt-t{font-size:34px;font-weight:600;font-variant-numeric:tabular-nums}
 a.tema{text-decoration:none}.fk-rute{margin-top:8px;min-height:22px}.okt-gjort{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);opacity:.8}
 .tema{display:grid;grid-template-columns:minmax(180px,300px) minmax(0,1fr) minmax(0,1fr) 130px;gap:6px 16px;align-items:center;width:100%;text-align:left;padding:10px 12px;margin:0 0 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--fg);font:inherit;cursor:pointer}
 .tema:hover{border-color:var(--accent)}.tema.on{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent);background:var(--accent-soft)}.tema.auto:not(.on){box-shadow:inset 3px 0 0 var(--accent)}
@@ -557,16 +562,16 @@ a.tema{text-decoration:none}.fk-rute{margin-top:8px;min-height:22px}.okt-gjort{d
   <a class="brand" href="#hjem"><span class="mark">∭</span>Studieplattform</a>
   <div id="filebar" class="row" style="gap:6px;margin-left:auto" hidden></div>
   <nav id="topnav" style="margin-left:0">
-    <a href="#hjem">Hjem</a><a href="#kalender">Kalender</a><a href="#gjoremal">Plan</a><a href="#okt">Matte</a><a href="#fag-mek">Mekanikk</a><a href="#fag-fem">Elementmetoden</a>
+    <a href="#hjem">Hjem</a><a href="#gjoremal">Plan</a><a href="#okt-mek">Mekanikk</a><a href="#okt-fem">Elementmetoden</a><a href="#okt">Matte</a><a href="#mer">Mer</a>
   </nav>
 </header>
 <div class="wrap">
-  <aside class="side" id="side"></aside>
+  <aside class="side" id="side" hidden></aside>
   <main id="main-wrap"><div id="tabs" class="tabs" hidden></div><div id="main"><div class="card"><p class="muted">Laster oppgavebanken …</p></div></div></main>
 </div>
 <nav id="botnav" aria-label="Hovedmeny">
   <a href="#hjem" data-b="hjem"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Hjem</a>
-  <a href="#okt" data-b="okt"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Økt</a>
+  <a href="#okt" data-b="okt" id="bn-okt"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Økt</a>
   <a href="#gjoremal" data-b="gjoremal"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Plan</a>
   <a href="#mer" data-b="mer"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Mer</a>
 </nav>
@@ -894,17 +899,19 @@ function route(){
   TABS.sync('#'+h);
   PLAN_CACHE = null;
   const ctx = ctxFag(h);
-  const sect = ['hjem','kalender','gjoremal'].includes(h) ? h : ctx==='mek' ? 'fag-mek' : ctx==='fem' ? 'fag-fem' : ctx==='matte' ? 'okt' : h;
-  const bsel = ['hjem','gjoremal','mer'].includes(h) ? h : (h==='okt' || h==='diagnose' || (h.startsWith('q-') && oktState().cur)) ? 'okt' : ['kalender','om','notater'].includes(h) || ctx ? 'mer' : 'hjem';
+  OKT_FAG = ctx || 'matte';
+  const sect = h==='kalender' ? 'gjoremal' : ['hjem','gjoremal'].includes(h) ? h : ctx ? oktHash(ctx).slice(1) : 'mer';
+  const bsel = ['hjem','gjoremal','mer'].includes(h) ? h : (/^okt/.test(h) || h==='diagnose' || (h.startsWith('q-') && oktState().cur)) ? 'okt' : ['kalender','om','notater'].includes(h) || ctx ? 'mer' : 'hjem';
   document.querySelectorAll('#botnav a').forEach(a=>a.classList.toggle('active', a.dataset.b===bsel));
   document.querySelectorAll('#topnav a').forEach(a=>a.classList.toggle('active', a.getAttribute('href')==='#'+sect));
-  renderSide(h);
+  const bo = $('#bn-okt'); if(bo){ const P0 = PLAN_CACHE || buildPlan(), fo = ((planFor(todayStr()).find(p=>p.a.type==='okt')||{}).a||{}).fag; bo.setAttribute('href', ctx ? oktHash(ctx) : oktHash(fo||'matte')); }
   const main = $('#main'); main.innerHTML='';
   const setKey = x => /^\d+$/.test(x) ? +x : x;
   if(h==='hjem') renderHjem(main);
   else if(h==='kalender') renderKalender(main);
-  else if(h==='okt') renderOkt(main);
+  else if(h==='okt' || /^okt-(mek|fem)$/.test(h)) renderOkt(main);
   else if(h==='diagnose') renderDiagnose(main);
+  else if(h==='muntlig') renderMuntlig(main);
   else if(h==='mer') renderMer(main);
   else if(h==='python') renderPython(main);
   else if(h==='python-oppg') renderPoOversikt(main);
@@ -928,7 +935,8 @@ function route(){
 }
 function typeset(el){ if(window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]).catch(()=>{}); }
 function ctxFag(h){
-  if(/^fag-(mek|fem)$/.test(h)) return h.slice(4);
+  if(/^(fag|okt)-(mek|fem)$/.test(h)) return h.slice(4);
+  if(h==='muntlig') return 'fem';
   if(h.startsWith('oving-')){ const k = h.slice(6); return (window.__SETS||{})[k] ? window.__SETS[k].fag : 'matte'; }
   if(h.startsWith('q-')){ const q = QBY[h.slice(2)]; return q ? (q.fag||'matte') : null; }
   if(h.startsWith('forsok-')){ const ss = STATE.sessions[h.slice(7)]; if(!ss) return null; return (window.__SETS||{})[ss.oving] ? window.__SETS[ss.oving].fag : 'matte'; }
@@ -1266,10 +1274,10 @@ function attachHelp(root, q, ctx){
     };
     if(panel.querySelector('.h-ok')){ panel.querySelector('.h-ok').onclick = selfBtn(true); panel.querySelector('.h-bad').onclick = selfBtn(false); }
     if(f.kind==='card'){
-      const fl = wrap.querySelector('.flip'), cb = wrap.querySelector('.cardback'), cok = wrap.querySelector('.c-ok'), cbad = wrap.querySelector('.c-bad');
-      if(fl) fl.onclick = ()=>{ cb.hidden = !cb.hidden; fl.textContent = cb.hidden ? 'Snu kortet' : 'Skjul baksiden'; if(!cb.hidden && !ctx.answered.has(k)){ cok.hidden = false; cbad.hidden = false; } typeset(cb); };
-      const cardRate = ok => async ()=>{ if(ctx.answered.has(k)) return; await selfBtn(ok)(); cok.disabled = true; cbad.disabled = true; const ws = wrap.querySelector('.st'); if(ws) ws.textContent = ok ? 'Registrert: kunne det' : 'Registrert: kommer tilbake i repetisjonen'; };
-      if(cok){ cok.onclick = cardRate(true); cbad.onclick = cardRate(false); }
+      const fl = wrap.querySelector('.flip'), cb = wrap.querySelector('.cardback'), cok = wrap.querySelector('.c-ok'), cbad = wrap.querySelector('.c-bad'), cdel = wrap.querySelector('.c-del');
+      if(fl) fl.onclick = ()=>{ cb.hidden = !cb.hidden; fl.textContent = cb.hidden ? 'Vis vurderingspunkter' : 'Skjul vurderingspunkter'; fl.classList.toggle('primary', cb.hidden); if(!cb.hidden && !ctx.answered.has(k)){ cok.hidden = false; cbad.hidden = false; if(cdel) cdel.hidden = false; } typeset(cb); };
+      const cardRate = (ok, delvis) => async ()=>{ if(ctx.answered.has(k)) return; if(delvis) ctx.usedHint = true; await selfBtn(ok)(); cok.disabled = true; cbad.disabled = true; if(cdel) cdel.disabled = true; const ws = wrap.querySelector('.st'); if(ws) ws.textContent = delvis ? 'Registrert: delvis (teller 70 %)' : ok ? 'Registrert: klarte selv' : 'Registrert: kommer tilbake i repetisjonen'; };
+      if(cok){ cok.onclick = cardRate(true); cbad.onclick = cardRate(false); if(cdel) cdel.onclick = cardRate(true, true); }
     }
   });
   // Sjekk-knapper
@@ -1400,8 +1408,8 @@ function renderProve(main, s){
     ${qs.map(q=>queHtml(q, 'prove', {cls:'', txt:'Ikke besvart'}, `id="pq_${q.id}"`)).join('')}
     <div class="cq-foot"><a class="btn sec" href="#oving-${n}">Avbryt</a><button class="btn primary" id="lever">Fullfør forsøk …</button></div><div id="result"></div>
   </div>${navBlockHtml(qs, -1, ()=>'', px ? `<span class="small muted">Tid igjen</span><span class="timer" id="timer">4:00:00</span><span class="small muted" style="display:block;margin:4px 0 8px">Del 1: oppg. 1–9 (4 p) · Del 2: oppg. 10–13 (9 p)</span>` : `<span class="small muted">Tid brukt</span><span class="timer" id="timer">00:00</span>`, `<a class="fin" href="#" id="lever2">${px?'Lever …':'Fullfør forsøk …'}</a>`)}</div>`;
-  qs.forEach(q=>{ const inf = main.querySelector(`#pq_${q.id} .info`); if(!inf) return; const fb = document.createElement('button'); fb.className = 'btn small ghost flagb'; fb.textContent = 'Merk'; fb.title = 'Merk oppgaven for å komme tilbake til den';
-    fb.onclick = ()=>{ const on = fb.classList.toggle('on'); fb.textContent = on ? 'Merket' : 'Merk'; const nb = main.querySelector(`.qnbutton[data-q="${q.id}"]`); if(nb) nb.classList.toggle('flag', on); }; inf.appendChild(fb); });
+  qs.forEach(q=>{ const inf = main.querySelector(`#pq_${q.id} .info`); if(!inf) return; const fb = document.createElement('button'); fb.className = 'btn small ghost flagb'; fb.textContent = 'Usikker'; fb.title = 'Merk oppgaven som usikker, så kommer du tilbake til den';
+    fb.onclick = ()=>{ const on = fb.classList.toggle('on'); fb.textContent = on ? 'Usikker ✓' : 'Usikker'; const nb = main.querySelector(`.qnbutton[data-q="${q.id}"]`); if(nb) nb.classList.toggle('flag', on); }; inf.appendChild(fb); });
   main.querySelectorAll('.qnbutton').forEach(a=>a.onclick=e=>{ e.preventDefault(); const el = $('#pq_'+a.dataset.q); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); });
   bindAnswers(main, s.id);
   const tm = setInterval(()=>{ const el=$('#timer'); if(!el){ clearInterval(tm); return; } const t=Math.floor((Date.now()-start)/1000);
@@ -1432,10 +1440,12 @@ function renderProve(main, s){
       rows.push({q:q.id,qn,qg});
     }
     const poeng = rows.reduce((a,r)=>{ const q = QBY[r.q]; return a + (r.qn ? r.qg/r.qn*(q.maxp||1) : 0); }, 0), maks = qs.reduce((a,q)=>a+(q.maxp||1), 0);
-    Object.assign(s, {done:1, score: tot? got/tot : 0, got, tot, sek:Math.floor((Date.now()-start)/1000), rows, end:Date.now(), poeng: Math.round(poeng*10)/10, maks, selv:{}});
+    const usikre = [...main.querySelectorAll('.qnbutton.flag')].map(x=>x.dataset.q).filter(Boolean);
+    Object.assign(s, {done:1, score: tot? got/tot : 0, got, tot, sek:Math.floor((Date.now()-start)/1000), rows, end:Date.now(), poeng: Math.round(poeng*10)/10, maks, selv:{}, usikre});
     await saveDoc('sessions', s.id, s);
     const selvQ = rows.filter(r=>!r.qn).map(r=>QBY[r.q]);
     $('#result').innerHTML = `<div class="ddp fas" style="margin-top:4px"><h4>Resultat</h4><p style="margin:0;font-size:16px"><strong><span id="px-p">${fmtP(s.poeng)}</span> av ${maks} poeng</strong> · ${got}/${tot} felt riktig</p>
+      ${usikre.length?`<p class="small" style="margin:8px 0 0"><strong>Merket som usikker:</strong> ${usikre.map(id=>{ const q = QBY[id], r = rows.find(x=>x.q===id); return `<a href="#q-${id}">oppg. ${q.nr}</a>${r&&r.qn&&r.qg===r.qn?' (riktig, men ta den på nytt)':''}`; }).join(', ')}</p>`:''}
       ${selvQ.length?`<div class="selvr"><p class="small" style="margin:8px 0 4px"><strong>Rett selv</strong> (rettes ikke automatisk). Sammenlign med løsningen og velg ærlig:</p>${selvQ.map(q=>`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0"><span class="small">Oppg. ${q.nr} · ${mdInline(q.title)} (${q.maxp||1} p)</span><button class="btn small sec" data-sv="${q.id}" data-ok="1">Fikk til</button><button class="btn small sec" data-sv="${q.id}" data-ok="0">Fikk ikke til</button></div>`).join('')}</div>`:''}<p class="small" style="margin:6px 0 0">Resultatet er lagret og inngår i mestringen og gjøremålene. <a href="#forsok-${s.id}">Se oppsummeringen</a>, eller bla opp for å se riktig svar ved hvert felt.</p></div>`;
     $('#lever').disabled = true; $('#result').scrollIntoView({behavior:'smooth'});
     main.querySelectorAll('[data-sv]').forEach(b=>b.onclick = async ()=>{ const q = QBY[b.dataset.sv], ok = b.dataset.ok==='1'; if(s.selv[q.id]!=null) return;
@@ -1553,7 +1563,7 @@ document.addEventListener('click', e=>{
 // =====================================================================
 // ---------- Studieplattform: fag, aktiviteter, plan og kalender ----------
 // =====================================================================
-const APP_VER = '28.11 kl. 10.00';
+const APP_VER = '28.11 kl. 12.00';
 const FAG = {
   mek:  { key:'mek',  kode:'MEKA1101', navn:'Mekanikk 1',        kort:'Mekanikk',       canvas:'MEKA1101-26H :: Mekanikk 1',      sem:'MEKA1101-26H', exam:'2026-12-04', tid:'kl. 09:00–13:00 (4 t), oppmøte 30 min før', form:'Skriftlig, Inspera + håndberegninger på ark. Hjelpemiddel D: enkel kalkulator og vedlagt formelark.', farge:'#7b3f98' },
   fem:  { key:'fem',  kode:'MEPA2314', navn:'Elementmetoden',    kort:'Elementmetoden', canvas:'MEPA2314-26H :: Elementmetoden',   sem:'MEPA2314-26H', exam:'2026-12-11', tid:'tidspunkt ikke oppgitt i Canvas', form:'Muntlig eksamen (teller 40 %). Prosjektmappen teller 60 %.', farge:'#1f6f78' },
@@ -1635,7 +1645,7 @@ const ACTS = [];
     {id:'fem-rep', type:'set', set:'fRep', min:20, pri:2, t:'Øv på «Repetisjon: statikk og opplagre» (6 spørsmål)', g:'Mål: likevekt og opplagertyper sitter.'},
     {id:'fem-pres', type:'manual', min:120, pri:1, earliest:'2026-12-05', t:'Lag en 5-minutters muntlig presentasjon av prosjektet (problem, modell, randbetingelser, mesh, resultater, konklusjon)', g:'Mål: presentasjonen holdt høyt én gang med tidtaker.', link:'#q-fProsj-5'},
     {id:'fem-bom', type:'manual', min:30, pri:2, earliest:'2026-12-07', t:'Repeter Elementmetoden-spørsmålene du bommet på', g:'Mål: alle kort med «Kunne det ikke» gjennomgått på nytt.', link:'#fag-fem'},
-    {id:'fem-prove', type:'manual', min:90, pri:1, earliest:'2026-12-08', t:'Prøvemuntlig: forklar 10 tilfeldige spørsmål høyt, 2–3 minutter per spørsmål', g:'Mål: svar med definisjon, skisse, når/hvorfor og eksempel fra prosjektet.', link:'#fag-fem'},
+    {id:'fem-prove', type:'manual', min:90, pri:1, earliest:'2026-12-08', t:'Prøvemuntlig: forklar 10 tilfeldige spørsmål høyt, 2–3 minutter per spørsmål', g:'Mål: svar med definisjon, skisse, når/hvorfor og eksempel fra prosjektet.', link:'#muntlig'},
     {id:'fem-siste', type:'manual', min:60, pri:1, earliest:'2026-12-10', due:'2026-12-10', t:'Siste gjennomgang: presentasjonen og de svakeste spørsmålene', g:'Mål: rolig kveld før muntlig.', link:'#fag-fem'},
   ];
   const push = (fag, list) => list.forEach((a,k)=>ACTS.push(Object.assign({fag, order:k, due:a.due||lastStudy(fag)}, a)));
@@ -1694,12 +1704,12 @@ function capOf(d, ps){
   return ps.cap;
 }
 function dayRange(a, b){ const out=[]; for(let d=a; d<=b; d=addDays(d,1)) out.push(d); return out; }
-function doneOn(d){ return engineActs().filter(a=>a.type!=='okt' && a.type!=='rep').map(a=>({a, st:actStatus(a)})).filter(x=>x.st.done && x.st.ts && iso(new Date(x.st.ts))===d); }
+function doneOn(d){ return engineActs().filter(a=>a.type!=='okt').map(a=>({a, st:actStatus(a)})).filter(x=>x.st.done && x.st.ts && iso(new Date(x.st.ts))===d); }
 let PLAN_CACHE = null;
 function buildPlan(){
   const ps = planSettings(), today = todayStr();
   const all = engineActs().map(a=>({a, st:actStatus(a)}));
-  ps.natt = planForm()==='natt';
+  ps.natt = planForm()==='natt'; ps.nattFag = new Set(FAG_ORDER.filter(f=>dueFields(f).length));
   const pend = all.filter(x=>!x.st.done && todayStr() <= lastStudy(x.a.fag)).map(x=>({a:x.a, st:x.st, rem: Math.max(10, Math.round(x.a.min*(1-(x.st.prog||0))/5)*5)}));
   const doneToday = all.filter(x=>x.st.done && x.st.ts && iso(new Date(x.st.ts))===today).reduce((s,x)=>s+(x.st.brukt!=null ? x.st.brukt : x.a.min),0) + Math.round(oktLoggMin(today));
   const excluded = new Set(); let res;
@@ -1720,18 +1730,25 @@ function buildPlan(){
   PLAN_CACHE = res; return res;
 }
 function schedule(items, ps, today, doneToday){
+  items = items.map(p=>Object.assign({}, p));   // kopi: rem telles ned når en aktivitet deles over flere dager
   const days = dayRange(today, PLAN_END);
   const plan = {}; days.forEach(d=>plan[d]=[]);
   const placed = new Set(), placedOn = {};
   const byFag = {}; FAG_ORDER.forEach(f=>byFag[f] = items.filter(p=>p.a.fag===f).sort((x,y)=>x.a.order-y.a.order));
   const edf = (x,y)=> (x.a.due<y.a.due?-1:x.a.due>y.a.due?1:0) || (x.a.pri-y.a.pri) || (FAG_ORDER.indexOf(x.a.fag)-FAG_ORDER.indexOf(y.a.fag)) || (x.a.order-y.a.order);
-  const eligible = (p,d) => !placed.has(p.a.id) && (!p.a.earliest || p.a.earliest<=d) && d<=lastStudy(p.a.fag) && !(ps.natt && d===today && !['rep','okt'].includes(p.a.type));
+  const hel = p => p.a.type==='px' || p.a.type==='examscore';   // hele eksamenssett deles ikke
+  const eligible = (p,d) => !placed.has(p.a.id) && (!p.a.earliest || p.a.earliest<=d) && d<=lastStudy(p.a.fag) && !(ps.natt && d===today && !(p.a.type==='okt' && ps.nattFag.has(p.a.fag)));
   for(const d of days){
     const cap = capOf(d, ps); let left = cap - (d===today ? doneToday : 0);
-    if(left<=0) continue;
-    const put = p => { plan[d].push(p); placed.add(p.a.id); placedOn[p.a.id]=d; left -= p.rem; };
+    if(left<10) continue;
+    // Legger inn så mye som får plass. Resten av aktiviteten blir stående til en senere dag.
+    const put = p => { if(left<10) return 0; if(hel(p) && p.rem>left) return 0;
+      const amt = p.rem<=left+5 ? p.rem : Math.floor(left/5)*5; if(amt<10 && amt<p.rem) return 0;
+      const del = amt<p.rem || p.delt;
+      plan[d].push({a:p.a, st:p.st, rem:amt, del}); left -= amt; p.rem -= amt; p.delt = true; placedOn[p.a.id] = d;
+      if(p.rem<5) placed.add(p.a.id); return amt; };
     // 1) det som har frist i dag eller tidligere
-    items.filter(p=>eligible(p,d) && p.a.due<=d).sort(edf).forEach(p=>{ if(left>0) put(p); });
+    items.filter(p=>eligible(p,d) && p.a.due<=d).sort(edf).forEach(p=>put(p));
     // 2) jevnt tempo per fag fram mot eksamen
     const active = FAG_ORDER.filter(f=>d<=lastStudy(f)).sort((a,b)=>lastStudy(a)<lastStudy(b)?-1:1);
     for(const f of active){
@@ -1740,16 +1757,12 @@ function schedule(items, ps, today, doneToday){
       const daysLeft = days.filter(x=>x>=d && x<=lastStudy(f) && capOf(x,ps)>0).length || 1;
       const need = rest.reduce((s,p)=>s+p.rem,0)/daysLeft;
       let alloc = 0;
-      for(const p of rest.filter(p=>eligible(p,d))){
-        if(alloc>=need || left<=0) break;
-        if(p.rem > left+20 && !(alloc===0 && plan[d].length===0)) continue;
-        put(p); alloc += p.rem;
-      }
+      for(const p of rest.filter(p=>eligible(p,d))){ if(alloc>=need || left<10) break; alloc += put(p); }
     }
     // 3) fyll resten av dagen etter nærmeste frist
-    for(let g=0; g<40 && left>=15; g++){
-      const c = items.filter(p=>eligible(p,d) && p.rem<=left+15).sort(edf)[0];
-      if(!c) break; put(c);
+    for(let g=0; g<40 && left>=10; g++){
+      const c = items.filter(p=>eligible(p,d) && !plan[d].some(x=>x.a.id===p.a.id && placed.has(p.a.id))).sort(edf).find(p=>!hel(p) || p.rem<=left);
+      if(!c || !put(c)) break;
     }
   }
   const overflow = items.filter(p=>!placed.has(p.a.id));
@@ -1769,6 +1782,8 @@ function actItemHtml(a, opts){
   const link = actLink(a); const ext = a.ext || /\.pdf|\.html/.test(link);
   const [main, extra] = splitTitle(a.t);
   const meta = [fmtMin(opts.rem && opts.rem!==a.min && !st.done ? opts.rem : a.min)];
+  if(opts.del) meta.push('del av ' + fmtMin(a.min));
+  if(a.type==='manual' && !a.egen && /Capquiz|SharePoint/.test(a.t)) meta.push('utenfor plattformen'); else if(a.type==='manual' && a.ext) meta.push('åpner PDF');
   if((a.type==='qs'||a.type==='set') && !st.done && st.prog>0) meta.push(Math.round(st.prog*100)+' % besvart');
   if(st.manual) meta.push('merket som gjort');
   return `<div class="it act ${st.done?'done':''}" data-act="${a.id}">${opts.sel?`<label class="rsel" title="Velg for nullstilling"><input type="checkbox" data-rsel="${a.id}"></label>`:''}<button class="chk ${st.done?'on':''}" data-act="${a.id}" title="${lock?'Fullført automatisk ut fra svarene dine':st.done?'Merk som ikke gjort':'Merk som gjort'}" ${lock?'disabled':''}>${st.done?'✓':''}</button>
@@ -1839,7 +1854,7 @@ function bindReset(root){
 function renderGjoremal(main){
   const P = buildPlan(); const t = todayStr();
   const days = Object.keys(P.plan).filter(d=>P.plan[d].length);
-  const all = engineActs().filter(a=>a.type!=='okt' && a.type!=='rep').map(a=>({a, st:actStatus(a)}));
+  const all = engineActs().map(a=>({a, st:actStatus(a)}));
   const egne = all.filter(x=>x.a.egen);
   const doneAll = all.filter(x=>x.st.done).sort((x,y)=>(y.st.ts||0)-(x.st.ts||0));
   const started = all.filter(x=>!x.st.done && (x.st.prog||0)>0).sort((x,y)=>(y.st.prog||0)-(x.st.prog||0));
@@ -1850,22 +1865,22 @@ function renderGjoremal(main){
   const doneHtml = Object.keys(byDay).sort().reverse().map(d=>`<div class="weekhd"><h3 style="margin:0">${d==='ukjent'?'Uten dato':d===t?'I dag · '+fmtD(d):fmtD(d)}</h3><span class="small muted">${byDay[d].length} · ${fmtMin(byDay[d].reduce((s,x)=>s+x.a.min,0))}</span></div><div class="todo">${byDay[d].map(x=>actItemHtml(x.a,{sel:true})).join('')}</div>`).join('');
   const planHtml = days.map(d=>{ const ps2 = P.plan[d]; const m = ps2.reduce((s,p)=>s+p.rem,0);
     return `<div class="weekhd"><h3 style="margin:0">${d===t?'I dag · ':''}${fmtD(d)}</h3><span class="small muted">${fmtMin(m)}</span></div>
-    <div class="todo">${ps2.map(p=>actItemHtml(p.a,{rem:p.rem, from: d===t && p.a.due<t ? p.a.due : null, late: p.a.due<d && p.a.due>=t})).join('')}</div>`; }).join('');
+    <div class="todo">${ps2.map(p=>actItemHtml(p.a,{rem:p.rem, del:p.del, from: d===t && p.a.due<t ? p.a.due : null, late: p.a.due<d && p.a.due>=t})).join('')}</div>`; }).join('');
   main.innerHTML = `<div class="row between"><h1>Plan</h1><a class="btn small" href="#kalender">Vis i kalender</a></div>
-  <p class="small muted" style="margin:0 0 10px">Planen lages av én motor for alle fagene: nærmeste eksamen først, og matten fordeles som økter der Økt-motoren velger oppgavene. Endre dagens tid på Hjem.</p>
-  <div class="gsum">
+  <p class="small muted" style="margin:0 0 10px">Planen lages av én motor for alle fagene: nærmeste eksamen først, og øvingen i hvert fag ligger som økter der motoren velger tema og oppgaver. Ingen dag får mer enn studietiden du har satt.</p>
+  <div class="row between" style="margin:10px 0 6px">${capControlHtml(t)}<span class="small muted">Ugjort flyttes til neste ledige dag</span></div>${overflowHtml(P)}
+  ${foldSec('g-plan', 'Dag for dag', `${days.length} studiedager fordelt på ${daysTo(FAG.matte.exam)} kalenderdager til siste eksamen`, planHtml || '<p class="muted small" style="margin:0">Ingenting igjen i planen.</p>', true)}
+  ${P.excluded.length?foldSec('g-ned', `Nedprioritert (${P.excluded.length})`, 'får ikke plass med dagens studietid', `<div class="todo">${P.excluded.map(p=>actItemHtml(p.a,{rem:p.rem})).join('')}</div>`, false):''}
+  <div class="gsum" style="margin-top:14px">
     <div><span class="gn">${doneAll.length}</span><span class="small muted">fullført · ${fmtMin(doneMin)}</span></div>
     <div><span class="gn">${started.length}</span><span class="small muted">påbegynt</span></div>
     <div><span class="gn">${all.length-doneAll.length-started.length}</span><span class="small muted">ikke startet</span></div>
     <div><span class="gn">${fmtMin(remMin)}</span><span class="small muted">arbeid igjen</span></div>
   </div>
-  <div class="row between" style="margin:10px 0 6px">${capControlHtml(t)}<span class="small muted">Ugjort flyttes til neste ledige dag</span></div>${overflowHtml(P)}
   <div id="rbar" class="rbar" hidden><span><strong class="rn">0</strong> valgt</span><span class="row" style="gap:6px"><button class="btn small ghost rcancel">Avbryt</button><button class="btn small danger rgo">Nullstill valgte</button></span></div>
   ${foldSec('g-egne', `Egne oppgaver (${egne.length})`, 'legg til noe motoren skal planlegge inn', `<div class="egen-f"><input id="eg-t" placeholder="Hva skal gjøres?"><select id="eg-f">${FAG_ORDER.map(f=>`<option value="${f}">${esc(FAG[f].kort)}</option>`).join('')}</select><label class="small">min <input id="eg-m" type="number" min="10" step="5" value="30" style="width:70px"></label><button class="btn small primary" id="eg-add">Legg til</button></div>${egne.length?`<div class="todo" style="margin-top:8px">${egne.map(x=>actItemHtml(x.a)+`<button class="btn small ghost eg-del" data-id="${x.a.id}">Slett</button>`).join('')}</div>`:''}`, egne.length>0)}
-  ${foldSec('g-start', `Påbegynt (${started.length})`, `startet, men ikke ferdig${started.length?' · <a href="#" data-selall>velg alle</a>':''}`, started.length?`<div class="todo">${started.map(x=>actItemHtml(x.a,{sel:true, rem:Math.max(10,Math.round(x.a.min*(1-x.st.prog)/5)*5)})).join('')}</div>`:'<p class="muted small" style="margin:0">Ingenting påbegynt.</p>', true)}
-  ${foldSec('g-done', `Fullført (${doneAll.length})`, `alt du har gjort, nyest først${doneAll.length?' · <a href="#" data-selall>velg alle</a>':''}`, doneHtml || '<p class="muted small" style="margin:0">Ingenting fullført ennå.</p>', true)}
-  ${foldSec('g-plan', 'Plan', `${days.length} dager fram til siste eksamen`, planHtml || '<p class="muted small" style="margin:0">Ingenting igjen i planen.</p>', true)}
-  ${P.excluded.length?foldSec('g-ned', `Nedprioritert (${P.excluded.length})`, 'får ikke plass med dagens studietid', `<div class="todo">${P.excluded.map(p=>actItemHtml(p.a,{rem:p.rem})).join('')}</div>`, false):''}`;
+  ${!started.length?'':foldSec('g-start', `Påbegynt (${started.length})`, `startet, men ikke ferdig${started.length?' · <a href="#" data-selall>velg alle</a>':''}`, started.length?`<div class="todo">${started.map(x=>actItemHtml(x.a,{sel:true, rem:Math.max(10,Math.round(x.a.min*(1-x.st.prog)/5)*5)})).join('')}</div>`:'<p class="muted small" style="margin:0">Ingenting påbegynt.</p>', true)}
+  ${!doneAll.length?'':foldSec('g-done', `Fullført (${doneAll.length})`, `alt du har gjort, nyest først${doneAll.length?' · <a href="#" data-selall>velg alle</a>':''}`, doneHtml || '<p class="muted small" style="margin:0">Ingenting fullført ennå.</p>', false)}`;
   bindActs(main); bindCap(main); bindFolds(main); bindReset(main);
   $('#eg-add').onclick = async ()=>{ const t2 = $('#eg-t').value.trim(); if(!t2) return; await saveDoc('todos', 'egen-'+Date.now().toString(36), {egen:true, t:t2, fag:$('#eg-f').value, min:Math.max(10, +$('#eg-m').value||30), ts:Date.now()}); PLAN_CACHE = null; route(); };
   main.querySelectorAll('.eg-del').forEach(b=>b.onclick = async ()=>{ const v = STATE.todos[b.dataset.id]; if(!v || !confirm('Slette «'+v.t+'»?')) return; await saveDoc('todos', b.dataset.id, Object.assign({}, v, {slettet:true})); PLAN_CACHE = null; route(); });
@@ -1883,8 +1898,8 @@ function renderKalender(main, sel){
     return `<button class="calday ${d===t?'today':''} ${d<t?'past':''} ${d===CAL_SEL?'sel':''} ${ev.some(e=>e.type==='eksamen')?'exam':''}" data-d="${d}">
       <div class="cd-h"><span>${pd(d).getDate()}${pd(d).getDate()===1||d===start?'. '+MON[pd(d).getMonth()]:''}</span>${d>=t&&cap?`<span class="cd-m">${Math.round(m/6)/10}/${Math.round(cap/6)/10} t</span>`:''}</div>
       ${ev.map(e=>`<div class="cd-ev ${e.type}" style="--fc:${e.fag?FAG[e.fag].farge:'#666'}">${e.type==='eksamen'?'Eksamen ':'Frist '}${esc(e.fag?FAG[e.fag].kort:e.tekst.split(' ')[0])}</div>`).join('')}
-      ${dn.map(x=>`<div class="cd-it done" style="--fc:${FAG[x.a.fag].farge}">✓ ${esc(stripMd(x.a.t))}</div>`).join('')}
-      ${ps2.map(p=>`<div class="cd-it" style="--fc:${FAG[p.a.fag].farge}">${esc(stripMd(p.a.t))}</div>`).join('')}</button>`;
+      ${dn.length?`<div class="cd-it done">✓ ${dn.length} gjort</div>`:''}
+      ${FAG_ORDER.map(f=>{ const mm = ps2.filter(p=>p.a.fag===f).reduce((s,p)=>s+p.rem,0); return mm?`<div class="cd-it" style="--fc:${FAG[f].farge}">${esc(FAG[f].kort)} · ${fmtMin(mm)}</div>`:''; }).join('')}${ps2.filter(p=>p.a.type==='px'||p.a.type==='examscore').map(()=>`<div class="cd-it small">hel eksamen på tid</div>`).join('')}</button>`;
   };
   const selPlan = CAL_SEL>=t ? (P.plan[CAL_SEL]||[]) : []; const selDone = doneOn(CAL_SEL); const selEv = EVENTS.filter(e=>e.date===CAL_SEL);
   main.innerHTML = `<div class="row between"><h1>Kalender</h1><div class="row small">${FAG_ORDER.map(f=>fagDot(f)+esc(FAG[f].kort)).join(' &nbsp; ')}</div></div>
@@ -1893,7 +1908,7 @@ function renderKalender(main, sel){
   <div class="card" style="margin-top:16px"><div class="row between"><h2 style="margin:0">${CAL_SEL===t?'I dag · ':''}${fmtD(CAL_SEL)}</h2><span class="small muted">${fmtMin(selPlan.reduce((s,p)=>s+p.rem,0))} planlagt</span></div>
     ${selEv.map(e=>`<p class="${e.type==='eksamen'?'warnnote':'small'}" style="margin:8px 0">${esc(e.tekst)}</p>`).join('')}
     ${CAL_SEL>=t?capControlHtml(CAL_SEL, true):''}
-    <div class="todo" style="margin-top:10px">${selDone.map(x=>actItemHtml(x.a)).join('')}${selPlan.map(p=>actItemHtml(p.a,{rem:p.rem})).join('')}</div>
+    <div class="todo" style="margin-top:10px">${selDone.map(x=>actItemHtml(x.a)).join('')}${selPlan.map(p=>actItemHtml(p.a,{rem:p.rem, del:p.del})).join('')}</div>
     ${!selPlan.length&&!selDone.length?`<p class="muted">${CAL_SEL<t?'Ingen aktiviteter ble fullført denne dagen.':'Ingenting planlagt.'}</p>`:''}</div>`;
   main.querySelectorAll('.calday').forEach(b=>b.onclick=()=>{ CAL_SEL = b.dataset.d; renderKalender(main, CAL_SEL); typeset(main); });
   bindActs(main); bindCap(main);
@@ -2012,7 +2027,7 @@ function monsterHtml(){
         <tr><td><strong>Del 2</strong><div class="small muted">4 × 9 p</div></td><td>Utledning av varme- eller konveksjon–diffusjonslikningen · Parametrisk flate a–d med sympy, dblquad og tplquad · Kodeoppgave · Fluks med Gauss</td></tr>
       </tbody></table>
       <h3 style="margin:14px 0 6px">Nytt i år, ikke sett på eksamen ennå</h3>
-      <p class="small" style="margin:0 0 6px">Leapfrog 1D/2D, 2D varme og Laplace, strømfunksjon. Den mest sannsynlige nye kodeoppgaven.</p>
+      <p class="small" style="margin:0 0 6px">Leapfrog 1D/2D, 2D varme og Laplace, strømfunksjon. Nytt i årets øvinger, så det kan komme som kodeoppgave.</p>
       <div class="mx-ov">${M.nytt.map(monsterOvLink).join(" ")}</div>
     </div>
   </div>
@@ -2042,10 +2057,28 @@ const OKT_TYPER = [
   {id:'annet',   navn:'Grunnlag og annen numerikk',    k:0, p:4, pre:[],                  topics:['rep','numint']},
 ];
 const OKT_MAL = 0.8, OKT_START_MIN = 25, OKT_EKSAMEN = '2026-12-16';
+// Motoren er felles for alle fag. OKT_FAG er faget den regner på akkurat nå.
+let OKT_FAG = 'matte';
+const OKT_ALLE = {matte: OKT_TYPER};
+const OKT_MAKS = {matte:72, mek:100, fem:100};
+const iFag = (f, fn) => { const o = OKT_FAG; OKT_FAG = f; try{ return fn(); } finally{ OKT_FAG = o; } };
+function oktTyper(){
+  if(!OKT_ALLE[OKT_FAG]){ const f = OKT_FAG, qs = QF(f);
+    const ts = Object.entries(TOPICS).filter(([k])=>k.startsWith(f==='mek'?'m-':'f-')), W = ts.reduce((a,[k,t])=>a+(t.vekt||0),0) || 1;
+    OKT_ALLE[f] = ts.filter(([k])=>qs.some(q=>q.topic===k)).map(([k,t])=>({id:k, navn:shortTopic(t.navn), langt:t.navn, k:null, p:null, pre:[], P:1, V:100*(t.vekt||0)/W, lysark:t.lysark}));
+    OKT_ALLE[f].forEach(t=>OKT_BY[t.id]=t);
+    OKT_ALLE[f].uten = ts.filter(([k])=>!qs.some(q=>q.topic===k)).map(([k,t])=>({navn:shortTopic(t.navn), andel:(t.vekt||0)/W, lysark:t.lysark}));
+  }
+  return OKT_ALLE[OKT_FAG];
+}
+const oktOrig = q => fagOf(q)!=='matte' || q.oving<=10;
+const oktSc = x => OKT_FAG==='matte' ? `${x}/72` : `${x} %`;
+const oktSlutt = () => OKT_FAG==='matte' ? OKT_EKSAMEN : lastStudy(OKT_FAG);
 OKT_TYPER.forEach(t=>{ t.P = t.pOverride!=null ? t.pOverride : (t.k+1)/(4+2); t.V = t.P*t.p; });
 const OKT_BY = {}; OKT_TYPER.forEach(t=>OKT_BY[t.id]=t);
 let OKT_QTYPE = null, OKT_PXTYPE = null;
 function oktTypeOf(q){
+  if(fagOf(q)!=='matte'){ iFag(fagOf(q), oktTyper); return OKT_BY[q.topic] ? q.topic : null; }
   if(!OKT_QTYPE){ OKT_QTYPE = {};
     OKT_PXTYPE = {};
     Q.filter(x=>(x.fag||'matte')==='matte' && x.maxp!=null).forEach(x=>{
@@ -2054,10 +2087,11 @@ function oktTypeOf(q){
   return OKT_QTYPE[q.id] || null;
 }
 // Rekkefølge i et tema: løst eksempel og «med hull» først (fading), så øvingene, så repetisjonsøvingene, så nye varianter
-const oktRank = q => q.variant ? (/^(Løst eksempel|Med hull)/.test(q.title) ? 0 : 3) : (q.oving<=10 ? 1 : 2);
-const oktQs = tid => Q.filter(q=>oktTypeOf(q)===tid).sort((a,b)=>(oktRank(a)-oktRank(b)) || String(a.oving).localeCompare(String(b.oving), 'nb', {numeric:true}) || (a.nr-b.nr));
-function oktState(){ const s = (STATE.settings||{}).okt || {}; return Object.assign({fokus:'auto', bland:true, minDag:180, log:[], cur:null, autoFokus:null}, s); }
-async function oktSave(s){ s.log = (s.log||[]).slice(-400); await saveDoc('settings','okt', s); }
+const oktRank = q => q.variant ? (/^(Løst eksempel|Med hull)/.test(q.title) ? 0 : 3) : (oktOrig(q) ? 1 : 2);
+const oktQs = tid => Q.filter(q=>oktTypeOf(q)===tid).sort((a,b)=>(oktRank(a)-oktRank(b)) || String(a.oving).localeCompare(String(b.oving), 'nb', {numeric:true}) || String(a.nr).localeCompare(String(b.nr), 'nb', {numeric:true}));
+const oktKey = f => f==='matte' ? 'okt' : 'okt_'+f;
+function oktState(f){ f = f || OKT_FAG; const s = (STATE.settings||{})[oktKey(f)] || {}; return Object.assign({fokus:'auto', bland:true, minDag:180, log:[], cur:null, autoFokus:null}, s, {fag:f}); }
+async function oktSave(s){ s.log = (s.log||[]).slice(-400); await saveDoc('settings', oktKey(s.fag||OKT_FAG), s); }
 // Mestring per oppgave: score (siste svar, hint teller 70 %) × hvor godt det huskes nå (0.9^(dager siden / intervall)).
 function oktQM(q){
   const sc = questionScore(q); if(sc==null) return 0;
@@ -2071,11 +2105,19 @@ function oktTempo(tid, s){
   const d = l => l.filter(x=>x.min>0.5 && x.min<120).map(x=>x.min).sort((a,b)=>a-b);
   const med = a => a.length ? a[Math.floor(a.length/2)] : null;
   const alle = d(s.log), egen = d(s.log.filter(x=>x.type===tid));
-  return egen.length>=2 ? med(egen) : alle.length>=3 ? med(alle) : OKT_START_MIN;
+  if(egen.length>=2) return med(egen);
+  if(OKT_FAG!=='matte'){ const qs = oktQs(tid); return qs.length ? qs.reduce((a,q)=>a+qMinutter(q),0)/qs.length : 10; }
+  return alle.length>=3 ? med(alle) : OKT_START_MIN;
 }
+// Nivå per tema. Løst selv = riktig uten vist fasit. Bekreftet = løst selv på to ulike oppgaver, på to ulike dager.
+function oktNiva(qs){ const ok = [], dager = new Set(); let provd = false;
+  qs.forEach(q=>{ let qok = q.fields.length>0, dag = null; q.fields.forEach(f=>{ const a = STATE.attempts[fieldKey(q.id,f.i)]; if(a && a.hist && a.hist.length) provd = true;
+      const r = a && a.hist ? a.hist.filter(r=>r[1]===1 && !r[4] && !r[3]).pop() : null; if(!r) qok = false; else dag = iso(new Date(r[0])); });
+    if(qok){ ok.push(q.id); dager.add(dag); } });
+  return ok.length>=2 && dager.size>=2 ? 'bekreftet' : ok.length ? 'løst selv' : provd ? 'prøvd' : 'ikke prøvd'; }
 function oktStats(s){
   s = s || oktState();
-  return OKT_TYPER.map(t=>{ const qs = oktQs(t.id).filter(q=>q.oving<=10);
+  return oktTyper().map(t=>{ const qs = oktQs(t.id).filter(oktOrig);
     // Diagnose: oppgaver uten egne svar får startnivået fra diagnosen
     const pr = ((s.diag||{}).res||{})[t.id], harData = qs.map(q=>questionScore(q)!=null);
     const ms = qs.map((q,i)=> harData[i] || pr==null ? oktQM(q) : pr);
@@ -2084,14 +2126,14 @@ function oktStats(s){
     const px = Q.filter(q=>OKT_PXTYPE && OKT_PXTYPE[q.id]===t.id).map(questionScore).filter(x=>x!=null);
     if(px.length) m = 0.5*m + 0.5*px.reduce((a,b)=>a+b,0)/px.length;
     const igjen = qs.filter((q,i)=>ms[i]<OKT_MAL).length, tempo = oktTempo(t.id, s);
-    const preOk = t.pre.every(p=>{ const pq = oktQs(p).filter(q=>q.oving<=10); return !pq.length || pq.map(oktQM).reduce((a,b)=>a+b,0)/pq.length >= 0.5; });
+    const preOk = t.pre.every(p=>{ const pq = oktQs(p).filter(oktOrig); return !pq.length || pq.map(oktQM).reduce((a,b)=>a+b,0)/pq.length >= 0.5; });
     // Det du kan fra før, går raskere: oppgaver uten egne svar teller mindre tid etter diagnosen
     const restMin = qs.reduce((a,q,i)=> a + (ms[i]<OKT_MAL ? tempo*(harData[i] || pr==null ? 1 : 1-0.6*pr) : 0), 0), gevinst = t.V*Math.max(0, OKT_MAL-m);
-    return {t, n:qs.length, m, igjen, tempo, restMin, preOk, perMin: restMin ? gevinst/restMin : 0};
+    return {t, n:qs.length, m, igjen, tempo, restMin, preOk, perMin: restMin ? gevinst/restMin : 0, niva: oktNiva(oktQs(t.id))};
   }).filter(x=>x.n);
 }
 const OKT_SISTE_UKE = '2026-12-13';
-const oktSisteUke = () => todayStr() >= OKT_SISTE_UKE;
+const oktSisteUke = () => OKT_FAG==='matte' && todayStr() >= OKT_SISTE_UKE;
 const oktNatt = s => planForm()==='natt' || !!(s.dag && s.dag.d===todayStr() && s.dag.form==='natt');
 function oktVelgFokus(st){
   const kand = st.filter(x=>x.igjen>0 && (!oktSisteUke() || x.m>=0.2)).sort((a,b)=>b.perMin-a.perMin);
@@ -2109,33 +2151,35 @@ function oktFokus(s, st){
 function oktNeste(s, st){
   let fokus = oktFokus(s, st); const sist = oktLogg(s).slice(-2).map(x=>x.q); const nattevakt = oktNatt(s);
   const iOkt = oktLogg(s).filter(x=>x.okt===s.oktId).length;
-  if(nattevakt){
-    const rep = dueFields('matte').map(d=>d.q).find(q=>oktTypeOf(q) && !sist.includes(q.id));
-    return rep ? {q:rep, fokus:oktTypeOf(rep), hvorfor:'Etter nattevakt: bare repetisjon av det du har jobbet med før'} : null;
+  if(nattevakt || s.feilModus){
+    const rep = dueFields(OKT_FAG).map(d=>d.q).find(q=>oktTypeOf(q) && !sist.includes(q.id));
+    return rep ? {q:rep, fokus:oktTypeOf(rep), hvorfor: s.feilModus ? 'Feilene dine: oppgaver du bommet på, så fasit på, eller er i ferd med å glemme' : 'Etter nattevakt: bare repetisjon av det du har jobbet med før'} : null;
   }
   if(s.bland && iOkt>0 && iOkt%5===4){
-    const rep = dueFields('matte').map(d=>d.q).find(q=>{ const t = oktTypeOf(q); return t && t!==fokus && !sist.includes(q.id) && (st.find(x=>x.t.id===t)||{}).m>=0.3; });
+    const rep = dueFields(OKT_FAG).map(d=>d.q).find(q=>{ const t = oktTypeOf(q); return t && t!==fokus && !sist.includes(q.id) && (st.find(x=>x.t.id===t)||{}).m>=0.3; });
     if(rep) return {q:rep, fokus, hvorfor:'Repetisjon fra ' + OKT_BY[oktTypeOf(rep)].navn + ' (blandes inn for å holde det ved like)'};
   }
   // Bli i samme tema: originaløvinger først, så repetisjonsøvingene (samme oppgave, nye tall). Først når temaet er tomt, byttes tema.
-  const finn = tid => { const qs = oktQs(tid).filter(q=>!sist.includes(q.id)); const orig = qs.filter(q=>q.oving<=10);
+  const finn = tid => { const qs = oktQs(tid).filter(q=>!sist.includes(q.id)); const orig = qs.filter(oktOrig);
     const fad = qs.filter(q=>oktRank(q)===0), mt = (st.find(y=>y.t.id===tid)||{}).m||0;
     return (mt<0.5 && fad.find(q=>oktQM(q)<OKT_MAL)) || orig.find(q=>oktQM(q)<OKT_MAL) || qs.find(q=>oktQM(q)<OKT_MAL) || (s.fokus===tid ? qs[0] : null); };
   let q = fokus && finn(fokus);
   if(!q){ for(const y of st.filter(y=>y.t.id!==fokus && y.igjen>0).sort((a,b)=>b.perMin-a.perMin)){ q = finn(y.t.id); if(q){ fokus = y.t.id; break; } } }
   if(!q) return null;
   const x = st.find(y=>y.t.id===fokus);
-  return {q, fokus, hvorfor:`${x.t.navn} · kom i ${x.t.k} av 4 eksamenssett · ${x.t.p} p · gir mest eksamensgevinst per minutt akkurat nå`};
+  const VV = st.reduce((a,y)=>a+y.t.V,0) || 1;
+  return {q, fokus, hvorfor: OKT_FAG==='matte' ? `${x.t.navn} · kom i ${x.t.k} av 4 eksamenssett · ${x.t.p} p · gir mest eksamensgevinst per minutt akkurat nå` : `${x.t.navn} · ${Math.round(x.t.V/VV*100)} % av ${OKT_FAG==='fem'?'pensum':'eksamen'} · gir mest per minutt akkurat nå`};
 }
 function oktSliter(s, fokus){ const l = oktLogg(s).filter(x=>x.type===fokus).slice(-2); return l.length===2 && l.every(x=>!x.ok); }
 function oktPrognose(st, s){
   const VV = st.reduce((a,x)=>a+x.t.V,0) || 1;
-  const naa = 72*st.reduce((a,x)=>a+x.t.V*x.m,0)/VV;
-  const dager = Math.max(0, Math.ceil((new Date(OKT_EKSAMEN+'T23:59') - new Date())/864e5));
+  const MX = OKT_MAKS[OKT_FAG];
+  const naa = MX*st.reduce((a,x)=>a+x.t.V*x.m,0)/VV;
+  const dager = Math.max(0, Math.ceil((new Date(oktSlutt()+'T23:59') - new Date())/864e5));
   const tilgj = dager*s.minDag, trengs = st.reduce((a,x)=>a+x.restMin,0);
-  let rest = tilgj; const rekker = [], kuttes = []; let slutt = naa*VV/72;
+  let rest = tilgj; const rekker = [], kuttes = []; let slutt = naa*VV/MX;
   st.filter(x=>x.igjen>0).sort((a,b)=>b.perMin-a.perMin).forEach(x=>{ if(x.restMin<=rest){ rest -= x.restMin; slutt += x.t.V*Math.max(0,OKT_MAL-x.m); rekker.push(x); } else kuttes.push(x); });
-  return {naa:Math.round(naa), slutt:Math.round(72*slutt/VV), dager, tilgj, trengs, kuttes, perDag: dager ? Math.ceil(trengs/dager) : trengs};
+  return {naa:Math.round(naa), slutt:Math.round(MX*slutt/VV), dager, tilgj, trengs, kuttes, perDag: dager ? Math.ceil(trengs/dager) : trengs};
 }
 const fmtT = m => { m = Math.round(m); return m>=60 ? `${Math.floor(m/60)} t${m%60?` ${m%60} min`:''}` : `${m} min`; };
 const OKT_PY = {pde:'pde', felt:'vek', potens:'vek', flate:'flate', fluks:'flate', arbeid:'linje', stokes:'linje', pyint:'sci', trippel:'int', dobbel:'int', polar:'alt', delaunay:'del', kode:'varme', kurve:'kurve'};
@@ -2155,18 +2199,21 @@ const OKT_FORKLAR = {
 };
 // Temavelger: alle oppgavetyper med eksamensandel, mestring og tid igjen
 function oktTemaHtml(st, s, fokus){
-  const VV = st.reduce((a,x)=>a+x.t.V,0) || 1;
+  const VV = st.reduce((a,x)=>a+x.t.V,0) || 1, erM = OKT_FAG==='matte', hva = OKT_FAG==='fem' ? 'pensum' : 'eksamen', maxA = Math.max(...st.map(x=>x.t.V/VV), 0.01)*1.25;
+  const uten = oktTyper().uten || [];
   const rad = x => { const andel = x.t.V/VV, valgt = s.fokus===x.t.id, autoNa = s.fokus==='auto' && fokus===x.t.id, ferdig = !x.igjen;
     return `<button class="tema ${valgt?'on':''} ${autoNa?'auto':''} ${ferdig?'ferdig':''}" data-fokus="${x.t.id}">
-      <span class="tm-n"><strong>${esc(x.t.navn)}</strong><span class="small muted">i ${x.t.k} av 4 eksamenssett${autoNa?' · <span class="tm-tag">Auto nå</span>':''}${valgt?' · <span class="tm-tag">Valgt</span>':''}</span></span>
-      <span class="tm-a"><span class="tm-l"><span>${Math.round(andel*100)} %<span class="tm-hide"> av eksamen</span></span><span class="muted" style="white-space:nowrap">≈ ${fmtP(x.t.V)} p</span></span><span class="tm-bar"><i style="width:${Math.min(100, andel/0.16*100)}%"></i></span></span>
-      <span class="tm-a"><span class="tm-l"><span>${Math.round(x.m*100)} % mestret</span></span><span class="tm-bar m"><i style="width:${Math.round(x.m*100)}%"></i></span></span>
+      <span class="tm-n"><strong>${esc(x.t.navn)}</strong><span class="small muted">${x.t.k!=null?`i ${x.t.k} av 4 eksamenssett`:esc(x.t.langt&&x.t.langt!==x.t.navn?x.t.langt:'')}${autoNa?' · <span class="tm-tag">Auto nå</span>':''}${valgt?' · <span class="tm-tag">Valgt</span>':''}</span></span>
+      <span class="tm-a"><span class="tm-l"><span>${Math.round(andel*100)} %<span class="tm-hide"> av ${hva}</span></span>${erM?`<span class="muted" style="white-space:nowrap">≈ ${fmtP(x.t.V)} p</span>`:''}</span><span class="tm-bar"><i style="width:${Math.min(100, andel/maxA*100)}%"></i></span></span>
+      <span class="tm-a"><span class="tm-l"><span>${Math.round(x.m*100)} % mestret</span><span class="tm-niva n-${x.niva.replace(/\W/g,'')}">${x.niva}</span></span><span class="tm-bar m"><i style="width:${Math.round(x.m*100)}%"></i></span></span>
       <span class="tm-r small">${ferdig?'✓ ferdig':`${x.igjen} igjen · ${fmtT(x.restMin)}`}</span></button>`; };
   const grp = (tit, liste) => { const sum = liste.reduce((a,x)=>a+x.t.V,0);
     return `<div class="tm-g"><div class="tm-gh"><strong>${tit}</strong><span class="small muted">${Math.round(sum/VV*100)} % av forventede eksamenspoeng</span></div>${liste.sort((a,b)=>b.t.V-a.t.V).map(rad).join('')}</div>`; };
-  return `<div class="card" id="okt-tema"><div class="row between" style="align-items:baseline;flex-wrap:wrap;gap:6px"><h2 style="margin:0">Velg tema</h2><span class="small muted">Andel = sannsynlighet for å komme × poeng, av hele eksamen</span></div>
+  return `<div class="card" id="okt-tema"><div class="row between" style="align-items:baseline;flex-wrap:wrap;gap:6px"><h2 style="margin:0">Velg tema</h2><span class="small muted">${erM?'Andel = sannsynlighet for å komme × poeng, av hele eksamen':OKT_FAG==='fem'?'Muntlig: temaene er vektet likt':'Andel = temaets vekt i eksamenssettene'}</span></div>
     <button class="tema autorad ${s.fokus==='auto'?'on':''}" data-fokus="auto"><span class="tm-n"><strong>Auto (anbefalt)</strong><span class="small muted">Tar det som gir flest poeng per minutt nå${fokus&&s.fokus==='auto'?': '+esc(OKT_BY[fokus].navn):''}, og blir i temaet til det sitter.</span></span></button>
-    <div class="tm-leg small muted"><span>Venstre stolpe: andel av eksamen</span><span>Høyre stolpe: hvor mye du mestrer</span></div>${grp('Del 2 · 9 p per oppgave', st.filter(x=>x.t.p>=9))}${grp('Del 1 · 4 p per oppgave', st.filter(x=>x.t.p<9))}</div>`;
+    <div class="tm-leg small muted"><span>Venstre stolpe: andel av ${hva}</span><span>Høyre stolpe: hvor mye du mestrer</span></div>${erM ? grp('Del 2 · 9 p per oppgave', st.filter(x=>x.t.p>=9)) + grp('Del 1 · 4 p per oppgave', st.filter(x=>x.t.p<9)) : st.slice().sort((a,b)=>b.t.V-a.t.V).map(rad).join('')}
+    <p class="small muted" style="margin:8px 0 0"><strong>Løst selv</strong> = riktig uten hint og uten at fasit var vist. <strong>Bekreftet</strong> = løst selv på to ulike oppgaver, på to ulike dager.</p>
+    ${uten.length?`<p class="small muted" style="margin:8px 0 0">Ikke med her, fordi det ikke finnes interaktive oppgaver: ${uten.map(u=>`${u.lysark&&u.lysark[0]?`<a href="${esc(u.lysark[0].pdf)}" target="_blank" rel="noopener">${esc(u.navn)}</a>`:esc(u.navn)}`).join(', ')}. Les lysarkene og regn fra PDF-ene under Oversikt og ressurser.</p>`:''}</div>`;
 }
 function oktProveHtml(){
   const ks = Object.keys(SETS).filter(k=>/^PX\d/.test(k)).sort(); if(!ks.length) return '';
@@ -2181,44 +2228,49 @@ function oktProveHtml(){
 function renderOkt(main){
   const s = oktState(), st = oktStats(s), nx = oktNeste(s, st), md = oktMinDag(), pg = oktPrognose(st, Object.assign({}, s, {minDag: md})), natt = oktNatt(s);
   const fokus = nx ? nx.fokus : null;
-  const status = pg.trengs<=pg.tilgj ? `<span class="pill good">I rute</span> Du trenger ca. ${fmtT(pg.perDag)} matte per dag, og planen gir ca. ${fmtT(md)}.`
+  const F = FAG[OKT_FAG], erM = OKT_FAG==='matte';
+  const status = pg.trengs<=pg.tilgj ? `<span class="pill good">I rute</span> Du trenger ca. ${fmtT(pg.perDag)} ${esc(F.kort.toLowerCase())} per dag, og planen gir ca. ${fmtT(md)}.`
     : `<span class="pill warn">For lite tid</span> Alt krever ca. ${fmtT(pg.perDag)} per dag. Med ${fmtT(md)} per dag i planen kuttes: ${pg.kuttes.map(x=>esc(x.t.navn)).join(', ')}.`;
   const sisteL = oktLogg(s).filter(x=>x.okt!=='diag').slice(-1)[0], slT = !s.cur && sisteL && oktSliter(s, sisteL.type) ? sisteL.type : null, slQ = slT ? QBY[sisteL.q] : null, slX = slT ? st.find(x=>x.t.id===slT) : null;
   const fkT = !s.cur && sisteL && sisteL.ok && OKT_FORKLAR[sisteL.type] && !((s.forklart||{})[sisteL.type]===todayStr()) ? sisteL.type : null;
   const temaHtml = oktTemaHtml(st, s, fokus);
+  const dueQ = [...new Set(dueFields(OKT_FAG).map(d=>d.q).filter(q=>oktTypeOf(q)))], nDue = dueQ.length, dueMin = dueQ.reduce((a,q)=>a+oktTempo(oktTypeOf(q), s),0);
   const bom = (s.log||[]).filter(x=>x.arsak && Date.now()-x.start < 14*864e5);
   const bomHtml = bom.length ? `<h3 style="margin:14px 0 6px">Hvor poengene lekker (siste 14 dager)</h3><table class="mtab"><tbody>${Object.entries(OKT_ARSAK).map(([k,a])=>{ const n = bom.filter(x=>x.arsak===k).length; return n?`<tr><td><strong>${a.navn}</strong></td><td class="c">${n}</td><td class="small">${a.tiltak}</td></tr>`:''; }).join('')}</tbody></table>` : '<p class="small muted" style="margin:10px 0 0">Når du bommer, velger du årsaken. Her ser du etter hvert hvor poengene lekker.</p>';
   const py = fokus && OKT_PY[fokus] && PY_BY[OKT_PY[fokus]] ? `<a href="#python-${OKT_PY[fokus]}">${esc(PY_BY[OKT_PY[fokus]].t)}</a>` : '';
-  main.innerHTML = `${pyTabs('okt')}
+  main.innerHTML = `${erM?'':`<div class="row between" style="margin-bottom:8px"><h1 style="margin:0">${esc(F.navn)}</h1><span class="pill" style="background:${F.farge}22;color:${F.farge}">${OKT_FAG==='fem'?'Muntlig':'Eksamen'} ${fmtD(F.exam)} · ${daysTo(F.exam)} dager</span></div>`}${fagTabs('okt')}
   ${s.kvittering?kvitteringHtml(s.kvittering):''}
   ${oktTrengerDiagnose(s)?'<div class="okt-info">Ny her? <a href="#diagnose">Ta diagnosetesten</a> (ca. 25 min), så slipper du å øve på det du allerede kan.</div>':''}
   ${oktSisteUke()?'<div class="okt-info">Siste uke før eksamen: ingen nye temaer. Ta prøveeksamen og repeter det du har jobbet med.</div>':''}
   <div class="card okt-hero">
-    ${slT?`<div class="okt-sliter">To bom på rad i ${esc(OKT_BY[slT].navn)}. Før du går videre: les det løste eksempelet${slQ&&slQ.refs&&slQ.refs[0]?` i <a href="#komp-${esc(slQ.refs[0].key)}">kompendiet §${esc(slQ.refs[0].key)}</a>`:''}, og gå gjennom «Steg for steg» på <a href="#q-${esc(sisteL.q)}">oppgaven du bommet på</a>.${slX&&slX.t.pre.length?` Sitter ikke grunnlaget, bytt tema til forkunnskapen: ${slX.t.pre.map(p=>`<button class="btn small sec" data-fokus="${p}">${esc(OKT_BY[p].navn)}</button>`).join(' ')}`:''}</div>`:''}
+    ${slT?`<div class="okt-sliter">To bom på rad i ${esc(OKT_BY[slT].navn)}. Før du går videre: ${erM?'les det løste eksempelet':'se gjennom løsningsforslaget'}${erM&&slQ&&slQ.refs&&slQ.refs[0]?` i <a href="#komp-${esc(slQ.refs[0].key)}">kompendiet §${esc(slQ.refs[0].key)}</a>`:''}${erM?', og gå gjennom «Steg for steg» på':' til'} <a href="#q-${esc(sisteL.q)}">oppgaven du bommet på</a>.${slX&&slX.t.pre.length?` Sitter ikke grunnlaget, bytt tema til forkunnskapen: ${slX.t.pre.map(p=>`<button class="btn small sec" data-fokus="${p}">${esc(OKT_BY[p].navn)}</button>`).join(' ')}`:''}</div>`:''}
     ${fkT?`<div class="okt-forklar"><strong>Forklar for makker (10 min).</strong> Forklar høyt, uten notater: <ul>${OKT_FORKLAR[fkT].map(x=>`<li>${esc(x)}</li>`).join('')}</ul>Det du ikke får forklart, er det du må øve mer på. <button class="btn small sec" id="okt-forklart">Forklart</button></div>`:''}
     ${nx ? `<div class="small muted">Neste oppgave</div><h1 style="margin:2px 0 6px">${esc(ovShort(nx.q.oving))}.${esc(nx.q.nr)} ${mdInline(nx.q.title)}</h1>
     <p class="muted" style="margin:0 0 12px">${esc(nx.hvorfor)} · ca. ${Math.round(oktTempo(oktTypeOf(nx.q), s))} min</p>
-    <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap"><button class="btn primary big" id="okt-start">${s.cur?'Fortsett økten':'Start'}</button>${s.cur?'<button class="btn ghost" id="okt-slutt">Avslutt økten</button>':''}<a class="small" href="eksamen/formelark_matte3.pdf" target="_blank" rel="noopener">Formelark</a>${py?`<span class="small muted">Sjekk med Python: ${py}</span>`:''}</div>`
-      : natt ? `<h1>Ingen repetisjoner forfaller</h1><p class="muted">Etter nattevakt: ta 15 minutter <a href="#python">Python-pugging</a> og hvil. Nytt stoff tar du når du er uthvilt.</p>`
-      : '<h1>Alt er mestret</h1><p class="muted">Bruk tiden på prøveeksamen.</p>'}
+    <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap"><button class="btn primary big" id="okt-start">${s.cur?'Fortsett økten':'Start'}</button>${s.cur?'<button class="btn ghost" id="okt-slutt">Avslutt økten</button>':''}${erM?'<a class="small" href="eksamen/formelark_matte3.pdf" target="_blank" rel="noopener">Formelark</a>':OKT_FAG==='mek'&&BM.res&&BM.res.formelark?`<a class="small" href="${BM.res.formelark}" target="_blank" rel="noopener">Formelark</a>`:''}${py?`<span class="small muted">Sjekk med Python: ${py}</span>`:''}</div>`
+      : natt ? `<h1>Ingen repetisjoner forfaller</h1><p class="muted">Etter nattevakt: ${erM?'ta 15 minutter <a href="#python">Python-pugging</a> og hvil':'hvil'}. Nytt stoff tar du når du er uthvilt.</p>`
+      : `<h1>Alt er mestret</h1><p class="muted">${erM?'Bruk tiden på prøveeksamen.':OKT_FAG==='mek'?'Bruk tiden på en hel eksamen på tid (se Oversikt og ressurser).':'Øv på å forklare høyt, og hold presentasjonen med tidtaker.'}</p>`}
     <div class="okt-ctl small"><span>Tema: <strong>${s.fokus==='auto'?'Auto'+(fokus?' ('+esc(OKT_BY[fokus].navn)+')':''):esc((OKT_BY[s.fokus]||{}).navn||'')}</strong> · <a href="#okt-tema" id="okt-bytt">bytt tema</a></span>
-      <label>I dag <select id="okt-dag"><option value="uthvilt" ${natt?'':'selected'}>Uthvilt</option><option value="natt" ${natt?'selected':''}>Etter nattevakt (bare repetisjon)</option></select></label>
-      <label><input type="checkbox" id="okt-bland" ${s.bland?'checked':''}> Bland inn repetisjon (1 av 5)</label></div>
+      ${natt?'<span>Etter nattevakt: bare repetisjon i dag (endres på Hjem)</span>':''}</div>
   </div>
-  <div class="okt-line"><div><span class="small muted">Forventet eksamensscore</span><div class="okt-big">${pg.naa}<span class="muted">/72 nå</span> → ${pg.slutt}<span class="muted">/72 17.12</span></div></div><div class="small">${status}</div></div>
+  <div class="okt-line"><div><span class="small muted">${erM?'Forventet eksamensscore':OKT_FAG==='fem'?'Andel av pensum som sitter':'Andel av eksamen som sitter'}</span><div class="okt-big">${pg.naa}<span class="muted">${erM?'/72':' %'} nå</span> → ${pg.slutt}<span class="muted">${erM?'/72':' %'} ${fmtD(F.exam).replace(/^\S+ /,'')}</span></div></div><div class="small">${status}</div></div>
+  ${nDue && !s.cur && !natt ? `<div class="card okt-feilk"><div><strong>Tren på feilene mine</strong><div class="small muted">${nDue} ${nDue===1?'oppgave':'oppgaver'} du bommet på, så fasit på, eller er i ferd med å glemme · ca. ${fmtT(dueMin)}</div></div><button class="btn sec" id="okt-feil">Start</button></div>` : ''}
+  ${OKT_FAG==='fem'?'<div class="card okt-feilk"><div><strong>Prøvemuntlig</strong><div class="small muted">10 spørsmål: forklar høyt i 2 minutter, og sammenlign med vurderingspunktene</div></div><a class="btn sec" href="#muntlig">Start</a></div>':''}
   ${temaHtml}
-  ${oktProveHtml()}
+  ${erM?oktProveHtml():''}
   <details class="fsec" data-fold="okt-det" ${foldOpen('okt-det', false)?'open':''}><summary><span class="fs-t">Detaljer</span><span class="fs-s">hvordan neste oppgave velges · bommeliste</span></summary><div class="fs-b">
-    <p class="small" style="margin:0 0 8px">Hver oppgavetype har en eksamensverdi = sannsynlighet × poeng. Sannsynligheten er (antall sett + 1)/(4 + 2). Mestring er siste svar (hint teller 70 %) ganget med hvor godt det huskes nå. Har du tatt prøveeksamen, teller svarene der halve mestringen i typen. Neste tema er det som gir mest verdi per minutt, med forkunnskaper først. I et nytt del 2-tema kommer først et løst eksempel og en oppgave med hull. Tempoet er målt fra øktene dine (startverdi ${OKT_START_MIN} min per oppgave).</p>
+    <label class="small" style="display:flex;gap:8px;align-items:center;margin:0 0 10px"><input type="checkbox" id="okt-bland" ${s.bland?'checked':''}> Bland inn repetisjon fra andre temaer (1 av 5 oppgaver)</label>
+    <p class="small" style="margin:0 0 8px">${erM?'':`Hvert tema har en andel av ${OKT_FAG==='fem'?'pensum (muntlig: temaene er vektet likt)':'eksamen (vekten i eksamenssettene)'}. Mestring er siste svar (hint teller 70 %) ganget med hvor godt det huskes nå. Neste tema er det som gir mest per minutt, og du blir i temaet til det sitter.`}</p>
+    <p class="small" style="margin:0 0 8px;${erM?'':'display:none'}">Hver oppgavetype har en eksamensverdi = sannsynlighet × poeng. Sannsynligheten er (antall sett + 1)/(4 + 2). Mestring er siste svar (hint teller 70 %) ganget med hvor godt det huskes nå. Har du tatt prøveeksamen, teller svarene der halve mestringen i typen. Neste tema er det som gir mest verdi per minutt, med forkunnskaper først. I et nytt del 2-tema kommer først et løst eksempel og en oppgave med hull. Tempoet er målt fra øktene dine (startverdi ${OKT_START_MIN} min per oppgave).</p>
     ${bomHtml}
-    <p class="small muted" style="margin:10px 0 0">Matte får ca. ${fmtT(md)} per dag i felles plan (tiden settes på Hjem) · ${pg.dager} dager igjen · ${fmtT(pg.trengs)} arbeid igjen.</p>
+    <p class="small muted" style="margin:10px 0 0">${esc(F.kort)} får ca. ${fmtT(md)} per dag i felles plan (tiden settes på Hjem) · ${pg.dager} dager igjen · ${fmtT(pg.trengs)} arbeid igjen.</p>
   </div></details>`;
   bindFolds(main);
-  const b = $('#okt-start'); if(b) b.onclick = ()=>oktStartNa();
+  const b = $('#okt-start'); if(b) b.onclick = ()=>oktStartNa(false, OKT_FAG);
+  const fb = $('#okt-feil'); if(fb) fb.onclick = async ()=>{ const s2 = oktState(); s2.feilModus = true; s2.cur = null; await oktSave(s2); oktStartNa(true, OKT_FAG); };
   const sl = $('#okt-slutt'); if(sl) sl.onclick = ()=>oktAvslutt(oktState());
   const kl = $('#kv-lukk'); if(kl) kl.onclick = async ()=>{ const s2 = oktState(); s2.kvittering = null; await oktSave(s2); route(); };
   const by = $('#okt-bytt'); if(by) by.onclick = e=>{ e.preventDefault(); const el = $('#okt-tema'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); };
-  $('#okt-dag').onchange = e=>{ const ps = planSettings(), t = todayStr(); settDag(e.target.value==='natt' ? 60 : (ps.days[t]!=null ? ps.days[t] : capOf(t, ps)), e.target.value); };
   main.querySelectorAll('[data-fokus]').forEach(x=>x.onclick = async ()=>{ const s2 = oktState(); s2.fokus = x.dataset.fokus; s2.cur = null; await oktSave(s2); route(); });
   $('#okt-bland').onchange = async e=>{ const s2 = oktState(); s2.bland = e.target.checked; await oktSave(s2); };
   const fk = $('#okt-forklart'); if(fk) fk.onclick = async ()=>{ const s2 = oktState(); s2.forklart = Object.assign({}, s2.forklart, {[fkT]: todayStr()}); await oktSave(s2); route(); };
@@ -2229,7 +2281,7 @@ function oktBarHtml(qid){
   const s = oktState(); if(!s.cur || s.cur.q!==qid) return '';
   if(s.cur.diag){ const L = diagListe(); return `<div class="okt-bar"><span><strong>Diagnose</strong> · ${((s.diag||{}).i||0)+1} av ${L.length} · ${esc((OKT_BY[s.cur.type]||{}).navn||'')} · uten hint og fasit</span><span class="row" style="gap:8px"><button class="btn small primary" id="okt-neste">Neste i diagnosen →</button></span></div>`; }
   const n = oktLogg(s).filter(x=>x.okt===s.oktId).length + 1;
-  return `<div class="okt-bar"><span><strong>Økt</strong> · oppgave ${n} · ${esc((OKT_BY[s.cur.type]||{}).navn||'')}</span><span class="row" style="gap:8px"><a class="btn small ghost" href="eksamen/formelark_matte3.pdf" target="_blank" rel="noopener">Formelark</a><button class="btn small ghost" id="okt-slutt">Avslutt</button><button class="btn small primary" id="okt-neste">Neste i økten →</button></span></div>`;
+  return `<div class="okt-bar"><span><strong>Økt</strong> · oppgave ${n} · ${esc((OKT_BY[s.cur.type]||{}).navn||'')}</span><span class="row" style="gap:8px">${OKT_FAG==='fem'?'':`<a class="btn small ghost" href="${OKT_FAG==='mek'?esc(BM.res.formelark||''):'eksamen/formelark_matte3.pdf'}" target="_blank" rel="noopener">Formelark</a>`}<button class="btn small ghost" id="okt-slutt">Avslutt</button><button class="btn small primary" id="okt-neste">Neste i økten →</button></span></div>`;
 }
 function oktBindBar(main, q){
   const b = main.querySelector('#okt-neste'); if(!b) return;
@@ -2246,7 +2298,7 @@ function oktBindBar(main, q){
   const videre = async arsak=>{ const s = oktState(); if(!s.cur) return;
     loggNa(s, arsak);
     const gjort = s.cur.type; s.cur = null; await oktSave(s);
-    if(oktSliter(s, gjort)){ toast('To bom på rad: se det løste eksempelet før du går videre'); location.hash = '#okt'; return; }
+    if(oktSliter(s, gjort)){ toast('To bom på rad: se gjennom løsningen før du går videre'); location.hash = oktHash(s.fag); return; }
     const st = oktStats(s), nx = oktNeste(s, st);
     if(!nx){ await oktAvslutt(s); return; }
     if(s.fokus==='auto') s.autoFokus = nx.fokus;
@@ -2290,10 +2342,10 @@ function renderFag(main, f){
       return docCardHtml(f, e.navn, e.dato, [['Oppgaver',e.pdf],['Løsning',e.lf],['Logg resultater','#eksamen',false]]); })), true));
     secs.push(foldSec('m-komp','Kompendium', 'forelesningsnotatene side for side', cardGrid((window.BANK.sections||[]).filter(x=>x.lvl===1).map(x=>`<a class="setkort" href="#komp-${x.key}" style="--fc:${F.farge}"><div class="sk-n">§${esc(x.key)} ${esc(x.title)}</div><div class="sk-i">s. ${x.start}–${x.end}</div></a>`)), false));
   }
-  main.innerHTML = `<div class="row between"><h1>${esc(F.navn)}</h1><span class="pill" style="background:${F.farge}22;color:${F.farge}">${f==='fem'?'Muntlig':'Eksamen'} ${fmtD(F.exam)} · ${daysTo(F.exam)} dager</span></div>
+  main.innerHTML = `<div class="row between" style="margin-bottom:8px"><h1 style="margin:0">${esc(F.navn)}</h1><span class="pill" style="background:${F.farge}22;color:${F.farge}">${f==='fem'?'Muntlig':'Eksamen'} ${fmtD(F.exam)} · ${daysTo(F.exam)} dager</span></div>${f==='matte'?'':iFag(f, ()=>fagTabs('ov'))}
   ${f==='matte'?pyTabs('ov'):''}
   ${f==='matte'?monsterHtml():''}
-  ${f==='matte'?pensumHtml(f):fagTemaHtml(f)}
+  ${f==='matte'?pensumHtml(f):''}
   ${secs.join('')}
   <div class="grid g2" style="align-items:start;margin-top:14px">
     <div class="card"><h2>Neste i planen</h2>${nx?`<div class="todo">${actItemHtml(nx.p.a,{noFag:true, rem:nx.p.rem})}</div><p class="small muted" style="margin:6px 0 0">${nx.d===todayStr()?'I dag':fmtD(nx.d)} · <a href="#gjoremal">hele planen</a></p>`:'<p class="muted">Alt i planen er gjort.</p>'}</div>
@@ -2346,8 +2398,8 @@ function newFieldHtml(q, f, mode){
     return `<div class="fblock"><span class="fld pick" data-q="${q.id}" data-i="${f.i}" style="display:block">${multi?`<div>${tag}</div>`:''}<div class="opts ${f.orient==='h'?'h':''}">${opts}</div><div class="row" style="margin-top:6px">${chk}<span class="st"></span></div><div class="mcfb" hidden></div></span></div>`;
   }
   if(f.kind==='card'){
-    return `<div class="fblock"><span class="fld cardf" data-q="${q.id}" data-i="${f.i}" style="display:block"><div class="cardback" hidden><div class="k">Baksiden</div>${mdBlock(f.ans)}</div>
-      <div class="row" style="margin-top:6px">${mode==='ov'?`<button class="btn small flip">Snu kortet</button><button class="btn small sec c-ok" hidden>Kunne det</button><button class="btn small sec c-bad" hidden>Kunne det ikke</button>`:''}<span class="st"></span></div></span></div>`;
+    return `<div class="fblock"><span class="fld cardf" data-q="${q.id}" data-i="${f.i}" style="display:block"><div class="cardback" hidden><div class="k">Vurderingspunkter</div>${mdBlock(f.ans)}</div>
+      <div class="row" style="margin-top:6px">${mode==='ov'?`<button class="btn small primary flip">Vis vurderingspunkter</button><button class="btn small sec c-ok" hidden>Klarte selv</button><button class="btn small sec c-del" hidden>Delvis</button><button class="btn small sec c-bad" hidden>Må repetere</button>`:''}<span class="st"></span></div></span></div>`;
   }
   // self / text
   return `<div class="fblock"><span class="fld selff" data-q="${q.id}" data-i="${f.i}" style="display:block">${tag}<textarea class="ans" id="${id}" placeholder="${f.kind==='text'?'Skriv svaret ditt her før du sammenligner med modellsvaret.':'Skriv svaret eller sluttsvaret ditt her (håndberegningen gjør du på papir).'}"></textarea><span class="st muted small"></span></span></div>`;
@@ -2777,6 +2829,8 @@ function pyStreak(){ const D = PYS.D; let n = 0; const d = new Date();
   return n; }
 
 // ---- Visning: oversiktssiden ----
+function fagTabs(active){ const f = OKT_FAG; if(f==='matte') return pyTabs(active);
+  return `<div class="subtabs" role="tablist"><a href="#okt-${f}" class="${active==='okt'?'on':''}">Økt</a><a href="#fag-${f}" class="${active==='ov'?'on':''}">Oversikt og ressurser</a></div>`; }
 function pyTabs(active){ return `<div class="subtabs" role="tablist"><a href="#okt" class="${active==='okt'?'on':''}">Økt</a><a href="#oversikt" class="${active==='ov'?'on':''}">Oversikt</a><a href="#python" class="${active==='py'?'on':''}">Python-pugging</a></div>`; }
 function pyDeckSummary(S){ const D = (STATE.pugg||{})[S.id]; if(!D || !D.c) return {n:S.deck.length, sit:0, rev:0, due:0}; const now = Date.now();
   let sit=0, rev=0, due=0; S.deck.forEach(c=>{ const st = D.c[c.id]; if(!st) return; if(st.s==='review'){ rev++; if(st.ivl>=4*PY_DAY) sit++; } if(st.s!=='new' && st.due<=now) due++; });
@@ -3238,8 +3292,8 @@ window.__py = { PO_OPPG, PO_BY, poCheckSp, poCheckSci, poCheckLines, poResolve, 
 // Plattform v2: én motor for alle fag, Hjem med «Fortsett», diagnose, synk
 // =====================================================================
 const oktLogg = s => (s.log||[]).filter(x=>x.kilde!=='felt');
-function oktNaaExact(st){ const VV = st.reduce((a,x)=>a+x.t.V,0) || 1; return 72*st.reduce((a,x)=>a+x.t.V*x.m,0)/VV; }
-function oktLoggMin(d){ return oktLogg(oktState()).filter(x=>x.min && iso(new Date(x.start))===d).reduce((a,x)=>a+x.min,0); }
+function oktNaaExact(st){ const VV = st.reduce((a,x)=>a+x.t.V,0) || 1; return OKT_MAKS[OKT_FAG]*st.reduce((a,x)=>a+x.t.V*x.m,0)/VV; }
+function oktLoggMin(d, f){ return (f?[f]:FAG_ORDER).reduce((sum,ff)=>sum + oktLogg(oktState(ff)).filter(x=>x.min && iso(new Date(x.start))===d).reduce((a,x)=>a+x.min,0), 0); }
 function planForm(){ const ps = planSettings(); return ps.form && ps.form.d===todayStr() ? ps.form.form : null; }
 const fmtP = x => String(Math.round((x||0)*10)/10).replace('.',',');
 const PX_DATO = {PX1:'2026-12-05', PX2:'2026-12-09', PX3:'2026-12-13'};
@@ -3247,58 +3301,34 @@ function pxSession(k){ return Object.values(STATE.sessions).filter(s=>s.oving===
 
 // Alt motoren planlegger: mekanikk- og FEM-innhold, egne oppgaver, repetisjon, matteøkter og prøveeksamener
 function engineActs(){
-  const t = todayStr(), out = ACTS.filter(a=>a.fag!=='matte');
+  const t = todayStr(), out = ACTS.filter(a=>a.fag!=='matte' && a.type!=='qs' && a.type!=='set' && !/-bom$/.test(a.id));
+  // Innleveringene i matte er frister, så de står i planen selv om øvingen ellers styres av økt-motoren
+  ACTS.filter(a=>a.fag==='matte' && /^Lever øving (\d+)/.test(a.t)).forEach(a=>{ const n = +a.t.match(/øving (\d+)/)[1], fr = (a.t.match(/frist (\d+)\. nov/)||[])[1];
+    const uke = PLAN.find(w=>w.items.some(i=>i.id===a.id)); const due = fr ? '2026-11-'+String(fr).padStart(2,'0') : (uke ? uke.end : a.due); if(due < t) return;   // frister som er passert, vises ikke
+    out.push(Object.assign({}, a, {pri:1, order:-9, min:15, due, link:'#oving-'+n, g:'Leveres i Capquiz (utenfor plattformen). Øvingen åpnes her, så du kan se over svarene først. Kryss av når den er levert.'})); });
   Object.entries(STATE.todos||{}).forEach(([k,v])=>{ if(v && v.egen && !v.slettet && FAG[v.fag])
     out.push({id:k, fag:v.fag, type:'manual', egen:true, min:v.min||30, pri:1, order:900, due:v.due||lastStudy(v.fag), t:v.t, g:'Egen oppgave', link:'#gjoremal'}); });
-  ['mek','fem'].forEach(f=>{ if(t>lastStudy(f)) return; const due = dueFields(f); if(!due.length) return;
-    out.push({id:'rep-'+f, fag:f, type:'rep', min:Math.min(40, Math.max(10, Math.round(due.length*3/5)*5)), pri:1, order:-1, due:t,
-      t:`Repetisjon ${FAG[f].kort} (${due.length} ${due.length===1?'oppgave':'oppgaver'})`, g:'Det du bommet på sist, eller er i ferd med å glemme.', link:'#q-'+due[0].q.id}); });
-  if(t <= lastStudy('matte')){
-    const st = oktStats(oktState());
-    let rest = Math.round(st.reduce((a,x)=>a+x.restMin,0)/15)*15;
-    if(!rest && dueFields('matte').length) rest = 30;
-    const n = Math.ceil(rest/60), rekke = oktBlokkRekke(st);
-    for(let k=0; k<n; k++){ const m = Math.max(15, Math.min(60, rest-60*k));
-      out.push({id:'okt-'+k, fag:'matte', type:'okt', min:m, pri: k < Math.ceil(n*0.7) ? 1 : 2, order:k, due:lastStudy('matte'), t:'Matte-økt' + ((tt=>tt?': '+tt.navn:'')(oktBlokkTema(k, rekke))),
-        g: k ? 'Temaet er det motoren regner med at du er kommet til da. Det justeres etter hvordan øktene går.' : 'Samme økt som på Økt-siden. Bytter du tema der, endres planen.', link:'#okt'}); }
-    Object.keys(PX_DATO).filter(k=>SETS[k]).forEach((k,i)=>out.push({id:'px-'+k, fag:'matte', type:'px', set:k, min:240, pri:1, order:-5+i, earliest:PX_DATO[k], due:lastStudy('matte'),
+  // Øving i alle fag legges inn som økter. Økt-motoren velger tema og oppgaver.
+  FAG_ORDER.forEach(f=>{ if(t > lastStudy(f)) return; iFag(f, ()=>{
+    const st = oktStats(oktState()), blokk = f==='matte' ? 60 : f==='mek' ? 45 : 30;
+    let rest = Math.round(st.reduce((a,x)=>a+x.restMin,0)/5)*5;
+    if(!rest && dueFields(f).length) rest = Math.min(blokk, 30);
+    const n = Math.ceil(rest/blokk), rekke = oktBlokkRekke(st), manuelle = ACTS.filter(a=>a.fag===f).length || 1;
+    for(let k=0; k<n; k++){ const m = Math.max(10, Math.min(blokk, rest-blokk*k)), tt = oktBlokkTema(k*blokk, rekke);
+      out.push({id:'okt-'+f+'-'+k, fag:f, type:'okt', min:m, pri: k < Math.ceil(n*0.7) ? 1 : 2, order: f==='matte' ? k : -0.5 + k*manuelle/Math.max(n,1)*0.6, due:lastStudy(f), t:`${FAG[f].kort}-økt` + (tt?': '+tt.navn:''),
+        g: k ? 'Temaet er det motoren regner med at du er kommet til da. Det justeres etter hvordan øktene går.' : 'Samme økt som på Økt-siden. Bytter du tema der, endres planen.', link:oktHash(f)}); }
+  }); });
+  if(t <= lastStudy('matte')) Object.keys(PX_DATO).filter(k=>SETS[k]).forEach((k,i)=>out.push({id:'px-'+k, fag:'matte', type:'px', set:k, min:240, pri:1, order:-5+i, earliest:PX_DATO[k], due:lastStudy('matte'),
       t:`${SETS[k].navn.replace(' (nye tall)','')} på tid (4 t)`, g:'Som på eksamen: formelark og Python, ingen hint. Resultatet teller tungt i mestringen.', link:'#oving-'+k}));
-  }
   out.forEach(a=>ACTBY[a.id]=a);
   return out;
 }
-function oktMinDag(){ const P = PLAN_CACHE || buildPlan(); const ds = Object.keys(P.plan).filter(d=>d<=lastStudy('matte'));
-  const sum = ds.reduce((a,d)=>a+P.plan[d].filter(p=>p.a.fag==='matte').reduce((b,p)=>b+p.rem,0),0);
+function oktMinDag(){ const f = OKT_FAG, P = PLAN_CACHE || buildPlan(); const ds = Object.keys(P.plan).filter(d=>d<=lastStudy(f));
+  const sum = ds.reduce((a,d)=>a+P.plan[d].filter(p=>p.a.fag===f && p.a.type==='okt').reduce((b,p)=>b+p.rem,0),0);
   return ds.length ? Math.round(sum/ds.length) : 0; }
 
-// ---------- Tema-oversikt for mekanikk og elementmetoden (samme prinsipp som matte-økten) ----------
 let QMIN = null;
-function qMinutter(q){ if(!QMIN){ QMIN = {}; ACTS.forEach(a=>{ const qs = qsOfAct(a); qs.forEach(x=>{ QMIN[x.id] = a.min/qs.length; }); }); } return QMIN[q.id] || 10; }
-function fagTema(f){
-  const qs = QF(f), ts = Object.entries(TOPICS).filter(([k,t])=>(t.fag||(k.startsWith('m-')?'mek':k.startsWith('f-')?'fem':'matte'))===f);
-  const W = ts.reduce((a,[k,t])=>a+(t.vekt||0),0) || 1;
-  return ts.map(([k,t])=>{ const tq = qs.filter(q=>q.topic===k), P = tq.reduce((a,q)=>a+(q.maxp||1),0);
-    const m = P ? tq.reduce((a,q)=>a+(q.maxp||1)*oktQM(q),0)/P : 0, igjen = tq.filter(q=>oktQM(q)<OKT_MAL);
-    return {k, t, andel:(t.vekt||0)/W, n:tq.length, m, igjen:igjen.length, min:igjen.reduce((a,q)=>a+qMinutter(q),0), neste:igjen[0]||tq[0]||null};
-  }).sort((a,b)=>b.andel-a.andel);
-}
-function fagForventet(f){ return fagTema(f).reduce((a,x)=>a+x.andel*x.m,0); }
-function fagTemaHtml(f){
-  const F = FAG[f], L = fagTema(f), fv = fagForventet(f), uten = L.filter(x=>!x.n).reduce((a,x)=>a+x.andel,0);
-  const best = L.filter(x=>x.igjen).sort((a,b)=>(b.andel*(OKT_MAL-Math.min(b.m,OKT_MAL))/(b.min||1))-(a.andel*(OKT_MAL-Math.min(a.m,OKT_MAL))/(a.min||1)))[0];
-  const rad = x => { const lys = x.t.lysark && x.t.lysark[0];
-    const href = x.neste ? '#q-'+x.neste.id : lys ? lys.pdf : '#fag-'+f, ferdig = x.n && !x.igjen;
-    return `<a class="tema ${best&&best.k===x.k?'auto':''} ${ferdig?'ferdig':''}" href="${esc(href)}" ${x.neste?'':'target="_blank" rel="noopener"'}>
-      <span class="tm-n"><strong>${esc(x.t.navn)}</strong>${best&&best.k===x.k?'<span class="small"><span class="tm-tag">Flest poeng per minutt nå</span></span>':''}</span>
-      <span class="tm-a"><span class="tm-l"><span>${Math.round(x.andel*100)} %<span class="tm-hide"> av ${f==='fem'?'pensum':'eksamen'}</span></span></span><span class="tm-bar"><i style="width:${Math.min(100, x.andel/0.3*100)}%;background:${F.farge}"></i></span></span>
-      <span class="tm-a"><span class="tm-l"><span>${x.n?Math.round(x.m*100)+' % mestret':'–'}</span></span><span class="tm-bar m"><i style="width:${Math.round(x.m*100)}%"></i></span></span>
-      <span class="tm-r small">${!x.n?'les lysark':ferdig?'✓ ferdig':`${x.igjen} igjen · ${fmtT(x.min)}`}</span></a>`; };
-  return `<div class="card" id="fag-tema" style="--fc:${F.farge}"><div class="row between" style="align-items:baseline;flex-wrap:wrap;gap:6px"><h2 style="margin:0">Tema etter andel av ${f==='fem'?'pensum':'eksamen'}</h2><span class="small muted">Trykk på et tema for å øve på det</span></div>
-    <div class="phero"><span class="pnum">${Math.round(fv*100)} %</span><span class="muted small">av ${f==='fem'?'pensum':'eksamenspoengene'} sitter nå (andel × mestring)</span></div>
-    <div class="tm-leg small muted"><span>Venstre stolpe: andel av ${f==='fem'?'pensum':'eksamen'}</span><span>Høyre stolpe: hvor mye du mestrer</span></div>
-    ${L.map(rad).join('')}
-    <p class="small muted" style="margin:8px 0 0">${f==='mek'?'Andelen er temaets vekt i eksamenssettene. ':'Muntlig eksamen: temaene er vektet likt. '}Mestring er siste svar (hint teller 70 %) ganget med hvor godt det huskes nå.${uten>0?` ${Math.round(uten*100)} % av ${f==='fem'?'pensum':'eksamen'} har ingen interaktive oppgaver her og må øves fra lysark og PDF.`:''}</p></div>`;
-}
+function qMinutter(q){ if(!QMIN){ QMIN = {}; ACTS.forEach(a=>{ const qs = qsOfAct(a); qs.forEach(x=>{ QMIN[x.id] = a.min/qs.length; }); }); } return QMIN[q.id] || (fagOf(q)==='fem' ? 3 : 10); }
 // Rekker jeg det? Per fag, fra den felles planen
 function fagRute(f){ const P = PLAN_CACHE || buildPlan();
   const kutt = (P.excluded||[]).concat(P.overflow||[]).filter(p=>p.a.fag===f), min = kutt.reduce((a,p)=>a+p.rem,0);
@@ -3307,25 +3337,22 @@ function fagRute(f){ const P = PLAN_CACHE || buildPlan();
 // Hvilket tema hver matteøkt i planen handler om
 function oktBlokkRekke(st){ const s = oktState(), f0 = oktFokus(s, st);
   return st.filter(x=>x.igjen>0).sort((a,b)=>((b.t.id===f0)-(a.t.id===f0)) || ((b.preOk?1:0)-(a.preOk?1:0)) || (b.perMin-a.perMin)); }
-function oktBlokkTema(k, rekke){
-  let acc = 0; for(const x of rekke){ acc += x.restMin; if(acc > 60*k + 1) return x.t; }
+function oktBlokkTema(minStart, rekke){
+  let acc = 0; for(const x of rekke){ acc += x.restMin; if(acc > minStart + 1) return x.t; }
   return null;
 }
-function oktGjortHtml(){ const t = todayStr(), L = oktLogg(oktState()).filter(x=>x.min && iso(new Date(x.start))===t); if(!L.length) return '';
+function oktGjortHtml(){ const t = todayStr(); return FAG_ORDER.map(f=>{ const L = oktLogg(oktState(f)).filter(x=>x.min && iso(new Date(x.start))===t); if(!L.length) return '';
   const tema = [...new Set(L.map(x=>(OKT_BY[x.type]||{}).navn).filter(Boolean))];
-  return `<div class="it done okt-gjort"><span class="cb on" aria-hidden="true">✓</span><span><strong>Matte-økt</strong> · ${fmtMin(Math.round(L.reduce((a,x)=>a+x.min,0)))} · ${L.filter(x=>x.ok).length}/${L.length} riktig<br><span class="small muted">${esc(tema.join(', '))}</span></span></div>`; }
+  return `<div class="it done okt-gjort"><span class="cb on" aria-hidden="true">✓</span><span>${fagDot(f)}<strong>${esc(FAG[f].kort)}-økt</strong> · ${fmtMin(Math.round(L.reduce((a,x)=>a+x.min,0)))} · ${L.filter(x=>x.ok).length}/${L.length} riktig<br><span class="small muted">${esc(tema.join(', '))}</span></span></div>`; }).join(''); }
 
 // ---------- Status per fag (vises på fagkortene) ----------
-function fagStatus(f){
-  if(f==='matte'){ const s = oktState(), st = oktStats(s), pg = oktPrognose(st, Object.assign({}, s, {minDag: oktMinDag()}));
-    return {pct: pg.naa/72, txt:`${pg.naa}/72 p forventet nå`, sub:`${pg.slutt}/72 den 17.12 med planen`}; }
-  const qs = QF(f); const sc = qs.map(questionScore); const tried = sc.filter(x=>x!=null).length;
-  const m = fagForventet(f);
-  return {pct:m, txt:`${Math.round(m*100)} % av ${f==='fem'?'pensum':'eksamenspoengene'} sitter`, sub:`${tried}/${qs.length} prøvd`};
-}
+function fagStatus(f){ return iFag(f, ()=>{
+  const s = oktState(), st = oktStats(s), pg = oktPrognose(st, Object.assign({}, s, {minDag: oktMinDag()}));
+  return f==='matte' ? {pct: pg.naa/72, txt:`${pg.naa}/72 p forventet nå`, sub:`${pg.slutt}/72 den 17.12 med planen`}
+    : {pct: pg.naa/100, txt:`${pg.naa} % av ${f==='fem'?'pensum':'eksamen'} sitter nå`, sub:`${pg.slutt} % med planen`}; }); }
 function fagCardHtml(f){
   const F = FAG[f], n = daysTo(F.exam), fs = fagStatus(f);
-  const href = f==='matte' ? '#okt' : '#fag-'+f;
+  const href = oktHash(f);
   return `<a class="fagkort" href="${href}" style="--fc:${F.farge}">
     <div class="fk-top"><span class="fk-kode">${esc(F.kode)}</span><span class="fk-dager">${n>1?n+' dager':n===1?'i morgen':n===0?'i dag':'ferdig'}</span></div>
     <div class="fk-body"><div class="fk-tittel">${esc(F.navn)}</div>
@@ -3335,20 +3362,22 @@ function fagCardHtml(f){
 }
 
 // ---------- Start neste ting ----------
-function oktTrengerDiagnose(s){ const d = s.diag||{}; if(d.ferdig || d.hoppet) return false;
+function oktTrengerDiagnose(s){ if(OKT_FAG!=='matte') return false; const d = s.diag||{}; if(d.ferdig || d.hoppet) return false;
   const n = Object.values(STATE.attempts).filter(a=>a && a.hist && a.hist.length && fagOf(QBY[a.q])==='matte').length; return n < 10; }
-async function oktStartNa(utenDiagnose){
+async function oktStartNa(utenDiagnose, f){
+  if(f) OKT_FAG = f;
   const s = oktState();
   if(!utenDiagnose && oktTrengerDiagnose(s)){ location.hash = '#diagnose'; return; }
   if(s.cur && QBY[s.cur.q]){ location.hash = '#q-'+s.cur.q; return; }
   const st = oktStats(s), nx = oktNeste(s, st);
-  if(!nx){ location.hash = '#okt'; return; }
+  if(!nx){ location.hash = oktHash(); return; }
   s.oktId = Date.now(); s.oktStart = {naa: oktNaaExact(st), ts: Date.now()}; s.kvittering = null;
   if(s.fokus==='auto') s.autoFokus = nx.fokus;
   s.cur = {q:nx.q.id, type:oktTypeOf(nx.q), start:Date.now()}; await oktSave(s); location.hash = '#q-'+nx.q.id;
 }
+const oktHash = f => { f = f || OKT_FAG; return f==='matte' ? '#okt' : '#okt-'+f; };
 function startAct(a){
-  if(a.type==='okt') return oktStartNa();
+  if(a.type==='okt') return oktStartNa(false, a.fag);
   const link = actLink(a);
   if(a.ext || /\.pdf|\.html/.test(link)) window.open(link, '_blank', 'noopener'); else location.hash = link;
 }
@@ -3372,9 +3401,9 @@ function heroHtml(){
     <p class="muted" style="margin:0 0 12px">${natt?'Ta gjerne 15 minutter <a href="#python">Python-pugging</a>, ellers hvil. Nytt stoff tar du når du er uthvilt.':'Godt jobbet. Vil du gjøre mer, gir en matteøkt mest eksamensgevinst.'}</p>
     <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap">${natt?'':'<button class="btn primary big" id="hero-okt">Matteøkt</button>'}${linje}</div></div>`;
   let tittel = nx.a.t, under = nx.a.g || '';
-  if(nx.a.type==='okt'){ const s = oktState(); const n2 = s.cur && QBY[s.cur.q] ? {q:QBY[s.cur.q]} : oktNeste(s, oktStats(s));
-    tittel = oktTrengerDiagnose(s) ? 'Matte: diagnosetest (ca. 25 min)' : s.cur ? 'Fortsett matteøkten' : 'Matte-økt';
-    under = oktTrengerDiagnose(s) ? 'Én kort oppgave per oppgavetype, så slipper du å øve på det du allerede kan.' : n2 ? `Neste oppgave: ${ovShort(n2.q.oving)}.${n2.q.nr} ${n2.q.title}` : under; }
+  if(nx.a.type==='okt') iFag(nx.a.fag, ()=>{ const s = oktState(); const n2 = s.cur && QBY[s.cur.q] ? {q:QBY[s.cur.q]} : oktNeste(s, oktStats(s));
+    tittel = oktTrengerDiagnose(s) ? 'Matte: diagnosetest (ca. 25 min)' : s.cur ? `Fortsett ${FAG[nx.a.fag].kort.toLowerCase()}-økten` : nx.a.t;
+    under = oktTrengerDiagnose(s) ? 'Én kort oppgave per oppgavetype, så slipper du å øve på det du allerede kan.' : n2 ? `Neste oppgave: ${ovShort(n2.q.oving)}.${n2.q.nr} ${n2.q.title}` : under; });
   const [hoved, ekstra] = splitTitle(tittel);
   return `<div class="card hero" style="--fc:${FAG[nx.a.fag].farge}"><div class="small muted"><i class="fdot" style="--fc:${FAG[nx.a.fag].farge}"></i> Neste · ${esc(FAG[nx.a.fag].navn)} · ${fmtMin(nx.rem)}</div>
     <h1 class="hero-t">${mdInline(hoved)}</h1><p class="muted" style="margin:0 0 14px">${ekstra?mdInline(ekstra)+' · ':''}${mdInline(under)}</p>
@@ -3385,7 +3414,7 @@ function bindHero(main){
   const n = main.querySelector('[data-natt]'); if(n) n.onclick = ()=>settDag(60, 'natt');
   const e = main.querySelector('#endre-tid'); if(e) e.onclick = async ev=>{ ev.preventDefault(); const ps = planSettings(); ps.form = null; await savePlanSettings(ps); route(); };
   const f = main.querySelector('#fortsett'); if(f) f.onclick = ()=>{ const a = ACTBY[f.dataset.act]; if(a) startAct(a); };
-  const o = main.querySelector('#hero-okt'); if(o) o.onclick = ()=>oktStartNa();
+  const o = main.querySelector('#hero-okt'); if(o) o.onclick = ()=>oktStartNa(false, 'matte');
 }
 function renderHjem(main){
   const P = buildPlan(); const t = todayStr();
@@ -3396,7 +3425,7 @@ function renderHjem(main){
   <div class="fagkort-grid">${FAG_ORDER.map(fagCardHtml).join('')}</div>
   <div class="hjem-grid">
     <div class="card"><div class="row between"><h2 style="margin:0">I dag</h2><span class="small muted">${done.length||mm?`${done.length} gjort${mm?` · ${fmtMin(Math.round(mm))} matteøkt`:''}`:''}</span></div>
-      <div class="todo" style="margin-top:10px">${todays.map(p=>actItemHtml(p.a,{rem:p.rem, from: p.a.due<t && p.a.type!=='rep' ? p.a.due : null})).join('')}${oktGjortHtml()}${done.map(x=>actItemHtml(x.a)).join('')}</div>
+      <div class="todo" style="margin-top:10px">${todays.map(p=>actItemHtml(p.a,{rem:p.rem, del:p.del, from: p.a.due<t && p.a.type!=='rep' ? p.a.due : null})).join('')}${oktGjortHtml()}${done.map(x=>actItemHtml(x.a)).join('')}</div>
       ${!todays.length&&!done.length&&!mm?'<p class="muted">Ingenting planlagt i dag.</p>':''}
       <div class="row between" style="margin-top:12px"><span class="small muted">Rekkefølgen er satt av motoren: nærmeste eksamen og mest verdi per minutt først.</span><a class="btn small ghost" href="#gjoremal">Hele planen →</a></div>
       ${overflowHtml(P)}</div>
@@ -3406,19 +3435,19 @@ function renderHjem(main){
         return `<li><span class="d">${fmtD(d)}</span><span>${ps2.length? fs.map(fagDot).join('')+` ${ps2.length} aktiviteter · ${fmtMin(ps2.reduce((s,p)=>s+p.rem,0))}` : '<span class="muted">fri</span>'}</span></li>`; }).join('')}</ul></div>
     </div></div>`;
   bindHero(main); bindActs(main);
-  main.querySelectorAll('.it.act a.actlink').forEach(l=>{ const a = ACTBY[l.closest('.it').dataset.act]; if(a && a.type==='okt') l.onclick = e=>{ e.preventDefault(); oktStartNa(); }; });
+  main.querySelectorAll('.it.act a.actlink').forEach(l=>{ const a = ACTBY[l.closest('.it').dataset.act]; if(a && a.type==='okt') l.onclick = e=>{ e.preventDefault(); oktStartNa(false, a.fag); }; });
 }
 
 // ---------- «Mer» (mobil) ----------
 function renderMer(main){
   const L = (href, t, s) => `<a class="mer-it" href="${href}"><strong>${t}</strong><span class="small muted">${s}</span></a>`;
   main.innerHTML = `<h1>Mer</h1><div class="mer">
-    ${FAG_ORDER.map(f=>L(f==='matte'?'#oversikt':'#fag-'+f, esc(FAG[f].navn), `${FAG[f].kode} · ${f==='fem'?'muntlig':'eksamen'} ${fmtD(FAG[f].exam)}`)).join('')}
+    ${FAG_ORDER.map(f=>L(f==='matte'?'#oversikt':'#fag-'+f, esc(FAG[f].navn)+' · oversikt og ressurser', `${FAG[f].kode} · ${f==='fem'?'muntlig':'eksamen'} ${fmtD(FAG[f].exam)}`)).join('')}
     ${L('#python','Python-pugging','maler og puggekort til matteeksamen')}
     ${L('#kalender','Kalender','planen dag for dag')}
     ${L('#diagnose','Diagnosetest (matte)','sett startnivået per oppgavetype')}
     ${L('#notater','Notater og feil','')}
-    ${L('#om','Synk og innstillinger','historikk mellom PC og mobil')}</div>`;
+    ${L('#om','Synk og innstillinger','historikk mellom PC og mobil')}</div><p class="small muted" style="margin-top:14px">Versjon ${APP_VER}</p>`;
 }
 
 // ---------- Diagnose (matte) ----------
@@ -3437,7 +3466,7 @@ function renderDiagnose(main){
     main.innerHTML = `${pyTabs('okt')}<div class="card"><h1>Diagnosen er ferdig</h1><p class="muted">Motoren bruker dette som startnivå til du har gjort oppgaver i typen selv. Det du kan, får lavere prioritet, så tiden går til det som gir flest nye poeng.</p>
       <div class="mx-scroll"><table class="mtab"><thead><tr><th>Oppgavetype</th><th class="c">Startnivå</th></tr></thead><tbody>${rader}</tbody></table></div>
       <div class="row" style="gap:10px;margin-top:14px"><button class="btn primary big" id="dg-start">Start matteøkt</button><button class="btn ghost" id="dg-igjen">Ta diagnosen på nytt</button></div></div>`;
-    $('#dg-start').onclick = ()=>oktStartNa(true);
+    $('#dg-start').onclick = ()=>oktStartNa(true, 'matte');
     $('#dg-igjen').onclick = async ()=>{ const s2 = oktState(); s2.diag = {i:0, res:{}}; await oktSave(s2); route(); };
     return;
   }
@@ -3458,6 +3487,38 @@ function renderDiagnose(main){
   $('#dg-hopp').onclick = async e=>{ e.preventDefault(); const s2 = oktState(); s2.diag = Object.assign(s2.diag||{}, {hoppet:true}); await oktSave(s2); location.hash = '#okt'; };
 }
 
+// ---------- Prøvemuntlig (Elementmetoden) ----------
+let MUNT = null;
+function muntFasit(q){ return q.fields.map(f=>{ const s = f.kind==='mc' ? f.opts[f.ans] + (f.why && f.why[f.ans] ? ' — ' + f.why[f.ans] : '') : (f.ref || f.ans || '');
+    return s ? `<div>${f.label?`<strong>${esc(f.label)}:</strong> `:''}${mdBlock(String(s) + (f.unit && f.kind==='expr' ? ' ' + f.unit : ''))}</div>` : ''; }).join('') + (q.explain ? mdBlock(q.explain) : ''); }
+function renderMuntlig(main){
+  if(!MUNT){ const qs = QF('fem').map(q=>({q, v:oktQM(q) + Math.random()*0.35})).sort((a,b)=>a.v-b.v).slice(0,10).map(x=>x.q.id); MUNT = {qs, i:0, res:[]}; }
+  const M = MUNT, top = `<div class="row between" style="margin-bottom:8px"><h1 style="margin:0">Prøvemuntlig</h1><a class="btn small ghost" href="#okt-fem">Avslutt</a></div>`;
+  if(M.i>=M.qs.length){ const n = k => M.res.filter(r=>r.v===k).length;
+    main.innerHTML = `${top}<div class="card"><h2 style="margin-top:0">Ferdig: ${M.qs.length} spørsmål</h2><div class="kv-g"><div><span class="kv-n">${n('ok')}</span><span class="small muted">klarte selv</span></div><div><span class="kv-n">${n('del')}</span><span class="small muted">delvis</span></div><div><span class="kv-n">${n('bad')}</span><span class="small muted">må repetere</span></div></div>
+      ${M.res.filter(r=>r.v!=='ok').length?`<p class="small" style="margin:12px 0 4px"><strong>Ta disse igjen:</strong></p><div class="qlist">${M.res.filter(r=>r.v!=='ok').map(r=>{ const q = QBY[r.q]; return `<a href="#q-${q.id}"><span class="n">${esc(ovShort(q.oving))}.${esc(q.nr)}</span><span class="t">${mdInline(q.title)}</span></a>`; }).join('')}</div>`:''}
+      <div class="row" style="gap:10px;margin-top:14px"><button class="btn primary" id="mu-ny">Ny runde</button><a class="btn ghost" href="#okt-fem">Til økten</a></div></div>`;
+    $('#mu-ny').onclick = ()=>{ MUNT = null; route(); }; return; }
+  const q = QBY[M.qs[M.i]], tn = (TOPICS[q.topic]||{}).navn || '';
+  main.innerHTML = `${top}<div class="card hero" style="--fc:${FAG.fem.farge}"><div class="row between"><span class="small muted">Spørsmål ${M.i+1} av ${M.qs.length} · ${esc(shortTopic(tn))}</span><span class="munt-t" id="mu-t">2:00</span></div>
+    <div class="prog" style="margin:8px 0 4px"><i style="width:${Math.round(M.i/M.qs.length*100)}%;background:${FAG.fem.farge}"></i></div>
+    <h2 style="margin:12px 0 0">${mdInline(q.title)}</h2><div class="munt-q">${mdBlock(q.text||'')}</div>
+    ${q.fig?`<div class="segimg">${zimg(q.fig, q.title)}</div>`:''}
+    <p class="small muted" style="margin:0 0 12px">Forklar høyt som på eksamen: definisjon, skisse, når og hvorfor, og et eksempel fra prosjektet ditt. Klokka starter når du er klar.</p>
+    <div class="row" style="gap:10px;flex-wrap:wrap"><button class="btn primary big" id="mu-start">Start 2 minutter</button><button class="btn ghost" id="mu-vis">Vis vurderingspunkter</button></div>
+    <div id="mu-fasit" hidden><div class="ddp fas" style="margin-top:14px"><h4>Vurderingspunkter</h4>${muntFasit(q) || '<p class="small muted">Ingen fasit i kursmaterialet for dette spørsmålet.</p>'}${q.src&&q.src.pdf?`<p class="small" style="margin:8px 0 0">Kilde: <a href="${esc(q.src.pdf)}${q.src.page?'#page='+q.src.page:''}" target="_blank" rel="noopener">åpne lysbildet</a></p>`:''}</div>
+      <p class="small" style="margin:12px 0 6px"><strong>Hvordan gikk forklaringen din?</strong></p>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn sec" data-mu="ok">Klarte selv</button><button class="btn sec" data-mu="del">Delvis</button><button class="btn sec" data-mu="bad">Må repetere</button></div></div></div>`;
+  let tm = null, igjen = 120;
+  const vis = ()=>{ clearInterval(tm); $('#mu-fasit').hidden = false; $('#mu-vis').hidden = true; $('#mu-start').hidden = true; typeset($('#mu-fasit')); };
+  $('#mu-start').onclick = ()=>{ $('#mu-start').disabled = true; $('#mu-start').textContent = 'Forklar høyt …';
+    tm = setInterval(()=>{ const el = $('#mu-t'); if(!el){ clearInterval(tm); return; } igjen--; el.textContent = Math.floor(igjen/60)+':'+String(igjen%60).padStart(2,'0'); if(igjen<=0){ toast('Tiden er ute'); vis(); } }, 1000); };
+  $('#mu-vis').onclick = vis;
+  main.querySelectorAll('[data-mu]').forEach(b=>b.onclick = async ()=>{ const v = b.dataset.mu; main.querySelectorAll('[data-mu]').forEach(x=>x.disabled = true);
+    for(const f of q.fields) await recordAttempt(q, f, {ok: v!=='bad', mode:'muntlig', hint: v==='del', fasit:false});
+    M.res.push({q:q.id, v}); M.i++; route(); });
+}
+
 // ---------- Øktslutt-kvittering ----------
 function nesteRep(qids){ let min = Infinity;
   qids.forEach(id=>{ const q = QBY[id]; if(!q) return; q.fields.forEach(f=>{ const a = STATE.attempts[fieldKey(id,f.i)]; if(!a||!a.hist||!a.hist.length) return;
@@ -3467,13 +3528,13 @@ async function oktAvslutt(s){
   const id = s.oktId, L = oktLogg(s).filter(x=>x.okt===id && id!=null);
   const naa = oktNaaExact(oktStats(s)), fra = s.oktStart ? s.oktStart.naa : naa;
   s.kvittering = L.length ? {min: L.reduce((a,x)=>a+(x.min||0),0), n:L.length, ok:L.filter(x=>x.ok).length, delta: Math.round((naa-fra)*10)/10, naa: Math.round(naa), neste: nesteRep(L.map(x=>x.q)), ts:Date.now()} : null;
-  s.cur = null; s.oktId = null; s.oktStart = null; await oktSave(s); location.hash = '#okt';
+  s.cur = null; s.oktId = null; s.oktStart = null; s.feilModus = false; await oktSave(s); location.hash = oktHash(s.fag);
 }
 function kvitteringHtml(k){
   const d = k.neste ? iso(new Date(k.neste)) : null;
   return `<div class="card kvit"><div class="row between" style="align-items:baseline"><h2 style="margin:0">Økten er ferdig</h2><button class="btn small ghost" id="kv-lukk">Lukk</button></div>
     <div class="kv-g"><div><span class="kv-n">${fmtT(k.min)}</span><span class="small muted">tid</span></div><div><span class="kv-n">${k.ok}/${k.n}</span><span class="small muted">oppgaver riktig</span></div>
-    <div><span class="kv-n">${k.delta>=0?'+':''}${String(k.delta).replace('.',',')} p</span><span class="small muted">forventet eksamenspoeng (nå ${k.naa}/72)</span></div>
+    <div><span class="kv-n">${k.delta>=0?'+':''}${String(k.delta).replace('.',',')}${OKT_FAG==='matte'?' p':''}</span><span class="small muted">${OKT_FAG==='matte'?'forventet eksamenspoeng':'prosentpoeng mestret'} (nå ${oktSc(k.naa)})</span></div>
     <div><span class="kv-n">${d ? (d<=todayStr()?'i dag':d===addDays(todayStr(),1)?'i morgen':fmtD(d)) : '–'}</span><span class="small muted">neste repetisjon</span></div></div></div>`;
 }
 
@@ -3513,7 +3574,7 @@ function mergeState(a, b){
   const out = Object.assign({}, b, a, {tomb});
   for(const c of COLLS){ const A = a[c]||{}, B = b[c]||{}, o = {};
     new Set([...Object.keys(A), ...Object.keys(B)]).forEach(k=>{ const x = A[k], y = B[k];
-      let v = x==null ? y : y==null ? x : c==='attempts' ? mergeAttempt(x,y) : (c==='settings' && k==='okt') ? mergeOkt(x,y) : (tsOf(y)>tsOf(x) ? y : x);
+      let v = x==null ? y : y==null ? x : c==='attempts' ? mergeAttempt(x,y) : (c==='settings' && /^okt(_|$)/.test(k)) ? mergeOkt(x,y) : (tsOf(y)>tsOf(x) ? y : x);
       const td = tomb[c+'/'+k]; if(td && tsOf(v) <= td) return; o[k] = v; });
     out[c] = o; }
   return out;
@@ -3546,7 +3607,7 @@ const SYNC = {
   render(){ const bar = $('#filebar'); if(!bar) return; bar.hidden = false;
     const fil = !this.on() && FILE.pending && !FILE.handle && FILE.supported() ? `<button class="btn small primary" id="fb-resume">Fortsett: ${esc(FILE.pending.name)}</button>` : '';
     const t = this.at ? this.at.toLocaleTimeString('nb-NO',{hour:'2-digit',minute:'2-digit'}) : '';
-    const txt = store ? '' : !this.on() ? '<a class="sync-st" href="#om">Slå på synk</a>' : this.status==='synker' ? '<span class="sync-st">Synker …</span>' : this.status==='feil' ? `<a class="sync-st feil" href="#om" title="${esc(this.err)}">Synk feilet</a>` : `<a class="sync-st ok" href="#om">Synket ${t}</a>`;
+    const txt = store ? '' : !this.on() ? '<a class="sync-st" href="#om" title="Slå på synk for å få historikken på flere enheter">Lagret i denne nettleseren</a>' : this.status==='synker' ? '<span class="sync-st">Synker …</span>' : this.status==='feil' ? `<a class="sync-st feil" href="#om" title="${esc(this.err)}">Synk feilet</a>` : `<a class="sync-st ok" href="#om">Synket ${t}</a>`;
     bar.innerHTML = fil + txt; const b = $('#fb-resume'); if(b) b.onclick = ()=>FILE.resume(); },
   schedule(ms){ if(!this.on()) return; clearTimeout(this.timer); this.timer = setTimeout(()=>this.sync(), ms==null?8000:ms); },
   async sync(){
@@ -3591,7 +3652,7 @@ function bindSyncPanel(main){
   const off = main.querySelector('#sy-off'); if(off) off.onclick = ()=>{ SYNC.setCfg(null); SYNC.render(); route(); };
 }
 
-window.__app = { get Q(){return Q;}, get STATE(){return STATE;}, QBY, ACTBY, ACTS, actStatus, planFor, buildPlan, todayStr, dueFields, fieldKey, planSettings };
+window.__app = { capOf, get Q(){return Q;}, get STATE(){return STATE;}, QBY, ACTBY, ACTS, actStatus, planFor, buildPlan, todayStr, dueFields, fieldKey, planSettings };
 // ---------- Oppstart ----------
 async function boot(){
   try{

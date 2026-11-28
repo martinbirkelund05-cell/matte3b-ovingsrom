@@ -32,6 +32,12 @@ Safari/Firefox støtter ikke historikkfil; der ligger historikken i nettleseren 
 - **Mobil**: bunnmeny (Hjem, Økt, Plan, Mer), øktknappene nederst.
 - **Synk** (`#om`): historikken lagres i `historikk/<navn>.json` på grenen `historikk` i dette repoet og flettes automatisk mellom enheter. Krever et fine-grained token med bare *Contents: Read and write* på dette repoet, lagt inn én gang per enhet (lagres bare i nettleseren).
 
+### Felles motor og struktur (28.11)
+- Økt finnes for alle tre fagene (`#okt`, `#okt-mek`, `#okt-fem`) med samme temavelger: andel av eksamen, mestring, nivå (prøvd, løst selv, bekreftet) og tid igjen.
+- Planen legger øvingen i alle fag som økter, deler lange aktiviteter og legger aldri mer på en dag enn studietiden. Innleveringer med frist står i planen.
+- «Tren på feilene mine» på Økt-siden, og «Prøvemuntlig» (`#muntlig`) for Elementmetoden.
+- Én meny: Hjem, Plan, de tre fagene og Mer. Hvert fag har fanene Økt og Oversikt.
+
 ## Innhold
 - `index.html` – hele plattformen (oversikt, gjøremål, øvinger i øvings-/prøvemodus, eksamenssett, kompendium, notater)
 - `bank_mek.js`, `bank_fem.js` – oppgavebanker for Mekanikk 1 og Elementmetoden · `mek/`, `fem/` – PDF-er, figurer og LF-sider
