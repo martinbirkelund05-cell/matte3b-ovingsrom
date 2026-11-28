@@ -47,6 +47,10 @@ Safari/Firefox støtter ikke historikkfil; der ligger historikken i nettleseren 
 - Pause og «Avslutt for i dag»: oppgave, utkast i svarfeltene og aktiv tid tas vare på.
 - Historikkfil: «Åpne historikk» og «Lagre som …» ligger øverst til høyre. Legg fila i OneDrive for å bruke samme historikk på flere PC-er. Fila flettes med historikken i nettleseren, så ingenting overskrives.
 
+### Kontrolltester og pågående økter (28.11)
+- Hvert tema du har løst selv, får en kontrolltest: først etter 2 dager, deretter 4, 8, 16 og 30 dager for hver bestått kontroll. Kontrollen er helst en annen oppgave i samme tema (repetisjonsøving eller variant). Bom setter temaet til «Trenger repetisjon», senker mestringen, legger inn målrettet trening og en ny kontroll. Temaet viser «Sist bekreftet» og «Neste kontroll».
+- Pågående økt vises i en fast linje under toppmenyen på alle sider, med «Gå til økt», «Pause» og «Avslutt». Én økt per fag kan stå på pause; kladd, oppgave og aktiv tid bevares også når nettleseren lukkes.
+
 ## Innhold
 - `index.html` – hele plattformen (oversikt, gjøremål, øvinger i øvings-/prøvemodus, eksamenssett, kompendium, notater)
 - `bank_mek.js`, `bank_fem.js` – oppgavebanker for Mekanikk 1 og Elementmetoden · `mek/`, `fem/` – PDF-er, figurer og LF-sider
