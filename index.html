@@ -1667,7 +1667,7 @@ document.addEventListener('click', e=>{
 // =====================================================================
 // ---------- Studieplattform: fag, aktiviteter, plan og kalender ----------
 // =====================================================================
-const APP_VER = '28.11 kl. 21.30';
+const APP_VER = '28.11 kl. 15.50';
 const FAG = {
   mek:  { key:'mek',  kode:'MEKA1101', navn:'Mekanikk 1',        kort:'Mekanikk',       canvas:'MEKA1101-26H :: Mekanikk 1',      sem:'MEKA1101-26H', exam:'2026-12-04', tid:'kl. 09:00–13:00 (4 t), oppmøte 30 min før', form:'Skriftlig, Inspera + håndberegninger på ark. Hjelpemiddel D: enkel kalkulator og vedlagt formelark.', farge:'#7b3f98' },
   fem:  { key:'fem',  kode:'MEPA2314', navn:'Elementmetoden',    kort:'Elementmetoden', canvas:'MEPA2314-26H :: Elementmetoden',   sem:'MEPA2314-26H', exam:'2026-12-11', tid:'tidspunkt ikke oppgitt i Canvas', form:'Muntlig eksamen (teller 40 %). Prosjektmappen teller 60 %.', farge:'#1f6f78' },
@@ -2360,7 +2360,7 @@ function renderOktSek(h){
     ${akt && !her && pauset.length ? `<button class="os-mer" data-os-tgl>${pauset.length} pauset</button>` : ''}</div>`;
   el.querySelectorAll('[data-os-tgl]').forEach(b=>b.onclick = ()=>{ el.dataset.open = el.dataset.open==='1' ? '0' : '1'; el.firstElementChild.classList.toggle('open'); });
   el.querySelectorAll('[data-os-ga]').forEach(a=>a.onclick = async e=>{ e.preventDefault(); const f = a.dataset.osGa, s = oktState(f); s.pauset = false; await oktSave(s); await saveDoc('settings','oktmeta', {aktiv:f}); const mal = '#q-'+s.cur.q; if(location.hash===mal) route(); else location.hash = mal; });
-  el.querySelectorAll('[data-os-pause]').forEach(b=>b.onclick = async ()=>{ const s = oktState(b.dataset.osPause); s.pauset = true; await oktSave(s); toast('Økten er satt på pause. Den ligger klar her.'); renderOktSek((location.hash||'#hjem').slice(1)); });
+  el.querySelectorAll('[data-os-pause]').forEach(b=>b.onclick = async ()=>{ const s = oktState(b.dataset.osPause); s.pauset = true; await oktSave(s); toast('Økten er satt på pause. Den ligger klar her.'); const hh = (location.hash||'#hjem').slice(1); if(/^q-/.test(hh)) renderOktSek(hh); else route(); });   // siden under tegnes på nytt, så Hjem og fagsiden viser «Pauset» med en gang
   el.querySelectorAll('[data-os-slutt]').forEach(b=>b.onclick = async ()=>{ const f = b.dataset.osSlutt; OKT_FAG = f; const s = oktState(f), q = QBY[s.cur.q];
     const svart = q.fields.some(ff=>{ const x = STATE.attempts[fieldKey(q.id,ff.i)]; return x && x.last>=s.cur.start; }); if(svart) oktLoggQ(s, q, null);
     await oktAvslutt(s); if((location.hash||'')===oktHash(f)) route(); });
